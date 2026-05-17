@@ -1,0 +1,8 @@
+{
+  "name": "nexband-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"Add your backend dev server here (e.g. node, express, fastify)\""
+  }
+}
