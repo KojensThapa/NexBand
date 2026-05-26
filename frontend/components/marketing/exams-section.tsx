@@ -41,6 +41,8 @@ export function ExamsSection() {
                 {available && (
                   <Link
                     href="/dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="mt-4 inline-flex text-sm font-medium text-indigo-600 hover:text-indigo-500"
                   >
                     Go to dashboard →
