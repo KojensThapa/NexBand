@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { DashboardSectionId } from "@/lib/dashboard/nav";
 import { IELTS_SECTIONS } from "@/lib/exams/ielts";
+import { WritingTaskBoard } from "@/components/test/writing/writing-task-board";
+import { ReadingTaskBoard } from "@/components/test/reading/reading-task-board";
 import {
   ListeningIcon,
   ReadingIcon,
@@ -20,6 +22,14 @@ interface SkillSectionProps {
 }
 
 export function SkillSection({ sectionId }: SkillSectionProps) {
+  if (sectionId === "writing") {
+    return <WritingTaskBoard backHref="/dashboard?section=writing" />;
+  }
+
+  if (sectionId === "reading") {
+    return <ReadingTaskBoard backHref="/dashboard?section=reading" />;
+  }
+
   const section = IELTS_SECTIONS.find((item) => item.skill === sectionId);
 
   if (!section) {

@@ -2,9 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export function useTimer(initialSeconds: number) {
+interface UseTimerOptions {
+  autoStart?: boolean;
+}
+
+export function useTimer(initialSeconds: number, options?: UseTimerOptions) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(options?.autoStart ?? false);
+
+  useEffect(() => {
+    if (options?.autoStart) {
+      setIsRunning(true);
+    }
+  }, [options?.autoStart]);
 
   useEffect(() => {
     if (!isRunning || secondsLeft <= 0) return;

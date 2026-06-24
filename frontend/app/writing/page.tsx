@@ -1,5 +1,5 @@
 import { WritingTaskBoard } from "@/components/test/writing/writing-task-board";
 
-export default function IeltsWritingPage() {
+export default function WritingPage() {
   return <WritingTaskBoard />;
 }
