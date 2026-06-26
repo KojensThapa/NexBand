@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { AnalysisLoader } from "@/components/reports/analysis-loader";
+import { SubmitTestButton } from "@/components/test/submit-test-button";
 import { useTimer } from "@/hooks/useTimer";
+import {
+  analyzeReadingSubmission,
+  createSavedReport,
+} from "@/lib/reports/mock-analysis";
+import { saveReport } from "@/lib/reports/storage";
 import { cn } from "@/lib/utils";
 import type {
-  ReadingAnswer,
   ReadingMockTest,
   ReadingPassage,
   ReadingQuestion,
@@ -19,7 +25,6 @@ interface ReadingSessionProps {
   singlePassage?: ReadingPassage;
   mode: ReadingMode;
   backHref?: string;
-  onSubmit?: (answers: ReadingAnswer[]) => void;
 }
 
 function QuestionInput({
@@ -75,10 +80,11 @@ export function ReadingSession({
   singlePassage,
   mode,
   backHref = "/test/ielts/reading",
-  onSubmit,
 }: ReadingSessionProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const resolvedBackHref = searchParams.get("back") ?? backHref;
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const visiblePassages = useMemo(() => {
     if (singlePassage) return [singlePassage];
@@ -117,21 +123,49 @@ export function ReadingSession({
     [allQuestions, answers]
   );
 
+  const sessionTitle = singlePassage
+    ? singlePassage.title
+    : mockTest?.title ?? "Reading Practice";
+
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const handleSubmit = () => {
-    const payload: ReadingAnswer[] = allQuestions.map((question) => ({
-      questionId: question.id,
-      value: answers[question.id] ?? "",
-    }));
-    onSubmit?.(payload);
-  };
+  const handleSubmit = useCallback(async () => {
+    setIsAnalyzing(true);
+    pause();
 
-  const sessionTitle = singlePassage
-    ? singlePassage.title
-    : mockTest?.title ?? "Reading Practice";
+    const detail = await analyzeReadingSubmission({
+      taskTitle: sessionTitle,
+      answeredCount,
+      totalQuestions: allQuestions.length,
+    });
+
+    const description =
+      allQuestions
+        .map((q) => answers[q.id])
+        .filter(Boolean)
+        .join(", ")
+        .slice(0, 80) || "Reading practice submission";
+
+    const report = createSavedReport(
+      "reading",
+      `IELTS Reading — ${sessionTitle}`,
+      description + (description.length >= 80 ? "…" : ""),
+      detail.overallScore,
+      detail
+    );
+
+    saveReport(report);
+    router.push(`/report/${report.id}`);
+  }, [
+    allQuestions,
+    answeredCount,
+    answers,
+    pause,
+    router,
+    sessionTitle,
+  ]);
 
   if (!activePassage) {
     return (
@@ -142,7 +176,9 @@ export function ReadingSession({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-slate-100">
+    <>
+      {isAnalyzing ? <AnalysisLoader message="Analyzing your reading answers…" /> : null}
+      <div className="flex h-full min-h-0 flex-col bg-slate-100">
       <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -284,15 +320,10 @@ export function ReadingSession({
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="mt-6 w-full rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-          >
-            Submit for AI feedback
-          </button>
+          <SubmitTestButton onClick={handleSubmit} className="mt-6" />
         </section>
       </div>
     </div>
+    </>
   );
 }

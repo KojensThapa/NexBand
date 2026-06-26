@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { AnalysisLoader } from "@/components/reports/analysis-loader";
+import { SubmitTestButton } from "@/components/test/submit-test-button";
 import { useTimer } from "@/hooks/useTimer";
+import {
+  analyzeWritingSubmission,
+  createSavedReport,
+} from "@/lib/reports/mock-analysis";
+import { saveReport } from "@/lib/reports/storage";
 import { cn } from "@/lib/utils";
 import { countWords } from "@/lib/exams/ielts-writing";
-import type { WritingMockTest, WritingTask, WritingTaskAnswer } from "@/types/writing";
+import type { WritingMockTest, WritingTask } from "@/types/writing";
 
 type WritingMode = "mock" | "task-1" | "task-2";
 
@@ -15,7 +22,6 @@ interface WritingSessionProps {
   singleTask?: WritingTask;
   mode: WritingMode;
   backHref?: string;
-  onSubmit?: (answers: WritingTaskAnswer[]) => void;
 }
 
 export function WritingSession({
@@ -23,10 +29,11 @@ export function WritingSession({
   singleTask,
   mode,
   backHref = "/test/ielts/writing",
-  onSubmit,
 }: WritingSessionProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const resolvedBackHref = searchParams.get("back") ?? backHref;
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const visibleTasks = useMemo(() => {
     if (singleTask) return [singleTask];
@@ -65,13 +72,47 @@ export function WritingSession({
     setTexts((prev) => ({ ...prev, [activeTask.id]: value }));
   };
 
-  const handleSubmit = () => {
-    const answers: WritingTaskAnswer[] = visibleTasks.map((task) => {
-      const text = texts[task.id] ?? "";
-      return { taskId: task.id, text, wordCount: countWords(text) };
+  const handleSubmit = useCallback(async () => {
+    if (!activeTask) return;
+    setIsAnalyzing(true);
+    pause();
+
+    const responseText =
+      mode === "mock"
+        ? visibleTasks.map((task) => texts[task.id] ?? "").join("\n\n")
+        : activeText;
+
+    const detail = await analyzeWritingSubmission({
+      taskTitle: activeTask.title,
+      taskPrompt: activeTask.prompt,
+      responseText,
+      wordCount,
     });
-    onSubmit?.(answers);
-  };
+
+    const report = createSavedReport(
+      "writing",
+      singleTask
+        ? `IELTS ${activeTask.label} — ${activeTask.title}`
+        : mockTest?.title ?? activeTask.title,
+      responseText.slice(0, 80) + (responseText.length > 80 ? "…" : ""),
+      detail.overallScore,
+      detail
+    );
+
+    saveReport(report);
+    router.push(`/report/${report.id}`);
+  }, [
+    activeTask,
+    activeText,
+    mode,
+    mockTest?.title,
+    pause,
+    router,
+    singleTask,
+    texts,
+    visibleTasks,
+    wordCount,
+  ]);
 
   const sessionTitle = singleTask
     ? singleTask.title
@@ -86,7 +127,9 @@ export function WritingSession({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-slate-100">
+    <>
+      {isAnalyzing ? <AnalysisLoader message="Analyzing your writing with AI…" /> : null}
+      <div className="flex h-full min-h-0 flex-col bg-slate-100">
       <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -233,16 +276,14 @@ export function WritingSession({
             {activeTask.recommendedMinutes} minutes.
           </p>
 
-          <button
-            type="button"
+          <SubmitTestButton
             onClick={handleSubmit}
             disabled={!meetsMinimum}
-            className="mt-4 w-full rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Submit for AI feedback
-          </button>
+            className="mt-4"
+          />
         </section>
       </div>
     </div>
+    </>
   );
 }
