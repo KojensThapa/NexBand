@@ -2,6 +2,7 @@ import type {
   ListeningFeedbackDetail,
   ReadingFeedbackDetail,
   SavedReport,
+  SpeakingFeedbackDetail,
   WritingFeedbackDetail,
 } from "@/types/report";
 
@@ -125,6 +126,69 @@ export async function analyzeReadingSubmission(input: {
     correctCount: correctEstimate,
     totalQuestions: input.totalQuestions,
     summary: `You answered ${input.answeredCount} of ${input.totalQuestions} questions. Estimated ${correctEstimate} correct based on AI analysis. Focus on skimming for main ideas and scanning for specific details.`,
+  };
+}
+
+export async function analyzeSpeakingSubmission(input: {
+  taskTitle: string;
+  recordingCount: number;
+  totalQuestions: number;
+}): Promise<SpeakingFeedbackDetail> {
+  await wait(ANALYSIS_DELAY_MS);
+
+  const overall = randomScore(5.5, 7.5);
+
+  return {
+    taskTitle: input.taskTitle,
+    overallScore: overall,
+    cefrLevel: overall >= 7 ? "B2+" : overall >= 6 ? "B2" : "B1",
+    recordingCount: input.recordingCount,
+    totalQuestions: input.totalQuestions,
+    summary: `Your ${input.recordingCount} recording${input.recordingCount !== 1 ? "s were" : " was"} analyzed across all speaking parts. Fluency is generally good with room to expand answers in Part 3. Focus on varied vocabulary and clearer pronunciation of multi-syllable words.`,
+    criteria: [
+      {
+        id: "fluency",
+        label: "Fluency and Coherence",
+        score: randomScore(5.5, 7.5),
+        color: "bg-violet-500",
+        summary:
+          "You speak at a reasonable pace with occasional hesitation. Ideas are mostly connected; use more linking phrases in Part 3.",
+      },
+      {
+        id: "lexical",
+        label: "Lexical Resource",
+        score: randomScore(5.5, 7),
+        color: "bg-emerald-500",
+        summary:
+          "Adequate vocabulary for familiar topics. Try using less common words and collocations for abstract discussion questions.",
+      },
+      {
+        id: "grammar",
+        label: "Grammatical Range and Accuracy",
+        score: randomScore(6, 7.5),
+        color: "bg-amber-500",
+        summary:
+          "A mix of simple and complex structures. Watch subject-verb agreement and article use in longer turns.",
+      },
+      {
+        id: "pronunciation",
+        label: "Pronunciation",
+        score: randomScore(5.5, 7),
+        color: "bg-rose-500",
+        summary:
+          "Generally intelligible with clear stress on key words. Work on word endings and sentence stress for higher bands.",
+      },
+    ],
+    strengths: [
+      "Natural pace in Part 1 short answers",
+      "Good use of examples in the Part 2 long turn",
+      "Willingness to develop ideas in Part 3",
+    ],
+    improvements: [
+      "Reduce filler words (um, uh) during preparation-heavy answers",
+      "Extend Part 3 responses with reasons and examples",
+      "Practice intonation on question tags and contrast phrases",
+    ],
   };
 }
 

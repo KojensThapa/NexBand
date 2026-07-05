@@ -4,8 +4,10 @@ import type {
   ListeningFeedbackDetail,
   ReadingFeedbackDetail,
   SavedReport,
+  SpeakingFeedbackDetail,
   WritingFeedbackDetail,
 } from "@/types/report";
+import { SpeakingFeedbackReport } from "./speaking-feedback-report";
 import { WritingFeedbackReport } from "./writing-feedback-report";
 import { SkillScoreReport } from "./skill-score-report";
 
@@ -38,6 +40,12 @@ export function ReportViewer({ report }: ReportViewerProps) {
         skill="listening"
         report={report.detail as ListeningFeedbackDetail}
       />
+    );
+  }
+
+  if (report.skill === "speaking") {
+    return (
+      <SpeakingFeedbackReport report={report.detail as SpeakingFeedbackDetail} />
     );
   }
 

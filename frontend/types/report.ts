@@ -44,10 +44,23 @@ export interface ListeningFeedbackDetail {
   summary: string;
 }
 
+export interface SpeakingFeedbackDetail {
+  taskTitle: string;
+  overallScore: number;
+  cefrLevel: string;
+  recordingCount: number;
+  totalQuestions: number;
+  criteria: CriterionScore[];
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+}
+
 export type ReportDetail =
   | { skill: "writing"; detail: WritingFeedbackDetail }
   | { skill: "reading"; detail: ReadingFeedbackDetail }
-  | { skill: "listening"; detail: ListeningFeedbackDetail };
+  | { skill: "listening"; detail: ListeningFeedbackDetail }
+  | { skill: "speaking"; detail: SpeakingFeedbackDetail };
 
 export interface SavedReport {
   id: string;
@@ -57,5 +70,9 @@ export interface SavedReport {
   status: "Completed";
   score: number;
   createdAt: string;
-  detail: WritingFeedbackDetail | ReadingFeedbackDetail | ListeningFeedbackDetail;
+  detail:
+    | WritingFeedbackDetail
+    | ReadingFeedbackDetail
+    | ListeningFeedbackDetail
+    | SpeakingFeedbackDetail;
 }
