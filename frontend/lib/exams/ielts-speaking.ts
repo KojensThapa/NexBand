@@ -23,10 +23,10 @@ const PART1_QUESTIONS_HOME = [
   { id: "p1-q3", text: "Do you work or are you a student?" },
   { id: "p1-q4", text: "What do you like most about your hometown?" },
   { id: "p1-q5", text: "How often do you visit your hometown?" },
-  { id: "p1-q6", text: "Do you prefer living in a city or in the countryside?" },
-  { id: "p1-q7", text: "What kind of accommodation do you live in?" },
-  { id: "p1-q8", text: "Who do you live with?" },
-  { id: "p1-q9", text: "Is there anything you would like to change about your home?" },
+  // { id: "p1-q6", text: "Do you prefer living in a city or in the countryside?" },
+  // { id: "p1-q7", text: "What kind of accommodation do you live in?" },
+  // { id: "p1-q8", text: "Who do you live with?" },
+  // { id: "p1-q9", text: "Is there anything you would like to change about your home?" },
 ];
 
 const PART1_QUESTIONS_HOBBIES = [

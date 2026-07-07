@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnalysisLoader } from "@/components/reports/analysis-loader";
 import { SubmitTestButton } from "@/components/test/submit-test-button";
-import { SpeakingRecorder } from "@/components/test/speaking/speaking-recorder";
+import {
+  SpeakingRecorder,
+  type SpeakingRecorderHandle,
+} from "@/components/test/speaking/speaking-recorder";
 import { useTimer } from "@/hooks/useTimer";
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import {
   SPEAKING_PART1_SECONDS,
   SPEAKING_PART2_PREP_SECONDS,
@@ -86,6 +90,13 @@ export function SpeakingSession({
   const [recordings, setRecordings] = useState<Record<string, SpeakingRecording>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const { speak, stop: stopSpeech } = useTextToSpeech();
+
+  // Ref to the currently-mounted SpeakingRecorder instance, so Next/Previous/
+  // tab buttons can force it to stop recording (and wait for the save to
+  // finish) before moving on to the next question.
+  const recorderRef = useRef<SpeakingRecorderHandle>(null);
+
   const timerSeconds = useMemo(() => {
     if (activePart === 1) return SPEAKING_PART1_SECONDS;
     if (activePart === 2) {
@@ -148,35 +159,56 @@ export function SpeakingSession({
     });
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    setIsAnalyzing(true);
-    pause();
+  const handleSubmit = useCallback(() => {
+    // Wait for any in-progress recording to finish saving before running
+    // the analysis — this prevents losing the last answer if the user
+    // clicks Submit while still mid-recording.
+    recorderRef.current?.stopIfRecording(async () => {
+      setIsAnalyzing(true);
+      pause();
+      stopSpeech();
 
-    const detail = await analyzeSpeakingSubmission({
-      taskTitle: sessionTitle,
-      recordingCount,
-      totalQuestions:
-        (part1?.questions.length ?? 0) +
-        1 +
-        (part2?.cueCard.followUpQuestions.length ?? 0) +
-        (part3?.questions.length ?? 0),
+      const detail = await analyzeSpeakingSubmission({
+        taskTitle: sessionTitle,
+        recordingCount,
+        totalQuestions:
+          (part1?.questions.length ?? 0) +
+          1 +
+          (part2?.cueCard.followUpQuestions.length ?? 0) +
+          (part3?.questions.length ?? 0),
+      });
+
+      const report = createSavedReport(
+        "speaking",
+        sessionTitle,
+        `${recordingCount} recordings submitted for AI analysis`,
+        detail.overallScore,
+        detail
+      );
+
+      saveReport(report);
+      router.push(`/report/${report.id}`);
     });
-
-    const report = createSavedReport(
-      "speaking",
-      sessionTitle,
-      `${recordingCount} recordings submitted for AI analysis`,
-      detail.overallScore,
-      detail
-    );
-
-    saveReport(report);
-    router.push(`/report/${report.id}`);
-  }, [sessionTitle, recordingCount, part1, part2, part3, pause, router]);
+  }, [sessionTitle, recordingCount, part1, part2, part3, pause, stopSpeech, router]);
 
   const part1Question = part1?.questions[part1QuestionIndex];
   const part3Question = part3?.questions[part3QuestionIndex];
   const followUpQuestion = part2?.cueCard.followUpQuestions[followUpIndex];
+
+  // Speak the current question aloud whenever it changes
+  useEffect(() => {
+    if (activePart === 1 && part1Question) {
+      speak(part1Question.text);
+    } else if (activePart === 2) {
+      if (part2Phase === "prep" && part2) {
+        speak(part2.cueCard.prompt);
+      } else if (part2Phase === "followup" && followUpQuestion) {
+        speak(followUpQuestion.text);
+      }
+    } else if (activePart === 3 && part3Question) {
+      speak(part3Question.text);
+    }
+  }, [activePart, part2Phase, part1Question, part3Question, followUpQuestion, part2, speak]);
 
   const renderPartTabs = () => (
     <div className="flex gap-2">
@@ -194,8 +226,12 @@ export function SpeakingSession({
             key={partNum}
             type="button"
             onClick={() => {
-              setActivePart(partNum);
-              if (partNum === 2) setPart2Phase("prep");
+              // Wait for any active recording to finish saving before
+              // switching parts, so the ✓ lands on the correct question.
+              recorderRef.current?.stopIfRecording(() => {
+                setActivePart(partNum);
+                if (partNum === 2) setPart2Phase("prep");
+              });
             }}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
@@ -259,7 +295,11 @@ export function SpeakingSession({
             <button
               type="button"
               disabled={part1QuestionIndex === 0}
-              onClick={() => setPart1QuestionIndex((i) => i - 1)}
+              onClick={() => {
+                recorderRef.current?.stopIfRecording(() => {
+                  setPart1QuestionIndex((i) => i - 1);
+                });
+              }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-40"
             >
               Previous
@@ -267,7 +307,11 @@ export function SpeakingSession({
             <button
               type="button"
               disabled={part1QuestionIndex >= part1.questions.length - 1}
-              onClick={() => setPart1QuestionIndex((i) => i + 1)}
+              onClick={() => {
+                recorderRef.current?.stopIfRecording(() => {
+                  setPart1QuestionIndex((i) => i + 1);
+                });
+              }}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
             >
               Next question
@@ -277,6 +321,7 @@ export function SpeakingSession({
 
         <section className="flex w-full flex-col items-center justify-center bg-slate-50 p-6 lg:w-1/2">
           <SpeakingRecorder
+            ref={recorderRef}
             recordingKey={part1Question.id}
             value={recordings[part1Question.id] ?? null}
             onChange={(rec) => setRecording(part1Question.id, rec)}
@@ -342,6 +387,7 @@ export function SpeakingSession({
 
           <section className="flex w-full flex-col items-center justify-center bg-slate-50 p-6 lg:w-1/2">
             <SpeakingRecorder
+              ref={recorderRef}
               recordingKey="part2-main"
               value={recordings["part2-main"] ?? null}
               onChange={(rec) => setRecording("part2-main", rec)}
@@ -350,7 +396,11 @@ export function SpeakingSession({
             {recordings["part2-main"] ? (
               <button
                 type="button"
-                onClick={() => setPart2Phase("followup")}
+                onClick={() => {
+                  recorderRef.current?.stopIfRecording(() => {
+                    setPart2Phase("followup");
+                  });
+                }}
                 className="mt-6 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white"
               >
                 Continue to follow-up questions →
@@ -379,7 +429,11 @@ export function SpeakingSession({
             <button
               type="button"
               disabled={followUpIndex === 0}
-              onClick={() => setFollowUpIndex((i) => i - 1)}
+              onClick={() => {
+                recorderRef.current?.stopIfRecording(() => {
+                  setFollowUpIndex((i) => i - 1);
+                });
+              }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium disabled:opacity-40"
             >
               Previous
@@ -387,7 +441,11 @@ export function SpeakingSession({
             <button
               type="button"
               disabled={followUpIndex >= part2.cueCard.followUpQuestions.length - 1}
-              onClick={() => setFollowUpIndex((i) => i + 1)}
+              onClick={() => {
+                recorderRef.current?.stopIfRecording(() => {
+                  setFollowUpIndex((i) => i + 1);
+                });
+              }}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
             >
               Next
@@ -397,6 +455,7 @@ export function SpeakingSession({
 
         <section className="flex w-full flex-col items-center justify-center bg-slate-50 p-6 lg:w-1/2">
           <SpeakingRecorder
+            ref={recorderRef}
             recordingKey={followUpQuestion.id}
             value={recordings[followUpQuestion.id] ?? null}
             onChange={(rec) => setRecording(followUpQuestion.id, rec)}
@@ -454,7 +513,11 @@ export function SpeakingSession({
             <button
               type="button"
               disabled={part3QuestionIndex === 0}
-              onClick={() => setPart3QuestionIndex((i) => i - 1)}
+              onClick={() => {
+                recorderRef.current?.stopIfRecording(() => {
+                  setPart3QuestionIndex((i) => i - 1);
+                });
+              }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium disabled:opacity-40"
             >
               Previous
@@ -462,7 +525,11 @@ export function SpeakingSession({
             <button
               type="button"
               disabled={part3QuestionIndex >= part3.questions.length - 1}
-              onClick={() => setPart3QuestionIndex((i) => i + 1)}
+              onClick={() => {
+                recorderRef.current?.stopIfRecording(() => {
+                  setPart3QuestionIndex((i) => i + 1);
+                });
+              }}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
             >
               Next question
@@ -472,6 +539,7 @@ export function SpeakingSession({
 
         <section className="flex w-full flex-col items-center justify-center bg-slate-50 p-6 lg:w-1/2">
           <SpeakingRecorder
+            ref={recorderRef}
             recordingKey={part3Question.id}
             value={recordings[part3Question.id] ?? null}
             onChange={(rec) => setRecording(part3Question.id, rec)}
