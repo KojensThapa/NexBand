@@ -1,6 +1,7 @@
 import type { IeltsSkill } from "./exam";
 
-export interface CriterionScore {  id: string;
+export interface CriterionScore {
+  id: string;
   label: string;
   score: number;
   color: string;
@@ -17,15 +18,59 @@ export interface FeedbackError {
   explanation: string;
 }
 
+export interface WordCountEntry {
+  word: string;
+  count: number;
+}
+
+export interface FillerWordEntry {
+  word: string;
+  count: number;
+}
+
+export interface MispronouncedWordEntry {
+  word: string;
+  suggestion: string;
+}
+
+export interface SectionScoreEntry {
+  label: string;
+  score: number;
+  correct: number;
+  total: number;
+}
+
+export interface QuestionTypePerformanceEntry {
+  type: string;
+  score: number;
+  correct: number;
+  total: number;
+}
+
 export interface WritingFeedbackDetail {
   taskTitle: string;
   taskPrompt: string;
   responseText: string;
   wordCount: number;
+  wordCountStatus: string;
   overallScore: number;
   cefrLevel: string;
   criteria: CriterionScore[];
   errors: FeedbackError[];
+  vocabularyAnalysis: {
+    uniqueWords: number;
+    repeatedWords: WordCountEntry[];
+  };
+  grammarAnalysis: {
+    grammarErrors: number;
+    spellingErrors: number;
+    punctuationErrors: number;
+  };
+  strengths: string[];
+  improvements: string[];
+  aiSummary: string;
+  suggestedImprovements: string[];
+  correctedEssay: string;
 }
 
 export interface ReadingFeedbackDetail {
@@ -33,7 +78,14 @@ export interface ReadingFeedbackDetail {
   overallScore: number;
   correctCount: number;
   totalQuestions: number;
-  summary: string;
+  accuracyPercentage: number;
+  timeTaken: string;
+  sectionScores: SectionScoreEntry[];
+  questionTypePerformance: QuestionTypePerformanceEntry[];
+  strengths: string[];
+  weakAreas: string[];
+  aiSummary: string;
+  recommendedTopics: string[];
 }
 
 export interface ListeningFeedbackDetail {
@@ -41,7 +93,33 @@ export interface ListeningFeedbackDetail {
   overallScore: number;
   correctCount: number;
   totalQuestions: number;
-  summary: string;
+  accuracyPercentage: number;
+  timeTaken: string;
+  partScores: SectionScoreEntry[];
+  questionTypePerformance: QuestionTypePerformanceEntry[];
+  strengths: string[];
+  weakAreas: string[];
+  aiSummary: string;
+  recommendedTopics: string[];
+}
+
+export interface SpeakingFeedbackDetail {
+  taskTitle: string;
+  overallScore: number;
+  cefrLevel: string;
+  recordingCount: number;
+  totalQuestions: number;
+  criteria: CriterionScore[];
+  recordingStats: {
+    duration: string;
+    wordsPerMinute: number;
+  };
+  fillerWords: FillerWordEntry[];
+  mispronouncedWords: MispronouncedWordEntry[];
+  strengths: string[];
+  improvements: string[];
+  aiSummary: string;
+  practiceRecommendations: string[];
 }
 
 export interface SpeakingFeedbackDetail {
@@ -84,4 +162,18 @@ export interface SavedReport {
     | ReadingFeedbackDetail
     | ListeningFeedbackDetail
     | SpeakingFeedbackDetail;
+<<<<<<< HEAD
+=======
+}
+
+export interface ReportHeaderMeta {
+  testTitle: string;
+  testDate?: string;
+  overallScore: number;
+  cefrLevel?: string;
+  status?: string;
+  aiSummary: string;
+  backHref?: string;
+  backLabel?: string;
+>>>>>>> dd93bf638b3a9424786982ca72ef20d8ee1d2be5
 }

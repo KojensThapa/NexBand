@@ -3,8 +3,8 @@
 import type { ComponentType } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { siteConfig } from "@/config/site";
-import { clearSessionCookie } from "@/lib/auth/session";
 import {
   DASHBOARD_NAV_ITEMS,
   type DashboardSectionId,
@@ -43,10 +43,11 @@ export function DashboardSidebar({
   onSectionChange,
 }: DashboardSidebarProps) {
   const router = useRouter();
+  const { signOut } = useAuth();
 
   function handleLogout() {
-    clearSessionCookie();
-    router.push("/");
+    signOut();
+    router.push("/auth/signin");
     router.refresh();
   }
 

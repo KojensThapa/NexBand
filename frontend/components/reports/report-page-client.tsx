@@ -36,20 +36,6 @@ export function ReportPageClient({ reportId }: ReportPageClientProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <Link
-            href="/dashboard?section=reports"
-            className="text-sm font-medium text-[#553285] hover:underline"
-          >
-            ← Back to My Reports
-          </Link>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.taskTitle}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Score: {report.score.toFixed(1)} · Completed
-          </p>
-        </div>
-      </div>
       <ReportViewer report={report} />
     </div>
   );

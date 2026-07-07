@@ -4,10 +4,17 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import {
+  clearAuthStorage,
+  getStoredSessionUser,
+  persistSessionUser,
+} from "@/lib/auth/local-auth";
+import { clearSessionCookie } from "@/lib/auth/session";
 import type { User } from "@/types/user";
 
 interface AuthContextValue {
@@ -20,14 +27,28 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading] = useState(false);
+  const [user, setUserState] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const signOut = useCallback(() => setUser(null), []);
+  useEffect(() => {
+    setUserState(getStoredSessionUser());
+    setIsLoading(false);
+  }, []);
+
+  const setUser = useCallback((nextUser: User | null) => {
+    setUserState(nextUser);
+    persistSessionUser(nextUser);
+  }, []);
+
+  const signOut = useCallback(() => {
+    setUserState(null);
+    clearAuthStorage();
+    clearSessionCookie();
+  }, []);
 
   const value = useMemo(
     () => ({ user, isLoading, setUser, signOut }),
-    [user, isLoading, signOut]
+    [user, isLoading, setUser, signOut]
   );
 
   return (
