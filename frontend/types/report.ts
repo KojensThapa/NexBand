@@ -44,10 +44,32 @@ export interface ListeningFeedbackDetail {
   summary: string;
 }
 
+export interface SpeakingFeedbackDetail {
+  taskTitle: string;
+  overallScore: number;
+  /** CEFR level, e.g. "B2". */
+  cefrLevel: string;
+  /** Estimated speaking speed in words per minute. */
+  speakingSpeedWpm: number;
+  /** Estimated count of long pauses / hesitations. */
+  pauses: number;
+  /** 0–100 confidence estimate. */
+  confidence: number;
+  /** 0–100 naturalness estimate. */
+  naturalness: number;
+  criteria: CriterionScore[];
+  strengths: string[];
+  improvements: string[];
+  suggestions: string[];
+  commonMistakes: { mistake: string; correction: string }[];
+  summary: string;
+}
+
 export type ReportDetail =
   | { skill: "writing"; detail: WritingFeedbackDetail }
   | { skill: "reading"; detail: ReadingFeedbackDetail }
-  | { skill: "listening"; detail: ListeningFeedbackDetail };
+  | { skill: "listening"; detail: ListeningFeedbackDetail }
+  | { skill: "speaking"; detail: SpeakingFeedbackDetail };
 
 export interface SavedReport {
   id: string;
@@ -57,5 +79,9 @@ export interface SavedReport {
   status: "Completed";
   score: number;
   createdAt: string;
-  detail: WritingFeedbackDetail | ReadingFeedbackDetail | ListeningFeedbackDetail;
+  detail:
+    | WritingFeedbackDetail
+    | ReadingFeedbackDetail
+    | ListeningFeedbackDetail
+    | SpeakingFeedbackDetail;
 }

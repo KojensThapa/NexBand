@@ -21,3 +21,66 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* ---- Speaking test animations (no external animation deps) ---- */
+
+/* Recording pulse rings around the mic button. */
+@keyframes nb-rec-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.nb-rec-ring {
+  animation: nb-rec-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.nb-rec-ring-delay {
+  animation-delay: 0.6s;
+}
+
+/* Gentle fade + rise used to introduce cards/questions. */
+@keyframes nb-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.nb-fade-up {
+  animation: nb-fade-up 0.4s ease-out both;
+}
+
+/* Live waveform bars (CSS fallback when no audio level is sampled). */
+@keyframes nb-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.nb-wave-bar {
+  transform-origin: center;
+  animation: nb-wave 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-rec-ring,
+  .nb-rec-ring-delay,
+  .nb-fade-up,
+  .nb-wave-bar {
+    animation: none;
+  }
+}

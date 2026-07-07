@@ -2,6 +2,7 @@ import type {
   ListeningFeedbackDetail,
   ReadingFeedbackDetail,
   SavedReport,
+  SpeakingFeedbackDetail,
   WritingFeedbackDetail,
 } from "@/types/report";
 
@@ -147,6 +148,104 @@ export async function analyzeListeningSubmission(input: {
     correctCount: correctEstimate,
     totalQuestions: input.totalQuestions,
     summary: `You completed ${input.answeredCount} of ${input.totalQuestions} answers. Estimated ${correctEstimate} correct. Practice note-taking and spelling of common IELTS vocabulary.`,
+  };
+}
+
+/**
+ * Placeholder AI analysis for a speaking submission. Mirrors the data a future
+ * backend (speech-to-text + band scoring) would return so the UI can be wired
+ * in later without changes.
+ */
+export async function analyzeSpeakingSubmission(input: {
+  taskTitle: string;
+  questionCount: number;
+  recordedCount: number;
+  totalSeconds: number;
+}): Promise<SpeakingFeedbackDetail> {
+  await wait(ANALYSIS_DELAY_MS);
+
+  const overall = randomScore(5.5, 7.5);
+  const coverage = input.questionCount
+    ? Math.min(1, input.recordedCount / input.questionCount)
+    : 0.8;
+
+  return {
+    taskTitle: input.taskTitle,
+    overallScore: overall,
+    cefrLevel: overall >= 7 ? "C1" : overall >= 6 ? "B2" : "B1",
+    speakingSpeedWpm: 110 + Math.round(Math.random() * 40),
+    pauses: Math.round((1 - coverage) * 12 + Math.random() * 4),
+    confidence: Math.round(55 + coverage * 35 + Math.random() * 5),
+    naturalness: Math.round(60 + coverage * 30 + Math.random() * 5),
+    criteria: [
+      {
+        id: "pronunciation",
+        label: "Pronunciation",
+        score: randomScore(5.5, 7.5),
+        color: "bg-sky-500",
+        summary:
+          "Generally clear and intelligible. A few sounds and word stress patterns could be more consistent.",
+      },
+      {
+        id: "fluency",
+        label: "Fluency & Coherence",
+        score: randomScore(6, 7.5),
+        color: "bg-emerald-500",
+        summary:
+          "Speech flows well most of the time with some self-correction. Link your ideas with more cohesive devices.",
+      },
+      {
+        id: "lexical",
+        label: "Lexical Resource (Vocabulary)",
+        score: randomScore(5.5, 7),
+        color: "bg-amber-500",
+        summary:
+          "Adequate range with some precise collocations. Use more topic-specific vocabulary and paraphrasing.",
+      },
+      {
+        id: "grammar",
+        label: "Grammar",
+        score: randomScore(6, 7.5),
+        color: "bg-rose-500",
+        summary:
+          "A mix of simple and complex structures with occasional tense slips that rarely block meaning.",
+      },
+    ],
+    strengths: [
+      "Clear, easy-to-follow pronunciation of most words.",
+      "Logical organisation of ideas within longer answers.",
+      "Confident use of present tense for habitual questions.",
+    ],
+    improvements: [
+      "Reduce filler words such as 'um' and 'you know'.",
+      "Vary sentence structures — include more conditionals and relatives.",
+      "Expand answers with reasons and examples in Part 1.",
+    ],
+    suggestions: [
+      "Record yourself daily and listen back for hesitation markers.",
+      "Learn 5–8 topic-specific collocations for common IELTS themes.",
+      "Practise 2-minute monologues with a timer to build stamina.",
+      "Shadow native speakers to improve intonation and linking.",
+    ],
+    commonMistakes: [
+      {
+        mistake: "I am agree with you.",
+        correction: "I agree with you.",
+      },
+      {
+        mistake: "I went to there last year.",
+        correction: "I went there last year.",
+      },
+      {
+        mistake: "It's depend on the situation.",
+        correction: "It depends on the situation.",
+      },
+    ],
+    summary: `You recorded ${input.recordedCount} of ${input.questionCount} responses over about ${Math.round(
+      input.totalSeconds / 60
+    )} minutes. Estimated band ${overall.toFixed(
+      1
+    )}. Focus on fluency and vocabulary range to move to the next band.`,
   };
 }
 
