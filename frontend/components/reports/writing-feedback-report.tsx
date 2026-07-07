@@ -1,238 +1,162 @@
 "use client";
 
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import type { WritingFeedbackDetail } from "@/types/report";
+import { CollapsibleSection } from "@/components/reports/shared/collapsible-section";
+import { ReportCard } from "@/components/reports/shared/report-card";
+import { ReportHeader } from "@/components/reports/shared/report-header";
+import { ScoreProgressBar } from "@/components/reports/shared/score-progress-bar";
+import { ScoreStatGrid } from "@/components/reports/shared/score-stat-grid";
+import { StrengthsList } from "@/components/reports/shared/strengths-list";
+import type { ReportHeaderMeta, WritingFeedbackDetail } from "@/types/report";
 
 interface WritingFeedbackReportProps {
   report: WritingFeedbackDetail;
-  showTabs?: boolean;
+  header?: ReportHeaderMeta;
 }
 
-const FEEDBACK_TABS = [
-  "Task Achievement",
-  "Coherence",
-  "Vocabulary",
-  "Grammar",
-] as const;
-
-export function WritingFeedbackReport({
-  report,
-  showTabs = true,
-}: WritingFeedbackReportProps) {
-  const [expandedCriterion, setExpandedCriterion] = useState("task-achievement");
-  const [feedbackTab, setFeedbackTab] = useState<(typeof FEEDBACK_TABS)[number]>(
-    "Coherence"
-  );
-  const [showVisual, setShowVisual] = useState(false);
-  const [viewMode, setViewMode] = useState<"original" | "feedback">("feedback");
-
-  const filteredErrors = report.errors.filter((error) => {
-    if (feedbackTab === "Task Achievement") return error.category === "Task Achievement";
-    if (feedbackTab === "Vocabulary") return error.category === "Vocabulary";
-    if (feedbackTab === "Grammar") return error.category === "Grammar";
-    return error.category === "Coherence" || error.category === "Task Achievement";
-  });
+export function WritingFeedbackReport({ report, header }: WritingFeedbackReportProps) {
+  const headerMeta: ReportHeaderMeta = header ?? {
+    testTitle: report.taskTitle,
+    overallScore: report.overallScore,
+    cefrLevel: report.cefrLevel,
+    status: "Completed",
+    aiSummary: report.aiSummary,
+  };
 
   return (
     <div className="space-y-6">
-      {showTabs ? (
-        <div className="flex flex-wrap gap-2">
-          {[
-            "Academic Writing Task 1",
-            "General Writing Task 1",
-            "Writing Task 2",
-            "IELTS Speaking",
-          ].map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              className={cn(
-                "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                tab === "Academic Writing Task 1"
-                  ? "bg-[#553285] text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              )}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <ReportHeader {...headerMeta} skillLabel="Writing Report" />
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-slate-500">Overall Score</p>
-            <p className="text-4xl font-bold text-slate-900">
-              {report.overallScore.toFixed(1)}
-              <span className="text-xl font-medium text-slate-400">/9.0</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-slate-500">CEFR Level</p>
-            <p className="text-2xl font-bold text-slate-900">{report.cefrLevel}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-slate-500">Word Count</p>
-            <p className="text-2xl font-bold text-slate-900">{report.wordCount} Words</p>
-          </div>
-        </div>
-      </section>
+      <ReportCard title="Score Overview">
+        <ScoreStatGrid
+          stats={[
+            {
+              label: "Overall Band Score",
+              value: report.overallScore.toFixed(1),
+              sublabel: "out of 9.0",
+            },
+            {
+              label: "Word Count",
+              value: String(report.wordCount),
+              sublabel: report.wordCountStatus,
+            },
+            {
+              label: "CEFR Level",
+              value: report.cefrLevel,
+            },
+            {
+              label: "Total Errors",
+              value: String(
+                report.grammarAnalysis.grammarErrors +
+                  report.grammarAnalysis.spellingErrors +
+                  report.grammarAnalysis.punctuationErrors
+              ),
+              sublabel: "grammar, spelling, punctuation",
+            },
+          ]}
+        />
+      </ReportCard>
 
-      <section className="space-y-2">
-        {report.criteria.map((criterion) => {
-          const isOpen = expandedCriterion === criterion.id;
-          return (
-            <div
+      <ReportCard title="Criterion Scores">
+        <div className="space-y-4">
+          {report.criteria.map((criterion) => (
+            <ScoreProgressBar
               key={criterion.id}
-              className="overflow-hidden rounded-xl border border-slate-200 bg-white"
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setExpandedCriterion(isOpen ? "" : criterion.id)
-                }
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
-              >
-                <span className="flex items-center gap-3">
-                  <span className={cn("h-3 w-3 rounded-full", criterion.color)} />
-                  <span className="font-medium text-slate-900">{criterion.label}</span>
-                </span>
-                <span className="font-semibold text-slate-900">
-                  {criterion.score.toFixed(1)}
-                </span>
-              </button>
-              {isOpen ? (
-                <div className="border-t border-slate-100 px-4 py-4">
-                  {criterion.subScores ? (
-                    <div className="mb-3 flex flex-wrap gap-4">
-                      {criterion.subScores.map((sub) => (
-                        <div key={sub.label} className="text-sm">
-                          <span className="text-slate-500">{sub.label}</span>
-                          <span className="ml-2 font-semibold text-slate-900">
-                            {sub.score.toFixed(1)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {criterion.summary ? (
-                    <p className="text-sm leading-relaxed text-slate-600">
-                      {criterion.summary}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Detailed Feedback</h2>
-
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            {report.taskTitle}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">
-            {report.taskPrompt}
-          </p>
-        </div>
-
-        <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm text-slate-600">
-          <input
-            type="checkbox"
-            checked={showVisual}
-            onChange={(event) => setShowVisual(event.target.checked)}
-            className="rounded border-slate-300 text-[#553285]"
-          />
-          Show the task visual
-        </label>
-        {showVisual ? (
-          <div className="mt-3 flex h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-400">
-            Task visual will appear here
-          </div>
-        ) : null}
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {FEEDBACK_TABS.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setFeedbackTab(tab)}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                feedbackTab === tab
-                  ? "bg-[#553285] text-white"
-                  : "bg-violet-50 text-violet-800 hover:bg-violet-100"
-              )}
-            >
-              {tab}
-            </button>
+              label={criterion.label}
+              score={criterion.score}
+              color={criterion.color}
+            />
           ))}
         </div>
+      </ReportCard>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 p-4">
-            <div className="mb-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setViewMode("original")}
-                className={cn(
-                  "rounded-lg px-3 py-1 text-xs font-medium",
-                  viewMode === "original"
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600"
-                )}
-              >
-                Original
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("feedback")}
-                className={cn(
-                  "rounded-lg px-3 py-1 text-xs font-medium",
-                  viewMode === "feedback"
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600"
-                )}
-              >
-                Feedback
-              </button>
-            </div>
-            <h3 className="text-sm font-semibold text-slate-900">Your Writing</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              {viewMode === "feedback"
-                ? report.responseText.split(" ").map((word, index) => {
-                    const isHighlighted =
-                      word.toLowerCase().includes("drop") ||
-                      word.toLowerCase().includes("liters");
-                    return (
-                      <span
-                        key={`${word}-${index}`}
-                        className={cn(isHighlighted && "bg-sky-100 text-sky-900")}
-                      >
-                        {word}{" "}
-                      </span>
-                    );
-                  })
-                : report.responseText}
-            </p>
-          </div>
-
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ReportCard title="Vocabulary Analysis">
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900">
-              {feedbackTab} Errors
-            </h3>
-            {(filteredErrors.length ? filteredErrors : report.errors).map((error) => (
+            <div className="rounded-xl bg-slate-50 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Unique Words
+              </p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">
+                {report.vocabularyAnalysis.uniqueWords}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-700">Repeated Words</p>
+              <ul className="mt-2 space-y-2">
+                {report.vocabularyAnalysis.repeatedWords.map((entry) => (
+                  <li
+                    key={entry.word}
+                    className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm"
+                  >
+                    <span className="font-medium text-slate-800">{entry.word}</span>
+                    <span className="text-slate-500">×{entry.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </ReportCard>
+
+        <ReportCard title="Grammar Analysis">
+          <ScoreStatGrid
+            stats={[
+              {
+                label: "Grammar Errors",
+                value: String(report.grammarAnalysis.grammarErrors),
+              },
+              {
+                label: "Spelling Errors",
+                value: String(report.grammarAnalysis.spellingErrors),
+              },
+              {
+                label: "Punctuation Errors",
+                value: String(report.grammarAnalysis.punctuationErrors),
+              },
+            ]}
+          />
+        </ReportCard>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <StrengthsList title="Strengths" items={report.strengths} variant="strength" />
+        <StrengthsList
+          title="Areas to Improve"
+          items={report.improvements}
+          variant="weakness"
+        />
+      </div>
+
+      <ReportCard title="AI Feedback Summary">
+        <p className="text-sm leading-relaxed text-slate-600">{report.aiSummary}</p>
+      </ReportCard>
+
+      <ReportCard title="Suggested Improvements">
+        <ul className="space-y-2">
+          {report.suggestedImprovements.map((item) => (
+            <li
+              key={item}
+              className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+            >
+              <span className="mt-0.5 text-[#553285]">•</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </ReportCard>
+
+      {report.errors.length > 0 ? (
+        <ReportCard title="Key Errors">
+          <div className="space-y-4">
+            {report.errors.map((error) => (
               <article
                 key={error.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
               >
                 <p className="text-sm font-semibold text-slate-900">
                   #{error.id} {error.title}
+                  <span className="ml-2 text-xs font-normal text-slate-500">
+                    ({error.category})
+                  </span>
                 </p>
                 <p className="mt-2 text-sm text-rose-600 line-through">{error.original}</p>
                 <p className="mt-1 text-sm text-emerald-700">{error.corrected}</p>
@@ -242,8 +166,14 @@ export function WritingFeedbackReport({
               </article>
             ))}
           </div>
-        </div>
-      </section>
+        </ReportCard>
+      ) : null}
+
+      <CollapsibleSection title="Corrected Essay">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+          {report.correctedEssay}
+        </p>
+      </CollapsibleSection>
     </div>
   );
 }

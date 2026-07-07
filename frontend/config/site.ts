@@ -6,8 +6,9 @@ export const siteConfig = {
   url: "https://nexband.app",
   links: {
     signIn: "/auth/signin",
+    signUp: "/auth/signup",
     dashboard: "/dashboard",
-    getStarted: "/auth/signin",
+    getStarted: "/auth/signup",
   },
   nav: [
     { label: "Features", href: "#features" },

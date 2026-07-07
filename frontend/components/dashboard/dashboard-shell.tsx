@@ -13,9 +13,20 @@ import { HomeSection } from "./sections/home-section";
 import { ReportsSection } from "./sections/reports-section";
 import { SkillSection } from "./sections/skill-section";
 import { SampleReportsSection } from "./sections/sample-reports-section";
+import { ProfileSection } from "./sections/profile-section";
 import { LessonsSection } from "./sections/lessons-section";
 
-function DashboardSectionContent({ section }: { section: DashboardSectionId }) {
+function DashboardSectionContent({
+  section,
+  showProfile,
+}: {
+  section: DashboardSectionId;
+  showProfile: boolean;
+}) {
+  if (showProfile) {
+    return <ProfileSection />;
+  }
+
   switch (section) {
     case "home":
       return <HomeSection />;
@@ -44,9 +55,11 @@ export function DashboardShell() {
 
   const [activeSection, setActiveSection] =
     useState<DashboardSectionId>(initialSection);
+  const [showProfile, setShowProfile] = useState(false);
 
   const handleSectionChange = useCallback(
     (section: DashboardSectionId) => {
+      setShowProfile(false);
       setActiveSection(section);
       router.replace(`/dashboard?section=${section}`, { scroll: false });
     },
@@ -64,12 +77,14 @@ export function DashboardShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar
-          title={navItem.label}
-          description={navItem.description}
+          title={showProfile ? "Profile" : navItem.label}
+          description={showProfile ? "Manage your account" : navItem.description}
+          showProfile={showProfile}
+          onProfileClick={() => setShowProfile(true)}
         />
 
         <main className="flex-1 overflow-y-auto p-6 sm:p-8">
-          <DashboardSectionContent section={activeSection} />
+          <DashboardSectionContent section={activeSection} showProfile={showProfile} />
         </main>
       </div>
     </div>
