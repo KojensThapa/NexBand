@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatReportDate, getSavedReports } from "@/lib/reports/storage";
+import {
+  deleteReport,
+  formatReportDate,
+  getSavedReports,
+} from "@/lib/reports/storage";
 import type { SavedReport } from "@/types/report";
 
 function TaskIcon() {
@@ -22,6 +26,22 @@ export function ReportsSection() {
   useEffect(() => {
     setReports(getSavedReports());
   }, []);
+
+  function handleDelete(report: SavedReport) {
+    const confirmed = window.confirm(
+      `Permanently delete "${report.taskTitle}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    if (!deleteReport(report.id)) return;
+
+    const next = reports.filter((item) => item.id !== report.id);
+    const nextTotalPages = Math.max(1, Math.ceil(next.length / rowsPerPage));
+    if (page > nextTotalPages) {
+      setPage(nextTotalPages);
+    }
+    setReports(next);
+  }
 
   const totalPages = Math.max(1, Math.ceil(reports.length / rowsPerPage));
   const pageReports = reports.slice((page - 1) * rowsPerPage, page * rowsPerPage);
@@ -93,12 +113,21 @@ export function ReportsSection() {
                     {Math.round(report.score)}
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/report/${report.id}`}
-                      className="inline-flex rounded-lg border border-[#553285] px-4 py-1.5 text-sm font-medium text-[#553285] transition-colors hover:bg-[#553285] hover:text-white"
-                    >
-                      View Report
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/report/${report.id}`}
+                        className="inline-flex rounded-lg border border-[#553285] px-4 py-1.5 text-sm font-medium text-[#553285] transition-colors hover:bg-[#553285] hover:text-white"
+                      >
+                        View Report
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(report)}
+                        className="inline-flex rounded-lg border border-rose-200 px-4 py-1.5 text-sm font-medium text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

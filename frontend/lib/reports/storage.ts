@@ -22,6 +22,15 @@ export function saveReport(report: SavedReport): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([report, ...existing]));
 }
 
+export function deleteReport(id: string): boolean {
+  if (typeof window === "undefined") return false;
+  const existing = getSavedReports();
+  const filtered = existing.filter((report) => report.id !== id);
+  if (filtered.length === existing.length) return false;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  return true;
+}
+
 export function formatReportDate(iso: string): string {
   const date = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
