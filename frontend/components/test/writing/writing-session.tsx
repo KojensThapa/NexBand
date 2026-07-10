@@ -17,6 +17,13 @@ import type { WritingMockTest, WritingTask } from "@/types/writing";
 
 type WritingMode = "mock" | "task-1" | "task-2";
 
+/** Minimum words required before the submit button is enabled for AI feedback. */
+const SUBMIT_MIN_WORDS = 50;
+
+function getSubmitMinimum(task: WritingTask) {
+  return Math.min(task.minWords, SUBMIT_MIN_WORDS);
+}
+
 interface WritingSessionProps {
   mockTest?: WritingMockTest;
   singleTask?: WritingTask;
@@ -65,7 +72,9 @@ export function WritingSession({
 
   const activeText = activeTask ? texts[activeTask.id] ?? "" : "";
   const wordCount = useMemo(() => countWords(activeText), [activeText]);
-  const meetsMinimum = activeTask ? wordCount >= activeTask.minWords : false;
+  const submitMinimum = activeTask ? getSubmitMinimum(activeTask) : 0;
+  const canSubmit = activeTask ? wordCount >= submitMinimum : false;
+  const meetsRecommended = activeTask ? wordCount >= activeTask.minWords : false;
 
   const handleChange = (value: string) => {
     if (!activeTask) return;
@@ -73,28 +82,25 @@ export function WritingSession({
   };
 
   const handleSubmit = useCallback(async () => {
-    if (!activeTask) return;
+    if (!activeTask || !canSubmit) return;
     setIsAnalyzing(true);
     pause();
-
-    const responseText =
-      mode === "mock"
-        ? visibleTasks.map((task) => texts[task.id] ?? "").join("\n\n")
-        : activeText;
 
     const detail = await analyzeWritingSubmission({
       taskTitle: activeTask.title,
       taskPrompt: activeTask.prompt,
-      responseText,
+      responseText: activeText,
       wordCount,
     });
 
     const report = createSavedReport(
       "writing",
-      singleTask
-        ? `IELTS ${activeTask.label} — ${activeTask.title}`
-        : mockTest?.title ?? activeTask.title,
-      responseText.slice(0, 80) + (responseText.length > 80 ? "…" : ""),
+      mockTest
+        ? `${mockTest.title} — ${activeTask.label}`
+        : singleTask
+          ? `IELTS ${activeTask.label} — ${activeTask.title}`
+          : activeTask.title,
+      activeText.slice(0, 80) + (activeText.length > 80 ? "…" : ""),
       detail.overallScore,
       detail
     );
@@ -104,13 +110,11 @@ export function WritingSession({
   }, [
     activeTask,
     activeText,
-    mode,
-    mockTest?.title,
+    canSubmit,
+    mockTest,
     pause,
     router,
     singleTask,
-    texts,
-    visibleTasks,
     wordCount,
   ]);
 
@@ -149,10 +153,10 @@ export function WritingSession({
 
           <div className="flex shrink-0 items-center gap-3">
             {visibleTasks.length > 1 ? (
-              <div className="hidden gap-2 sm:flex">
+              <div className="flex gap-2">
                 {visibleTasks.map((task) => {
                   const isActive = task.id === activeTask.id;
-                  const done = countWords(texts[task.id] ?? "") >= task.minWords;
+                  const done = countWords(texts[task.id] ?? "") >= getSubmitMinimum(task);
                   return (
                     <button
                       key={task.id}
@@ -256,11 +260,12 @@ export function WritingSession({
             <span
               className={cn(
                 "text-sm font-medium",
-                meetsMinimum ? "text-emerald-600" : "text-slate-400"
+                meetsRecommended ? "text-emerald-600" : canSubmit ? "text-amber-600" : "text-slate-400"
               )}
             >
               {wordCount} words
-              {!meetsMinimum && ` · ${activeTask.minWords - wordCount} more`}
+              {!canSubmit && ` · ${submitMinimum - wordCount} more to submit`}
+              {canSubmit && !meetsRecommended && ` · ${activeTask.minWords - wordCount} more for target`}
             </span>
           </div>
 
@@ -278,7 +283,7 @@ export function WritingSession({
 
           <SubmitTestButton
             onClick={handleSubmit}
-            disabled={!meetsMinimum}
+            disabled={!canSubmit}
             className="mt-4"
           />
         </section>

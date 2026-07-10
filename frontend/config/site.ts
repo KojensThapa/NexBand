@@ -9,6 +9,9 @@ export const siteConfig = {
     signUp: "/auth/signup",
     dashboard: "/dashboard",
     getStarted: "/auth/signup",
+    adminSignIn: "/admin/auth/signin",
+    adminSignUp: "/admin/auth/signup",
+    adminDashboard: "/admin/dashboard",
   },
   nav: [
     { label: "Features", href: "#features" },

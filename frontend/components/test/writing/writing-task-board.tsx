@@ -8,6 +8,11 @@ import {
   WRITING_PRACTICE_TASKS,
   type WritingBoardMode,
 } from "@/lib/exams/ielts-writing";
+import {
+  buildAdminMockTests,
+  getAdminPracticeTasks,
+} from "@/lib/admin/writing-to-exam";
+import { useAdminWritingQuestions } from "@/hooks/useAdminWritingQuestions";
 import type { WritingTask, WritingTask1Type } from "@/types/writing";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +57,11 @@ function PlayIcon({ className }: { className?: string }) {
 function TaskCard({
   task,
   href,
+  parts,
 }: {
   task: { id: string; title: string; typeLabel?: string; taskNumber?: 1 | 2; task1Type?: WritingTask1Type };
   href: string;
+  parts?: { label: string; title: string }[];
 }) {
   const style = getTaskStyle(task as WritingTask);
 
@@ -78,6 +85,16 @@ function TaskCard({
               {task.typeLabel}
             </span>
           ) : null}
+          {parts && parts.length > 0 ? (
+            <ul className="mt-3 space-y-1.5">
+              {parts.map((part) => (
+                <li key={part.label} className="text-xs text-slate-600">
+                  <span className="font-medium text-slate-700">{part.label}:</span>{" "}
+                  {part.title}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
 
@@ -97,27 +114,52 @@ function TaskCard({
 
 export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
   const [mode, setMode] = useState<WritingBoardMode>("task-1");
+  const { questions: adminQuestions, version } = useAdminWritingQuestions();
 
   const cards = useMemo(() => {
     if (mode === "mock") {
-      return WRITING_MOCK_TESTS.map((mock) => ({
-        id: mock.id,
-        title: mock.title,
-        typeLabel: "Full test · 60 min",
-        href: getWritingTaskHref("mock", mock.id, backHref),
-      }));
+      const adminMocks = buildAdminMockTests(adminQuestions);
+      const allMocks = [...WRITING_MOCK_TESTS, ...adminMocks];
+
+      return allMocks.map((mock) => {
+        const task1 = mock.tasks.find((task) => task.taskNumber === 1);
+        const task2 = mock.tasks.find((task) => task.taskNumber === 2);
+        const parts = [
+          task1 ? { label: "Part 1", title: task1.title } : null,
+          task2 ? { label: "Part 2", title: task2.title } : null,
+        ].filter((part): part is { label: string; title: string } => part !== null);
+
+        const partCountLabel =
+          parts.length === 2
+            ? "Part 1 + Part 2 · 60 min"
+            : parts.length === 1
+              ? `${parts[0].label} only · 60 min`
+              : "Full test · 60 min";
+
+        return {
+          id: mock.id,
+          title: mock.title,
+          typeLabel: partCountLabel,
+          parts,
+          href: getWritingTaskHref("mock", mock.id, backHref),
+        };
+      });
     }
 
-    const tasks =
+    const staticTasks =
       mode === "task-1"
         ? WRITING_PRACTICE_TASKS.filter((task) => task.taskNumber === 1)
         : WRITING_PRACTICE_TASKS.filter((task) => task.taskNumber === 2);
+
+    const adminTasks = getAdminPracticeTasks(adminQuestions, mode === "task-1" ? 1 : 2);
+
+    const tasks = [...staticTasks, ...adminTasks];
 
     return tasks.map((task) => ({
       ...task,
       href: getWritingTaskHref(mode, task.id, backHref),
     }));
-  }, [mode, backHref]);
+  }, [mode, backHref, adminQuestions, version]);
 
   return (
     <div className="space-y-6">
@@ -142,7 +184,12 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {cards.map((card) => (
-            <TaskCard key={card.id} task={card} href={card.href} />
+            <TaskCard
+              key={card.id}
+              task={card}
+              href={card.href}
+              parts={"parts" in card ? card.parts : undefined}
+            />
           ))}
         </div>
       </div>

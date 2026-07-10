@@ -1,3 +1,4 @@
+import { AdminPortalSection } from "@/components/marketing/admin-portal-section";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { ExamsSection } from "@/components/marketing/exams-section";
 import { FeaturesSection } from "@/components/marketing/features-section";
@@ -11,6 +12,7 @@ export default function HomePage() {
       <FeaturesSection />
       <ExamsSection />
       <HowItWorksSection />
+      <AdminPortalSection />
       <CtaSection />
     </>
   );
