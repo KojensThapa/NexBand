@@ -16,6 +16,11 @@ import {
   LISTENING_MOCK_SECONDS,
   LISTENING_PART_SECONDS,
 } from "@/lib/exams/ielts-listening";
+import {
+  countMockTestQuestions,
+  countPartQuestions,
+  getPartQuestionOffset,
+} from "@/lib/admin/listening-to-exam";
 import { cn } from "@/lib/utils";
 import type {
   ListeningMockTest,
@@ -119,16 +124,16 @@ export function ListeningSession({
     { autoStart: true }
   );
 
-  const questionOffset = (activePart.partNumber - 1) * 10;
-
-  const partQuestionCount = countListeningQuestions(activePart);
+  const questionOffset = getPartQuestionOffset(mockTest, activePart.partNumber);
+  const partQuestionCount = countPartQuestions(activePart);
+  const displayQuestionEnd = questionOffset + partQuestionCount;
 
   const answeredInPart = useMemo(() => {
-    return Array.from({ length: 10 }, (_, i) => {
+    return Array.from({ length: partQuestionCount }, (_, i) => {
       const qId = `${activePart.id}-q${i + 1}`;
       return Boolean(answers[qId]?.trim());
     }).filter(Boolean).length;
-  }, [activePart.id, answers]);
+  }, [activePart.id, answers, partQuestionCount]);
 
   const totalAnswered = useMemo(
     () => Object.values(answers).filter((v) => v.trim()).length,
@@ -168,7 +173,9 @@ export function ListeningSession({
     setIsAnalyzing(true);
     pause();
 
-    const totalQuestions = isPartOnly ? 10 : 40;
+    const totalQuestions = isPartOnly
+      ? partQuestionCount
+      : countMockTestQuestions(mockTest);
     const detail = await analyzeListeningSubmission({
       taskTitle: isPartOnly
         ? `${mockTest.title} — Part ${initialPart}`
@@ -194,6 +201,8 @@ export function ListeningSession({
     pause,
     router,
     totalAnswered,
+    partQuestionCount,
+    mockTest,
   ]);
 
   if (!activePart) {
@@ -282,17 +291,28 @@ export function ListeningSession({
 
         <div className="border-b border-slate-100 bg-slate-50 px-4 py-2 text-center text-sm text-slate-600 sm:px-6">
           {activePart.label} — Listen and answer questions{" "}
-          {questionOffset + 1}–{questionOffset + 10}
+          {questionOffset + 1}–{displayQuestionEnd}
         </div>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-lg font-semibold text-slate-900">
-              Questions {questionOffset + 1}–{questionOffset + 10}
+              Questions {questionOffset + 1}–{displayQuestionEnd}
             </h2>
             <p className="mt-2 whitespace-pre-line text-sm text-slate-600">
               {activePart.instruction}
             </p>
+
+            {activePart.mapImageUrl ? (
+              <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={activePart.mapImageUrl}
+                  alt={activePart.mapImageAlt ?? activePart.title}
+                  className="mx-auto max-h-80 object-contain"
+                />
+              </div>
+            ) : null}
 
             <div className="mt-6 overflow-hidden rounded-xl border border-slate-200">
               <table className="w-full text-sm">
@@ -336,9 +356,11 @@ export function ListeningSession({
               </table>
             </div>
 
-            {partQuestionCount < 10 ? (
+            {partQuestionCount < countListeningQuestions(activePart) ? (
               <div className="mt-4 space-y-3">
-                {Array.from({ length: 10 - partQuestionCount }, (_, i) => {
+                {Array.from(
+                  { length: countListeningQuestions(activePart) - partQuestionCount },
+                  (_, i) => {
                   const num = partQuestionCount + i + 1;
                   const qId = `${activePart.id}-q${num}`;
                   return (
@@ -358,7 +380,8 @@ export function ListeningSession({
                       />
                     </div>
                   );
-                })}
+                }
+                )}
               </div>
             ) : null}
           </div>
@@ -368,7 +391,8 @@ export function ListeningSession({
           <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
             <div className="flex flex-wrap items-center gap-4">
               {mockTest.parts.map((part) => {
-                const partAnswered = Array.from({ length: 10 }, (_, i) =>
+                const partCount = countPartQuestions(part);
+                const partAnswered = Array.from({ length: partCount }, (_, i) =>
                   Boolean(answers[`${part.id}-q${i + 1}`]?.trim())
                 ).filter(Boolean).length;
 
@@ -386,7 +410,7 @@ export function ListeningSession({
                   >
                     {part.label}
                     <span className="ml-2 text-xs opacity-80">
-                      {partAnswered} of 10
+                      {partAnswered} of {partCount}
                     </span>
                   </button>
                 );

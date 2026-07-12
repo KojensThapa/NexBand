@@ -40,14 +40,14 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
     id: "speaking",
     label: "Speaking",
-    description: "Speaking content management — coming soon.",
-    available: false,
+    description: "Create and manage IELTS Speaking mock tests.",
+    available: true,
   },
   {
     id: "listening",
     label: "Listening",
-    description: "Listening content management — coming soon.",
-    available: false,
+    description: "Create and manage IELTS Listening mock tests.",
+    available: true,
   },
   {
     id: "reading",

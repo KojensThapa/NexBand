@@ -13,8 +13,6 @@ import { useTimer } from "@/hooks/useTimer";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import {
   SPEAKING_PART1_SECONDS,
-  SPEAKING_PART2_PREP_SECONDS,
-  SPEAKING_PART2_SPEAK_SECONDS,
   SPEAKING_PART3_SECONDS,
 } from "@/lib/exams/ielts-speaking";
 import {
@@ -100,12 +98,13 @@ export function SpeakingSession({
   const timerSeconds = useMemo(() => {
     if (activePart === 1) return SPEAKING_PART1_SECONDS;
     if (activePart === 2) {
-      if (part2Phase === "prep") return SPEAKING_PART2_PREP_SECONDS;
-      if (part2Phase === "speak") return SPEAKING_PART2_SPEAK_SECONDS;
-      return SPEAKING_PART2_SPEAK_SECONDS;
+      const prepSeconds = (part2?.prepMinutes ?? 1) * 60;
+      const speakSeconds = (part2?.speakMinutes ?? 2) * 60;
+      if (part2Phase === "prep") return prepSeconds;
+      return speakSeconds;
     }
     return SPEAKING_PART3_SECONDS;
-  }, [activePart, part2Phase]);
+  }, [activePart, part2Phase, part2?.prepMinutes, part2?.speakMinutes]);
 
   const timerKey = `${activePart}-${part2Phase}`;
   const { formatted, isRunning, isFinished, start, pause, reset } = useTimer(timerSeconds, {
@@ -347,8 +346,8 @@ export function SpeakingSession({
           </h2>
           <p className="mt-2 text-sm text-slate-500">You should say:</p>
           <ul className="mt-4 max-w-md space-y-2">
-            {cueCard.bulletPoints.map((point) => (
-              <li key={point} className="flex items-start gap-2 text-sm text-slate-700">
+            {cueCard.bulletPoints.map((point, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm text-slate-700">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
                 {point}
               </li>
@@ -377,8 +376,8 @@ export function SpeakingSession({
             </span>
             <h2 className="mt-4 text-lg font-semibold text-slate-900">{cueCard.prompt}</h2>
             <ul className="mt-4 space-y-2">
-              {cueCard.bulletPoints.map((point) => (
-                <li key={point} className="text-sm text-slate-600">
+              {cueCard.bulletPoints.map((point, index) => (
+                <li key={index} className="text-sm text-slate-600">
                   · {point}
                 </li>
               ))}

@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { AdminWritingCategory } from "@/types/admin";
+import type { AdminWritingCategory, AdminWritingQuestion } from "@/types/admin";
 import {
   deleteAdminMockTest,
   deleteAdminWritingQuestion,
   groupAdminSavedWritingItems,
+  isAdminMockTestComplete,
+  isAdminWritingQuestionComplete,
   saveAdminWritingQuestion,
+  setAdminMockTestPublished,
+  setAdminWritingQuestionPublished,
+  type AdminSavedWritingItem,
 } from "@/lib/admin/writing-storage";
 import { useAdminWritingQuestions } from "@/hooks/useAdminWritingQuestions";
 import { cn } from "@/lib/utils";
@@ -40,6 +45,7 @@ type FormDraft = {
   imagePreview: string | null;
 };
 
+type FormMode = "create" | "edit";
 type FormContext = "mock-1" | "mock-2" | "task-1" | "task-2";
 
 const MAX_IMAGE_SIZE_MB = 5;
@@ -74,9 +80,32 @@ function isPracticeDraftComplete(
   return true;
 }
 
+function questionToDraft(question: AdminWritingQuestion): FormDraft {
+  return {
+    title: question.title,
+    prompt: question.prompt,
+    visualType: (question.task1Type as VisualType) ?? "graph",
+    imageAlt: question.imageAlt ?? "",
+    imagePreview: question.imageUrl ?? null,
+  };
+}
+
+function loadMockPartsIntoDrafts(parts: AdminWritingQuestion[]): Record<"mock-1" | "mock-2", FormDraft> {
+  const part1 = parts.find((part) => part.taskNumber === 1);
+  const part2 = parts.find((part) => part.taskNumber === 2);
+
+  return {
+    "mock-1": part1 ? questionToDraft(part1) : emptyDraft(),
+    "mock-2": part2 ? questionToDraft(part2) : emptyDraft(),
+  };
+}
+
 export function WritingSection() {
   const { questions, version } = useAdminWritingQuestions();
   const savedListRef = useRef<HTMLDivElement>(null);
+  const [mode, setMode] = useState<FormMode>("create");
+  const [editingMockId, setEditingMockId] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [category, setCategory] = useState<AdminWritingCategory>("task-1");
   const [mockTestTitle, setMockTestTitle] = useState("");
   const [mockTaskNumber, setMockTaskNumber] = useState<1 | 2>(1);
@@ -129,6 +158,7 @@ export function WritingSection() {
       "mock-2": emptyDraft(),
     }));
     setMockTestTitle("");
+    setEditingMockId(null);
   }
 
   function clearCurrentDraft() {
@@ -136,6 +166,23 @@ export function WritingSection() {
       ...current,
       [formContext]: emptyDraft(),
     }));
+    setEditingQuestionId(null);
+  }
+
+  function handleCancelEdit() {
+    setDrafts({
+      "mock-1": emptyDraft(),
+      "mock-2": emptyDraft(),
+      "task-1": emptyDraft(),
+      "task-2": emptyDraft(),
+    });
+    setCategory("task-1");
+    setMockTestTitle("");
+    setMockTaskNumber(1);
+    setEditingMockId(null);
+    setEditingQuestionId(null);
+    setMode("create");
+    setError(null);
   }
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -165,14 +212,24 @@ export function WritingSection() {
     reader.readAsDataURL(file);
   }
 
-  function saveMockTest() {
+  function saveMockTest(existingMockTestId?: string) {
     const trimmedMockTitle = mockTestTitle.trim();
-    const mockTestId = `mock-${trimmedMockTitle.toLowerCase().replace(/\s+/g, "-")}`;
+    const mockTestId =
+      existingMockTestId ??
+      `mock-${trimmedMockTitle.toLowerCase().replace(/\s+/g, "-")}`;
     const part1Visual = VISUAL_TYPE_OPTIONS.find(
       (option) => option.value === mockPart1.visualType
     );
 
     saveAdminWritingQuestion({
+      id: editingMockId
+        ? questions.find(
+            (question) =>
+              question.category === "mock" &&
+              question.mockTestId === editingMockId &&
+              question.taskNumber === 1
+          )?.id
+        : undefined,
       category: "mock",
       taskNumber: 1,
       title: mockPart1.title.trim(),
@@ -186,6 +243,14 @@ export function WritingSection() {
     });
 
     saveAdminWritingQuestion({
+      id: editingMockId
+        ? questions.find(
+            (question) =>
+              question.category === "mock" &&
+              question.mockTestId === editingMockId &&
+              question.taskNumber === 2
+          )?.id
+        : undefined,
       category: "mock",
       taskNumber: 2,
       title: mockPart2.title.trim(),
@@ -207,9 +272,14 @@ export function WritingSection() {
         if (!mockTestReady) {
           throw new Error("Complete Part 1 and Part 2 before saving the mock test.");
         }
-        saveMockTest();
+        saveMockTest(editingMockId ?? undefined);
         clearMockDrafts();
-        setSuccess("Mock test saved successfully.");
+        setMode("create");
+        setSuccess(
+          mode === "edit"
+            ? "Mock test updated successfully."
+            : "Mock test saved successfully."
+        );
       } else {
         if (!isPracticeDraftComplete(draft, category)) {
           throw new Error("Please fill in all required fields.");
@@ -220,6 +290,7 @@ export function WritingSection() {
         );
 
         saveAdminWritingQuestion({
+          id: editingQuestionId ?? undefined,
           category,
           taskNumber: category === "task-2" ? 2 : 1,
           title: draft.title.trim(),
@@ -231,7 +302,12 @@ export function WritingSection() {
         });
 
         clearCurrentDraft();
-        setSuccess("Writing question saved successfully.");
+        setMode("create");
+        setSuccess(
+          mode === "edit"
+            ? "Writing question updated successfully."
+            : "Writing question saved successfully."
+        );
       }
 
       savedListRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -244,19 +320,92 @@ export function WritingSection() {
 
   function handleDeletePractice(id: string) {
     deleteAdminWritingQuestion(id);
+    if (mode === "edit" && editingQuestionId === id) {
+      handleCancelEdit();
+    }
   }
 
   function handleDeleteMock(mockTestId: string) {
     deleteAdminMockTest(mockTestId);
+    if (mode === "edit" && editingMockId === mockTestId) {
+      handleCancelEdit();
+    }
+  }
+
+  function handleEditMock(item: Extract<AdminSavedWritingItem, { kind: "mock" }>) {
+    setCategory("mock");
+    setMockTestTitle(item.mockTestTitle);
+    setMockTaskNumber(1);
+    setDrafts((current) => ({
+      ...current,
+      ...loadMockPartsIntoDrafts(item.parts),
+    }));
+    setEditingMockId(item.mockTestId);
+    setEditingQuestionId(null);
+    setMode("edit");
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleEditPractice(question: AdminWritingQuestion) {
+    setCategory(question.category === "mock" ? "task-1" : question.category);
+    setDrafts((current) => ({
+      ...current,
+      [question.category === "task-2" ? "task-2" : "task-1"]: questionToDraft(question),
+    }));
+    setEditingQuestionId(question.id);
+    setEditingMockId(null);
+    setMode("edit");
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleTogglePublishMock(item: Extract<AdminSavedWritingItem, { kind: "mock" }>) {
+    if (!item.published && !isAdminMockTestComplete(item.parts)) {
+      setError("Cannot publish — complete Part 1 and Part 2 first.");
+      return;
+    }
+    setAdminMockTestPublished(item.mockTestId, !item.published);
+    setError(null);
+  }
+
+  function handleTogglePublishPractice(question: AdminWritingQuestion) {
+    if (!question.published && !isAdminWritingQuestionComplete(question)) {
+      setError("Cannot publish — complete all required fields first.");
+      return;
+    }
+    setAdminWritingQuestionPublished(question.id, !question.published);
+    setError(null);
+  }
+
+  function handleCategoryChange(nextCategory: AdminWritingCategory) {
+    if (mode === "edit") return;
+    setCategory(nextCategory);
+    setError(null);
   }
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-        <h2 className="text-lg font-semibold text-slate-900">Add writing question</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Create questions for Mock Test, Task 1, or Task 2. Upload chart images for visual tasks.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {mode === "edit" ? "Edit writing question" : "Add writing question"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Create questions for Mock Test, Task 1, or Task 2. Upload chart images for visual tasks.
+            </p>
+          </div>
+          {mode === "edit" ? (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Cancel edit
+            </button>
+          ) : null}
+        </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div>
@@ -268,12 +417,14 @@ export function WritingSection() {
                 <button
                   key={option.id}
                   type="button"
-                  onClick={() => setCategory(option.id)}
+                  disabled={mode === "edit"}
+                  onClick={() => handleCategoryChange(option.id)}
                   className={cn(
                     "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
                     category === option.id
                       ? "bg-violet-600 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                    mode === "edit" && category !== option.id && "opacity-50"
                   )}
                 >
                   {option.label}
@@ -455,9 +606,13 @@ export function WritingSection() {
           >
             {isSubmitting
               ? "Saving…"
-              : category === "mock"
-                ? "Save mock test"
-                : "Save question"}
+              : mode === "edit"
+                ? category === "mock"
+                  ? "Update mock test"
+                  : "Update question"
+                : category === "mock"
+                  ? "Save mock test"
+                  : "Save question"}
           </button>
         </form>
       </div>
@@ -487,6 +642,16 @@ export function WritingSection() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                            item.published
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          )}
+                        >
+                          {item.published ? "Published" : "Draft"}
+                        </span>
                         <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
                           Mock Test
                         </span>
@@ -528,13 +693,34 @@ export function WritingSection() {
                         ))}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteMock(item.mockTestId)}
-                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex shrink-0 flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleEditMock(item)}
+                        className="rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePublishMock(item)}
+                        className={cn(
+                          "rounded-lg px-3 py-1.5 text-xs font-medium",
+                          item.published
+                            ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                            : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                        )}
+                      >
+                        {item.published ? "Unpublish" : "Publish"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMock(item.mockTestId)}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </li>
               ) : (
@@ -545,6 +731,16 @@ export function WritingSection() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                            item.question.published
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          )}
+                        >
+                          {item.question.published ? "Published" : "Draft"}
+                        </span>
                         <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
                           {formatCategoryLabel(item.question.category, item.question.taskNumber)}
                         </span>
@@ -569,13 +765,34 @@ export function WritingSection() {
                         </div>
                       ) : null}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeletePractice(item.question.id)}
-                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex shrink-0 flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleEditPractice(item.question)}
+                        className="rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePublishPractice(item.question)}
+                        className={cn(
+                          "rounded-lg px-3 py-1.5 text-xs font-medium",
+                          item.question.published
+                            ? "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                            : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                        )}
+                      >
+                        {item.question.published ? "Unpublish" : "Publish"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePractice(item.question.id)}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </li>
               )

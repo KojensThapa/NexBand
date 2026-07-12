@@ -7,8 +7,8 @@ import {
   getWritingPracticeTask,
 } from "@/lib/exams/ielts-writing";
 import {
-  adminQuestionToWritingTask,
   buildAdminMockTests,
+  getAdminPracticeTasks,
 } from "@/lib/admin/writing-to-exam";
 import { getAdminWritingQuestions } from "@/lib/admin/writing-storage";
 import type { WritingMockTest, WritingTask } from "@/types/writing";
@@ -33,7 +33,7 @@ export function WritingTaskPageClient({ mode, taskId }: WritingTaskPageClientPro
       const questions = getAdminWritingQuestions();
 
       if (mode === "mock") {
-        const adminMocks = buildAdminMockTests(questions);
+        const adminMocks = buildAdminMockTests(questions, { publishedOnly: true });
         const mockTest = adminMocks.find((test) => test.id === taskId);
         if (mockTest) {
           setResolved({ kind: "mock", mockTest });
@@ -41,18 +41,12 @@ export function WritingTaskPageClient({ mode, taskId }: WritingTaskPageClientPro
         }
       }
 
-      const adminTask = questions.find((question) => question.id === taskId);
+      const adminTasks = getAdminPracticeTasks(questions, mode === "task-1" ? 1 : 2, {
+        publishedOnly: true,
+      });
+      const adminTask = adminTasks.find((task) => task.id === taskId);
       if (adminTask) {
-        const task = adminQuestionToWritingTask(adminTask);
-        if (mode === "task-1" && task.taskNumber !== 1) {
-          setResolved({ kind: "not-found" });
-          return;
-        }
-        if (mode === "task-2" && task.taskNumber !== 2) {
-          setResolved({ kind: "not-found" });
-          return;
-        }
-        setResolved({ kind: "single", task });
+        setResolved({ kind: "single", task: adminTask });
         return;
       }
     }
@@ -94,7 +88,7 @@ export function WritingTaskPageClient({ mode, taskId }: WritingTaskPageClientPro
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
         <p className="text-lg font-medium text-slate-900">Task not found</p>
-        <p className="text-sm text-slate-500">This writing task may have been removed.</p>
+        <p className="text-sm text-slate-500">This writing task may have been removed or is not published yet.</p>
       </div>
     );
   }

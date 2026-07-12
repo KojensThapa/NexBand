@@ -1,0 +1,7 @@
+export const DEFAULT_PART1_QUESTION_COUNT = 5;
+export const DEFAULT_PART3_QUESTION_COUNT = 5;
+export const DEFAULT_BULLET_POINT_COUNT = 4;
+export const MIN_BULLET_POINTS = 3;
+export const MAX_BULLET_POINTS = 4;
+export const DEFAULT_PREP_MINUTES = 1;
+export const DEFAULT_SPEAK_MINUTES = 2;

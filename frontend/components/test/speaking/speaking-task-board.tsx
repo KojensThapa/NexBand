@@ -9,6 +9,13 @@ import {
   SPEAKING_PART2_TASKS,
   SPEAKING_PART3_TASKS,
 } from "@/lib/exams/ielts-speaking";
+import {
+  buildAdminSpeakingMockTests,
+  buildAdminSpeakingPart1Tasks,
+  buildAdminSpeakingPart2Tasks,
+  buildAdminSpeakingPart3Tasks,
+} from "@/lib/admin/speaking-to-exam";
+import { useAdminSpeakingTests } from "@/hooks/useAdminSpeakingTests";
 import type { SpeakingBoardMode } from "@/types/speaking";
 import { cn } from "@/lib/utils";
 
@@ -84,10 +91,13 @@ function TaskCard({
 
 export function SpeakingTaskBoard({ backHref }: { backHref?: string } = {}) {
   const [mode, setMode] = useState<SpeakingBoardMode>("mock");
+  const { tests: adminTests } = useAdminSpeakingTests();
 
   const cards = useMemo(() => {
     if (mode === "mock") {
-      return SPEAKING_MOCK_TESTS.map((mock) => ({
+      const adminMocks = buildAdminSpeakingMockTests(adminTests, { publishedOnly: true });
+      const allMocks = [...SPEAKING_MOCK_TESTS, ...adminMocks];
+      return allMocks.map((mock) => ({
         id: mock.id,
         title: mock.title,
         typeLabel: mock.typeLabel,
@@ -97,7 +107,9 @@ export function SpeakingTaskBoard({ backHref }: { backHref?: string } = {}) {
     }
 
     if (mode === "part-1") {
-      return SPEAKING_PART1_TASKS.map((task) => ({
+      const adminPart1 = buildAdminSpeakingPart1Tasks(adminTests, { publishedOnly: true });
+      const allPart1 = [...SPEAKING_PART1_TASKS, ...adminPart1];
+      return allPart1.map((task) => ({
         id: task.id,
         title: task.title,
         typeLabel: task.typeLabel,
@@ -107,7 +119,9 @@ export function SpeakingTaskBoard({ backHref }: { backHref?: string } = {}) {
     }
 
     if (mode === "part-2") {
-      return SPEAKING_PART2_TASKS.map((task) => ({
+      const adminPart2 = buildAdminSpeakingPart2Tasks(adminTests, { publishedOnly: true });
+      const allPart2 = [...SPEAKING_PART2_TASKS, ...adminPart2];
+      return allPart2.map((task) => ({
         id: task.id,
         title: task.title,
         typeLabel: task.typeLabel,
@@ -116,14 +130,16 @@ export function SpeakingTaskBoard({ backHref }: { backHref?: string } = {}) {
       }));
     }
 
-    return SPEAKING_PART3_TASKS.map((task) => ({
+    const adminPart3 = buildAdminSpeakingPart3Tasks(adminTests, { publishedOnly: true });
+    const allPart3 = [...SPEAKING_PART3_TASKS, ...adminPart3];
+    return allPart3.map((task) => ({
       id: task.id,
       title: task.title,
       typeLabel: task.typeLabel,
       subtitle: `${task.part3.questions.length} discussion questions`,
       href: getSpeakingTaskHref("part-3", task.id, backHref),
     }));
-  }, [mode, backHref]);
+  }, [mode, backHref, adminTests]);
 
   return (
     <div className="space-y-6">

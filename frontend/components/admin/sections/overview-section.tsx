@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAdminWritingQuestions } from "@/hooks/useAdminWritingQuestions";
+import { useAdminListeningTests } from "@/hooks/useAdminListeningTests";
+import { useAdminSpeakingTests } from "@/hooks/useAdminSpeakingTests";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { groupAdminSavedWritingItems } from "@/lib/admin/writing-storage";
 export function OverviewSection() {
   const { admin } = useAdminAuth();
   const { questions } = useAdminWritingQuestions();
+  const { tests: listeningTests } = useAdminListeningTests();
+  const { tests: speakingTests } = useAdminSpeakingTests();
   const writingCount = useMemo(
     () => groupAdminSavedWritingItems(questions).length,
     [questions]
@@ -27,8 +31,8 @@ export function OverviewSection() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Writing questions" value={String(writingCount)} accent="violet" />
-        <StatCard label="Speaking questions" value="—" accent="slate" />
-        <StatCard label="Listening questions" value="—" accent="slate" />
+        <StatCard label="Speaking mock tests" value={String(speakingTests.length)} accent="violet" />
+        <StatCard label="Listening mock tests" value={String(listeningTests.length)} accent="violet" />
         <StatCard label="Reading questions" value="—" accent="slate" />
       </div>
 
@@ -40,6 +44,18 @@ export function OverviewSection() {
             className="inline-flex items-center rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
           >
             Add writing question
+          </Link>
+          <Link
+            href="/admin/dashboard?section=listening"
+            className="inline-flex items-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100"
+          >
+            Add listening mock test
+          </Link>
+          <Link
+            href="/admin/dashboard?section=speaking"
+            className="inline-flex items-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100"
+          >
+            Add speaking mock test
           </Link>
           <Link
             href="/"

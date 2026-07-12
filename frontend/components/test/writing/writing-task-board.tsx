@@ -87,8 +87,8 @@ function TaskCard({
           ) : null}
           {parts && parts.length > 0 ? (
             <ul className="mt-3 space-y-1.5">
-              {parts.map((part) => (
-                <li key={part.label} className="text-xs text-slate-600">
+              {parts.map((part, index) => (
+                <li key={`${part.label}-${index}`} className="text-xs text-slate-600">
                   <span className="font-medium text-slate-700">{part.label}:</span>{" "}
                   {part.title}
                 </li>
@@ -118,7 +118,7 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
 
   const cards = useMemo(() => {
     if (mode === "mock") {
-      const adminMocks = buildAdminMockTests(adminQuestions);
+      const adminMocks = buildAdminMockTests(adminQuestions, { publishedOnly: true });
       const allMocks = [...WRITING_MOCK_TESTS, ...adminMocks];
 
       return allMocks.map((mock) => {
@@ -151,7 +151,9 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
         ? WRITING_PRACTICE_TASKS.filter((task) => task.taskNumber === 1)
         : WRITING_PRACTICE_TASKS.filter((task) => task.taskNumber === 2);
 
-    const adminTasks = getAdminPracticeTasks(adminQuestions, mode === "task-1" ? 1 : 2);
+    const adminTasks = getAdminPracticeTasks(adminQuestions, mode === "task-1" ? 1 : 2, {
+      publishedOnly: true,
+    });
 
     const tasks = [...staticTasks, ...adminTasks];
 

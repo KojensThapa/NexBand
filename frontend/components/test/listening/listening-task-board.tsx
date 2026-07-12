@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import {
   getListeningTaskHref,
   LISTENING_MOCK_TESTS,
 } from "@/lib/exams/ielts-listening";
+import { buildAdminListeningMockTests } from "@/lib/admin/listening-to-exam";
+import { useAdminListeningTests } from "@/hooks/useAdminListeningTests";
 import type { ListeningMockTest } from "@/types/listening";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +111,12 @@ function MockTestCard({
 }
 
 export function ListeningTaskBoard({ backHref }: { backHref?: string } = {}) {
+  const { tests: adminTests } = useAdminListeningTests();
+  const allMocks = useMemo(() => {
+    const adminMocks = buildAdminListeningMockTests(adminTests, { publishedOnly: true });
+    return [...LISTENING_MOCK_TESTS, ...adminMocks];
+  }, [adminTests]);
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -116,7 +125,7 @@ export function ListeningTaskBoard({ backHref }: { backHref?: string } = {}) {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          {LISTENING_MOCK_TESTS.map((test) => (
+          {allMocks.map((test) => (
             <MockTestCard key={test.id} test={test} backHref={backHref} />
           ))}
         </div>

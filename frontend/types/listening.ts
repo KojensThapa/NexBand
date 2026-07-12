@@ -18,6 +18,9 @@ export interface ListeningPart {
   instruction: string;
   audioUrl?: string;
   audioDurationSeconds: number;
+  transcript?: string;
+  mapImageUrl?: string;
+  mapImageAlt?: string;
   tableHeaders: string[];
   tableRows: ListeningTableRow[];
 }

@@ -17,7 +17,10 @@ export function adminQuestionToWritingTask(question: AdminWritingQuestion): Writ
   };
 }
 
-export function buildAdminMockTests(questions: AdminWritingQuestion[]): WritingMockTest[] {
+export function buildAdminMockTests(
+  questions: AdminWritingQuestion[],
+  options?: { publishedOnly?: boolean }
+): WritingMockTest[] {
   const mockQuestions = questions.filter((question) => question.category === "mock");
   const grouped = new Map<string, AdminWritingQuestion[]>();
 
@@ -27,7 +30,12 @@ export function buildAdminMockTests(questions: AdminWritingQuestion[]): WritingM
     grouped.set(key, [...existing, question]);
   }
 
-  return Array.from(grouped.entries()).map(([key, items]) => {
+  return Array.from(grouped.entries())
+    .filter(([, items]) => {
+      if (!options?.publishedOnly) return true;
+      return items.every((item) => item.published);
+    })
+    .map(([key, items]) => {
     const tasks = items
       .sort((a, b) => a.taskNumber - b.taskNumber)
       .map(adminQuestionToWritingTask);
@@ -43,10 +51,12 @@ export function buildAdminMockTests(questions: AdminWritingQuestion[]): WritingM
 
 export function getAdminPracticeTasks(
   questions: AdminWritingQuestion[],
-  taskNumber: 1 | 2
+  taskNumber: 1 | 2,
+  options?: { publishedOnly?: boolean }
 ): WritingTask[] {
   const category = taskNumber === 1 ? "task-1" : "task-2";
   return questions
     .filter((question) => question.category === category)
+    .filter((question) => !options?.publishedOnly || question.published)
     .map(adminQuestionToWritingTask);
 }

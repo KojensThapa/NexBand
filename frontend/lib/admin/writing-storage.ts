@@ -33,9 +33,24 @@ export function getAdminWritingQuestions(): AdminWritingQuestion[] {
 }
 
 export function saveAdminWritingQuestion(
-  input: Omit<AdminWritingQuestion, "id" | "createdAt">
+  input: Omit<AdminWritingQuestion, "id" | "createdAt"> & { id?: string }
 ): AdminWritingQuestion {
   const existing = readQuestions();
+
+  if (input.id) {
+    const index = existing.findIndex((question) => question.id === input.id);
+    if (index !== -1) {
+      const updated: AdminWritingQuestion = {
+        ...existing[index],
+        ...input,
+        id: input.id,
+      };
+      const next = [...existing];
+      next[index] = updated;
+      writeQuestions(next);
+      return updated;
+    }
+  }
 
   if (input.category === "mock" && input.mockTestId) {
     const matchIndex = existing.findIndex(
@@ -59,6 +74,7 @@ export function saveAdminWritingQuestion(
 
   const question: AdminWritingQuestion = {
     ...input,
+    published: input.published ?? false,
     id: `admin-writing-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: new Date().toISOString(),
   };
@@ -79,6 +95,41 @@ export function deleteAdminMockTest(mockTestId: string) {
   );
 }
 
+export function setAdminWritingQuestionPublished(id: string, published: boolean) {
+  const existing = readQuestions();
+  const index = existing.findIndex((question) => question.id === id);
+  if (index === -1) return;
+
+  const next = [...existing];
+  next[index] = { ...next[index], published };
+  writeQuestions(next);
+}
+
+export function setAdminMockTestPublished(mockTestId: string, published: boolean) {
+  writeQuestions(
+    readQuestions().map((question) =>
+      question.category === "mock" && question.mockTestId === mockTestId
+        ? { ...question, published }
+        : question
+    )
+  );
+}
+
+export function isAdminMockTestComplete(parts: AdminWritingQuestion[]): boolean {
+  const part1 = parts.find((part) => part.taskNumber === 1);
+  const part2 = parts.find((part) => part.taskNumber === 2);
+  if (!part1 || !part2) return false;
+  if (!part1.title.trim() || !part1.prompt.trim() || !part1.imageUrl) return false;
+  if (!part2.title.trim() || !part2.prompt.trim()) return false;
+  return true;
+}
+
+export function isAdminWritingQuestionComplete(question: AdminWritingQuestion): boolean {
+  if (!question.title.trim() || !question.prompt.trim()) return false;
+  if (question.category === "task-1" && !question.imageUrl) return false;
+  return true;
+}
+
 export type AdminSavedWritingItem =
   | { kind: "practice"; question: AdminWritingQuestion }
   | {
@@ -86,6 +137,7 @@ export type AdminSavedWritingItem =
       mockTestId: string;
       mockTestTitle: string;
       parts: AdminWritingQuestion[];
+      published: boolean;
       createdAt: string;
     };
 
@@ -115,6 +167,7 @@ export function groupAdminSavedWritingItems(
       mockTestId,
       mockTestTitle: parts[0]?.mockTestTitle ?? "Admin Mock Test",
       parts: parts.sort((a, b) => a.taskNumber - b.taskNumber),
+      published: parts.every((part) => part.published),
       createdAt: parts.reduce(
         (latest, part) =>
           new Date(part.createdAt).getTime() > new Date(latest).getTime()

@@ -11,6 +11,8 @@ import { AdminSidebar } from "./admin-sidebar";
 import { AdminTopbar } from "./admin-topbar";
 import { OverviewSection } from "./sections/overview-section";
 import { WritingSection } from "./sections/writing-section";
+import { ListeningSection } from "./sections/listening-section";
+import { SpeakingSection } from "./sections/speaking-section";
 import { ComingSoonSection } from "./sections/coming-soon-section";
 
 function AdminSectionContent({ section }: { section: AdminSectionId }) {
@@ -20,9 +22,9 @@ function AdminSectionContent({ section }: { section: AdminSectionId }) {
     case "writing":
       return <WritingSection />;
     case "speaking":
-      return <ComingSoonSection skill="Speaking" />;
+      return <SpeakingSection />;
     case "listening":
-      return <ComingSoonSection skill="Listening" />;
+      return <ListeningSection />;
     case "reading":
       return <ComingSoonSection skill="Reading" />;
     default:

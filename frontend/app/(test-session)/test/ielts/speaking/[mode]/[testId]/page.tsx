@@ -1,11 +1,6 @@
 import { notFound } from "next/navigation";
-import { SpeakingSession } from "@/components/test/speaking/speaking-session";
-import {
-  getSpeakingMockTest,
-  getSpeakingPart1Task,
-  getSpeakingPart2Task,
-  getSpeakingPart3Task,
-} from "@/lib/exams/ielts-speaking";
+import { SpeakingTaskPageClient } from "@/components/test/speaking/speaking-task-page-client";
+import type { SpeakingBoardMode } from "@/types/speaking";
 
 interface PageProps {
   params: Promise<{ mode: string; testId: string }>;
@@ -13,59 +8,17 @@ interface PageProps {
 
 export default async function SpeakingTaskPage({ params }: PageProps) {
   const { mode, testId } = await params;
-  const modeTyped = mode as "mock" | "part-1" | "part-2" | "part-3";
+  const modeTyped = mode as SpeakingBoardMode;
 
-  if (modeTyped === "mock") {
-    const mockTest = getSpeakingMockTest(testId);
-    if (mockTest.id !== testId) notFound();
-
-    return (
-      <SpeakingSession
-        mode="mock"
-        mockTest={mockTest}
-        backHref="/test/ielts/speaking"
-      />
-    );
+  if (!["mock", "part-1", "part-2", "part-3"].includes(modeTyped)) {
+    notFound();
   }
 
-  if (modeTyped === "part-1") {
-    const task = getSpeakingPart1Task(testId);
-    if (!task) notFound();
-
-    return (
-      <SpeakingSession
-        mode="part-1"
-        part1Task={task}
-        backHref="/test/ielts/speaking"
-      />
-    );
-  }
-
-  if (modeTyped === "part-2") {
-    const task = getSpeakingPart2Task(testId);
-    if (!task) notFound();
-
-    return (
-      <SpeakingSession
-        mode="part-2"
-        part2Task={task}
-        backHref="/test/ielts/speaking"
-      />
-    );
-  }
-
-  if (modeTyped === "part-3") {
-    const task = getSpeakingPart3Task(testId);
-    if (!task) notFound();
-
-    return (
-      <SpeakingSession
-        mode="part-3"
-        part3Task={task}
-        backHref="/test/ielts/speaking"
-      />
-    );
-  }
-
-  notFound();
+  return (
+    <SpeakingTaskPageClient
+      mode={modeTyped}
+      testId={testId}
+      backHref="/test/ielts/speaking"
+    />
+  );
 }
