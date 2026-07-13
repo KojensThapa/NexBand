@@ -18,12 +18,8 @@ import type {
   ReadingQuestion,
 } from "@/types/reading";
 
-type ReadingMode = "mock" | "part-1" | "part-2" | "part-3";
-
 interface ReadingSessionProps {
-  mockTest?: ReadingMockTest;
-  singlePassage?: ReadingPassage;
-  mode: ReadingMode;
+  mockTest: ReadingMockTest;
   backHref?: string;
 }
 
@@ -39,9 +35,9 @@ function QuestionInput({
   if (question.options?.length) {
     return (
       <div className="mt-2 space-y-2">
-        {question.options.map((option) => (
+        {question.options.map((option, index) => (
           <label
-            key={option}
+            key={index}
             className={cn(
               "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
               value === option
@@ -77,8 +73,6 @@ function QuestionInput({
 
 export function ReadingSession({
   mockTest,
-  singlePassage,
-  mode,
   backHref = "/test/ielts/reading",
 }: ReadingSessionProps) {
   const router = useRouter();
@@ -86,11 +80,7 @@ export function ReadingSession({
   const resolvedBackHref = searchParams.get("back") ?? backHref;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const visiblePassages = useMemo(() => {
-    if (singlePassage) return [singlePassage];
-    if (!mockTest) return [];
-    return mockTest.passages;
-  }, [mockTest, singlePassage]);
+  const visiblePassages = mockTest.passages;
 
   const allQuestions = useMemo(
     () => visiblePassages.flatMap((passage) => passage.questions),
@@ -104,10 +94,7 @@ export function ReadingSession({
     Object.fromEntries(allQuestions.map((question) => [question.id, ""]))
   );
 
-  const timerSeconds = useMemo(() => {
-    if (singlePassage) return singlePassage.recommendedMinutes * 60;
-    return mockTest?.totalMinutes ? mockTest.totalMinutes * 60 : 60 * 60;
-  }, [singlePassage, mockTest?.totalMinutes]);
+  const timerSeconds = mockTest.totalMinutes * 60;
 
   const { formatted, isRunning, isFinished, start, pause, reset } = useTimer(
     timerSeconds,
@@ -123,9 +110,7 @@ export function ReadingSession({
     [allQuestions, answers]
   );
 
-  const sessionTitle = singlePassage
-    ? singlePassage.title
-    : mockTest?.title ?? "Reading Practice";
+  const sessionTitle = mockTest.title;
 
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -191,9 +176,6 @@ export function ReadingSession({
             <h1 className="mt-1 truncate text-lg font-bold text-slate-900 sm:text-xl">
               {sessionTitle}
             </h1>
-            {singlePassage?.typeLabel ? (
-              <p className="text-sm text-slate-500">{singlePassage.typeLabel}</p>
-            ) : null}
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
@@ -284,10 +266,34 @@ export function ReadingSession({
             </span>
           ) : null}
 
+          {activePassage.instruction ? (
+            <p className="mb-4 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm text-indigo-900">
+              {activePassage.instruction}
+            </p>
+          ) : null}
+
+          {activePassage.imageUrl ? (
+            <div className="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activePassage.imageUrl}
+                alt={activePassage.imageAlt ?? activePassage.title}
+                className="mx-auto max-h-[28rem] w-full object-contain sm:max-h-[32rem]"
+              />
+            </div>
+          ) : null}
+
           <div className="space-y-4 text-sm leading-relaxed text-slate-700">
-            {activePassage.passage.split("\n\n").map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
+            {activePassage.passage.includes("<") ? (
+              <div
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: activePassage.passage }}
+              />
+            ) : (
+              activePassage.passage.split("\n\n").map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))
+            )}
           </div>
         </section>
 

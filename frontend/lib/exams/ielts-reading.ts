@@ -335,23 +335,13 @@ export const READING_MOCK_TESTS: ReadingMockTest[] = [
   },
 ];
 
-export type ReadingBoardMode = "mock" | "part-1" | "part-2" | "part-3";
-
 export function getReadingMockTest(id?: string): ReadingMockTest {
   if (!id) return READING_MOCK_TESTS[0];
   return READING_MOCK_TESTS.find((test) => test.id === id) ?? READING_MOCK_TESTS[0];
 }
 
-export function getReadingPracticePassage(id: string): ReadingPassage | undefined {
-  return READING_PRACTICE_PASSAGES.find((passage) => passage.id === id);
-}
-
-export function getReadingTaskHref(
-  mode: ReadingBoardMode,
-  id: string,
-  backHref?: string
-): string {
-  const base = `/test/ielts/reading/${mode}/${id}`;
+export function getReadingTaskHref(id: string, backHref?: string): string {
+  const base = `/test/ielts/reading/mock/${id}`;
   if (!backHref) return base;
   return `${base}?back=${encodeURIComponent(backHref)}`;
 }

@@ -52,8 +52,8 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
     id: "reading",
     label: "Reading",
-    description: "Reading content management — coming soon.",
-    available: false,
+    description: "Create and manage IELTS Reading mock tests and passages.",
+    available: true,
   },
 ];
 

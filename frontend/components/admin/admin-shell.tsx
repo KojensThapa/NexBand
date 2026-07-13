@@ -13,7 +13,7 @@ import { OverviewSection } from "./sections/overview-section";
 import { WritingSection } from "./sections/writing-section";
 import { ListeningSection } from "./sections/listening-section";
 import { SpeakingSection } from "./sections/speaking-section";
-import { ComingSoonSection } from "./sections/coming-soon-section";
+import { ReadingSection } from "./sections/reading-section";
 
 function AdminSectionContent({ section }: { section: AdminSectionId }) {
   switch (section) {
@@ -26,7 +26,7 @@ function AdminSectionContent({ section }: { section: AdminSectionId }) {
     case "listening":
       return <ListeningSection />;
     case "reading":
-      return <ComingSoonSection skill="Reading" />;
+      return <ReadingSection />;
     default:
       return <OverviewSection />;
   }

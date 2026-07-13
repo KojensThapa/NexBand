@@ -4,7 +4,9 @@ export type ReadingQuestionType =
   | "true-false-not-given"
   | "multiple-choice"
   | "fill-blank"
-  | "yes-no-not-given";
+  | "yes-no-not-given"
+  | "matching"
+  | "short-answer";
 
 export interface ReadingQuestion {
   id: string;
@@ -12,6 +14,9 @@ export interface ReadingQuestion {
   type: ReadingQuestionType;
   prompt: string;
   options?: string[];
+  correctAnswer?: string;
+  explanation?: string;
+  marks?: number;
 }
 
 export interface ReadingPassage {
@@ -21,6 +26,9 @@ export interface ReadingPassage {
   title: string;
   typeLabel: string;
   passage: string;
+  instruction?: string;
+  imageUrl?: string;
+  imageAlt?: string;
   questions: ReadingQuestion[];
   recommendedMinutes: number;
 }

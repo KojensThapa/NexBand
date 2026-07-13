@@ -103,3 +103,57 @@ export interface AdminSpeakingMockTest {
   createdAt: string;
   updatedAt: string;
 }
+
+export type AdminReadingCategory = "mock";
+
+export type AdminReadingQuestionType =
+  | "multiple-choice"
+  | "true-false-not-given"
+  | "yes-no-not-given"
+  | "matching-headings"
+  | "matching-information"
+  | "matching-features"
+  | "matching-sentence-endings"
+  | "sentence-completion"
+  | "summary-completion"
+  | "note-completion"
+  | "table-completion"
+  | "flow-chart-completion"
+  | "diagram-labelling"
+  | "short-answer";
+
+export interface AdminReadingQuestion {
+  id: string;
+  questionNumber: number;
+  type: AdminReadingQuestionType;
+  questionText: string;
+  options?: string[];
+  correctAnswer: string;
+  explanation?: string;
+  marks: number;
+}
+
+export interface AdminReadingPassage {
+  id: string;
+  partNumber: 1 | 2 | 3;
+  passageOrder: number;
+  title: string;
+  passageText: string;
+  instruction: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  questions: AdminReadingQuestion[];
+}
+
+export interface AdminReadingTest {
+  id: string;
+  title: string;
+  category: AdminReadingCategory;
+  tags: string[];
+  published: boolean;
+  totalQuestions: number;
+  totalMinutes: number;
+  passages: AdminReadingPassage[];
+  createdAt: string;
+  updatedAt: string;
+}
