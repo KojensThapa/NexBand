@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnalysisLoader } from "@/components/reports/analysis-loader";
 import { SubmitTestButton } from "@/components/test/submit-test-button";
 import { useTimer } from "@/hooks/useTimer";
@@ -21,6 +21,7 @@ import {
   countPartQuestions,
   getPartQuestionOffset,
 } from "@/lib/admin/listening-to-exam";
+import { getListeningAudioUrl } from "@/lib/admin/listening-audio-storage";
 import { cn } from "@/lib/utils";
 import type {
   ListeningMockTest,
@@ -112,10 +113,45 @@ export function ListeningSession({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
+  const [storedAudio, setStoredAudio] = useState<{
+    key: string;
+    url: string;
+  } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const activePart =
     visibleParts.find((p) => p.partNumber === activePartNumber) ?? visibleParts[0];
+
+  useEffect(() => {
+    const audioKey = activePart.audioStorageKey;
+    if (!audioKey) return;
+
+    let disposed = false;
+    let objectUrl: string | undefined;
+
+    void getListeningAudioUrl(audioKey)
+      .then((url) => {
+        if (!url) return;
+        if (disposed) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setStoredAudio({ key: audioKey, url });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      disposed = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [activePart.audioStorageKey]);
+
+  const audioSource = activePart.audioStorageKey
+    ? storedAudio?.key === activePart.audioStorageKey
+      ? storedAudio.url
+      : undefined
+    : activePart.audioUrl;
 
   const timerSeconds = isPartOnly ? LISTENING_PART_SECONDS : LISTENING_MOCK_SECONDS;
 
@@ -145,11 +181,11 @@ export function ListeningSession({
   };
 
   const toggleAudio = () => {
-    if (activePart.audioUrl && audioRef.current) {
+    if (audioSource && audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        audioRef.current.play();
+        void audioRef.current.play();
       }
       setIsPlaying(!isPlaying);
       return;
@@ -284,9 +320,13 @@ export function ListeningSession({
           </div>
         </header>
 
-        {activePart.audioUrl ? (
-          // eslint-disable-next-line jsx-a11y/media-has-caption
-          <audio ref={audioRef} src={activePart.audioUrl} />
+        {audioSource ? (
+          <audio
+            ref={audioRef}
+            src={audioSource}
+            onTimeUpdate={(event) => setAudioProgress(Math.round(event.currentTarget.currentTime))}
+            onEnded={() => setIsPlaying(false)}
+          />
         ) : null}
 
         <div className="border-b border-slate-100 bg-slate-50 px-4 py-2 text-center text-sm text-slate-600 sm:px-6">

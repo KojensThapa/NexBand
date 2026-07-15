@@ -50,6 +50,9 @@ export interface AdminListeningPart {
   title: string;
   instruction: string;
   transcript?: string;
+  /** Key for audio stored in this browser's IndexedDB. */
+  audioStorageKey?: string;
+  /** Legacy Base64 audio data, retained so older locally saved tests still work. */
   audioUrl?: string;
   audioDurationSeconds: number;
   mapImageUrl?: string;

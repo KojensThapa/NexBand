@@ -22,6 +22,10 @@ import {
   saveAdminListeningTest,
   setAdminListeningTestPublished,
 } from "@/lib/admin/listening-storage";
+import {
+  deleteListeningAudio,
+  saveListeningAudio,
+} from "@/lib/admin/listening-audio-storage";
 import { useAdminListeningTests } from "@/hooks/useAdminListeningTests";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +45,29 @@ function emptyDraft(): TestDraft {
 
 function isPartValid(part: AdminListeningPart): boolean {
   if (!part.title.trim() || !part.instruction.trim()) return false;
-  if (!part.audioUrl) return false;
+  if (!part.audioStorageKey && !part.audioUrl) return false;
   return part.questions.every(
     (q) => q.questionText.trim() && q.correctAnswer.trim() && q.marks > 0
   );
+}
+
+function getAudioDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const audioUrl = URL.createObjectURL(file);
+    const audio = new Audio();
+    const cleanUp = () => URL.revokeObjectURL(audioUrl);
+
+    audio.addEventListener("loadedmetadata", () => {
+      const duration = Math.round(audio.duration) || 480;
+      cleanUp();
+      resolve(duration);
+    });
+    audio.addEventListener("error", () => {
+      cleanUp();
+      resolve(480);
+    });
+    audio.src = audioUrl;
+  });
 }
 
 function isDraftValid(draft: TestDraft): boolean {
@@ -74,6 +97,7 @@ export function ListeningSection() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
 
   const currentPart = draft.parts.find((p) => p.partNumber === activePart)!;
   const canSave = useMemo(() => isDraftValid(draft), [draft]);
@@ -121,7 +145,7 @@ export function ListeningSection() {
     }));
   }
 
-  function handleAudioUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAudioUpload(event: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
     const file = event.target.files?.[0];
     if (!file) return;
@@ -139,21 +163,29 @@ export function ListeningSection() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const audioUrl = reader.result as string;
-      const audio = new Audio(audioUrl);
-      audio.addEventListener("loadedmetadata", () => {
-        updatePart(activePart, {
-          audioUrl,
-          audioDurationSeconds: Math.round(audio.duration) || 480,
-        });
+    setIsUploadingAudio(true);
+
+    try {
+      const [audioStorageKey, audioDurationSeconds] = await Promise.all([
+        saveListeningAudio(file),
+        getAudioDuration(file),
+      ]);
+
+      if (currentPart.audioStorageKey) {
+        void deleteListeningAudio(currentPart.audioStorageKey).catch(() => undefined);
+      }
+
+      updatePart(activePart, {
+        audioStorageKey,
+        audioUrl: undefined,
+        audioDurationSeconds,
       });
-      audio.addEventListener("error", () => {
-        updatePart(activePart, { audioUrl, audioDurationSeconds: 480 });
-      });
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setError("Audio could not be stored locally. Please try a smaller file or free browser storage.");
+    } finally {
+      setIsUploadingAudio(false);
+      event.target.value = "";
+    }
   }
 
   function handleMapImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -230,6 +262,10 @@ export function ListeningSection() {
         throw new Error("Complete all 4 parts with audio, instructions, and valid questions.");
       }
 
+      if (isUploadingAudio) {
+        throw new Error("Wait for the audio upload to finish before saving the mock test.");
+      }
+
       saveAdminListeningTest({
         id: mode === "edit" ? draft.id : undefined,
         title: draft.title.trim(),
@@ -269,9 +305,14 @@ export function ListeningSection() {
     setError(null);
   }
 
-  function handleDelete(id: string) {
-    deleteAdminListeningTest(id);
-    if (mode === "edit" && draft.id === id) {
+  function handleDelete(test: AdminListeningMockTest) {
+    deleteAdminListeningTest(test.id);
+    void Promise.all(
+      test.parts.flatMap((part) =>
+        part.audioStorageKey ? [deleteListeningAudio(part.audioStorageKey)] : []
+      )
+    ).catch(() => undefined);
+    if (mode === "edit" && draft.id === test.id) {
       handleCancelEdit();
     }
   }
@@ -419,7 +460,7 @@ export function ListeningSection() {
                   onChange={handleAudioUpload}
                   className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-violet-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-violet-700 hover:file:bg-violet-100"
                 />
-                {currentPart.audioUrl ? (
+                {currentPart.audioStorageKey || currentPart.audioUrl ? (
                   <p className="mt-2 text-xs text-emerald-700">
                     Audio uploaded · {currentPart.audioDurationSeconds}s
                   </p>
@@ -519,7 +560,7 @@ export function ListeningSection() {
 
           <button
             type="submit"
-            disabled={isSubmitting || !canSave}
+            disabled={isSubmitting || isUploadingAudio || !canSave}
             className="flex h-12 w-full items-center justify-center rounded-xl bg-[#553285] text-sm font-medium text-white transition-colors hover:bg-[#432668] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8"
           >
             {isSubmitting
@@ -588,7 +629,9 @@ export function ListeningSection() {
                           </span>
                           {" · "}
                           {part.questions.length} Q
-                          {part.audioUrl ? " · Audio ✓" : " · No audio"}
+                          {part.audioStorageKey || part.audioUrl
+                            ? " · Audio ✓"
+                            : " · No audio"}
                         </div>
                       ))}
                     </div>
@@ -617,7 +660,7 @@ export function ListeningSection() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDelete(test.id)}
+                    onClick={() => handleDelete(test)}
                     className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
                   >
                     Delete

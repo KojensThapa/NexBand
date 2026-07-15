@@ -63,6 +63,7 @@ function adminPartToListeningPart(
     label: `Part ${part.partNumber}`,
     title: part.title,
     instruction: part.instruction,
+    audioStorageKey: part.audioStorageKey,
     audioUrl: part.audioUrl,
     audioDurationSeconds: part.audioDurationSeconds,
     transcript: part.transcript,

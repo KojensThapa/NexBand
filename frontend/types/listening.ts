@@ -16,6 +16,8 @@ export interface ListeningPart {
   label: string;
   title: string;
   instruction: string;
+  /** Key for an audio Blob stored locally in the browser. */
+  audioStorageKey?: string;
   audioUrl?: string;
   audioDurationSeconds: number;
   transcript?: string;
