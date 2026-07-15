@@ -14,11 +14,13 @@ const inputClass =
 interface AdminSignInFormProps {
   callbackUrl?: string;
   registered?: boolean;
+  passwordReset?: boolean;
 }
 
 export function AdminSignInForm({
   callbackUrl = "/admin/dashboard",
   registered,
+  passwordReset,
 }: AdminSignInFormProps) {
   const router = useRouter();
   const { setAdmin } = useAdminAuth();
@@ -55,6 +57,12 @@ export function AdminSignInForm({
         </p>
       ) : null}
 
+      {passwordReset ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Password updated successfully. Please sign in with your new password.
+        </p>
+      ) : null}
+
       <div>
         <label htmlFor="admin-email" className="mb-1.5 block text-sm font-medium text-slate-700">
           Admin email
@@ -88,6 +96,14 @@ export function AdminSignInForm({
           placeholder="Enter your password"
           className={inputClass}
         />
+        <div className="mt-2 text-right">
+          <Link
+            href="/admin/auth/forgot-password"
+            className="text-sm font-medium text-violet-600 hover:text-violet-500"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
       {error ? (

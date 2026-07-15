@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   getNavItem,
@@ -50,21 +50,23 @@ export function DashboardShell() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sectionParam = searchParams.get("section");
-  const initialSection =
+  const activeSection =
     sectionParam && isDashboardSectionId(sectionParam) ? sectionParam : "home";
-
-  const [activeSection, setActiveSection] =
-    useState<DashboardSectionId>(initialSection);
-  const [showProfile, setShowProfile] = useState(false);
+  const showProfile = searchParams.get("profile") === "true";
 
   const handleSectionChange = useCallback(
     (section: DashboardSectionId) => {
-      setShowProfile(false);
-      setActiveSection(section);
       router.replace(`/dashboard?section=${section}`, { scroll: false });
     },
     [router]
   );
+
+  const handleProfileToggle = useCallback(() => {
+    const profileQuery = showProfile ? "" : "&profile=true";
+    router.replace(`/dashboard?section=${activeSection}${profileQuery}`, {
+      scroll: false,
+    });
+  }, [activeSection, router, showProfile]);
 
   const navItem = getNavItem(activeSection);
 
@@ -80,7 +82,7 @@ export function DashboardShell() {
           title={showProfile ? "Profile" : navItem.label}
           description={showProfile ? "Manage your account" : navItem.description}
           showProfile={showProfile}
-          onProfileClick={() => setShowProfile(true)}
+          onProfileClick={handleProfileToggle}
         />
 
         <main className="flex-1 overflow-y-auto p-6 sm:p-8">

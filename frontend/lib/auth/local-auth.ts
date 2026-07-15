@@ -1,3 +1,7 @@
+import {
+  clearPasswordResetOtp,
+  isPasswordResetVerified,
+} from "@/lib/auth/otp";
 import type { User } from "@/types/user";
 
 const USERS_STORAGE_KEY = "nexband_users";
@@ -125,4 +129,83 @@ export function loginUser(input: { email: string; password: string }): User {
 export function clearAuthStorage() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(SESSION_USER_KEY);
+}
+
+export function findUserByEmail(email: string): User | null {
+  const normalized = normalizeEmail(email);
+  const match = readUsers().find((user) => user.email === normalized);
+  return match ? toPublicUser(match) : null;
+}
+
+export function resetUserPassword(input: {
+  email: string;
+  newPassword: string;
+  confirmPassword: string;
+}): void {
+  const email = normalizeEmail(input.email);
+  const newPassword = input.newPassword;
+  const confirmPassword = input.confirmPassword;
+
+  if (!email) throw new AuthError("Email is required.");
+  if (!isPasswordResetVerified(email, "user")) {
+    throw new AuthError("Please verify the OTP before resetting your password.");
+  }
+  if (!newPassword) throw new AuthError("New password is required.");
+  if (newPassword.length < 6) {
+    throw new AuthError("Password must be at least 6 characters.");
+  }
+  if (newPassword !== confirmPassword) {
+    throw new AuthError("Passwords do not match.");
+  }
+
+  const users = readUsers();
+  const index = users.findIndex((user) => user.email === email);
+  if (index === -1) {
+    throw new AuthError("No account found with this email.");
+  }
+
+  users[index] = { ...users[index], password: newPassword };
+  writeUsers(users);
+  clearPasswordResetOtp();
+}
+
+export function updateUserProfile(
+  userId: string,
+  updates: { name?: string; image?: string }
+): User {
+  const users = readUsers();
+  const index = users.findIndex((user) => user.id === userId);
+  if (index === -1) throw new AuthError("User not found.");
+
+  const nextName = updates.name !== undefined ? updates.name.trim() : users[index].name;
+  if (!nextName) throw new AuthError("Name is required.");
+
+  const updated: StoredUser = {
+    ...users[index],
+    name: nextName,
+    // The profile form always sends its current image value. Checking whether
+    // the property was supplied lets an explicit `undefined` remove an
+    // existing photo while an omitted property keeps it unchanged.
+    image: Object.prototype.hasOwnProperty.call(updates, "image")
+      ? updates.image
+      : users[index].image,
+  };
+
+  users[index] = updated;
+  writeUsers(users);
+  return toPublicUser(updated);
+}
+
+export function deleteUserAccount(userId: string): void {
+  const users = readUsers();
+  const filtered = users.filter((user) => user.id !== userId);
+  if (filtered.length === users.length) {
+    throw new AuthError("User not found.");
+  }
+  writeUsers(filtered);
+
+  const session = getStoredSessionUser();
+  if (session?.id === userId) {
+    clearAuthStorage();
+  }
 }

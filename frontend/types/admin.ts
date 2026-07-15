@@ -2,6 +2,7 @@ export interface Admin {
   id: string;
   email: string;
   name: string;
+  image?: string;
   createdAt: string;
 }
 

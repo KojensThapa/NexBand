@@ -3,7 +3,8 @@ export type AdminSectionId =
   | "writing"
   | "speaking"
   | "listening"
-  | "reading";
+  | "reading"
+  | "profile";
 
 export const ADMIN_SECTION_IDS: AdminSectionId[] = [
   "overview",
@@ -11,6 +12,7 @@ export const ADMIN_SECTION_IDS: AdminSectionId[] = [
   "speaking",
   "listening",
   "reading",
+  "profile",
 ];
 
 export function isAdminSectionId(value: string): value is AdminSectionId {
@@ -53,6 +55,12 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     id: "reading",
     label: "Reading",
     description: "Create and manage IELTS Reading mock tests and passages.",
+    available: true,
+  },
+  {
+    id: "profile",
+    label: "Profile",
+    description: "Manage your admin account, photo, and settings.",
     available: true,
   },
 ];

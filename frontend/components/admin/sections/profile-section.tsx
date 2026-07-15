@@ -2,28 +2,28 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ProfileAvatar } from "@/components/ui/profile-avatar";
 import {
-  AuthError,
-  deleteUserAccount,
-  updateUserProfile,
-} from "@/lib/auth/local-auth";
-import { clearSessionCookie } from "@/lib/auth/session";
+  AdminAuthError,
+  deleteAdminAccount,
+  updateAdminProfile,
+} from "@/lib/admin/auth/local-admin-auth";
+import { clearAdminSessionCookie } from "@/lib/admin/auth/session";
 import { cn } from "@/lib/utils";
 
 const MAX_PROFILE_IMAGE_MB = 2;
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100";
 
-export function ProfileSection() {
-  const { user, setUser, signOut } = useAuth();
+export function AdminProfileSection() {
+  const { admin, setAdmin, signOut } = useAdminAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState(user?.name ?? "");
-  const [image, setImage] = useState(user?.image);
+  const [name, setName] = useState(admin?.name ?? "");
+  const [image, setImage] = useState(admin?.image);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -31,9 +31,9 @@ export function ProfileSection() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    setName(user?.name ?? "");
-    setImage(user?.image);
-  }, [user]);
+    setName(admin?.name ?? "");
+    setImage(admin?.image);
+  }, [admin]);
 
   function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
@@ -66,24 +66,26 @@ export function ProfileSection() {
 
   function handleSave(event: React.FormEvent) {
     event.preventDefault();
-    if (!user) return;
+    if (!admin) return;
 
     setError(null);
     setSuccess(null);
     setIsSaving(true);
 
     try {
-      const updated = updateUserProfile(user.id, { name, image });
-      setUser(updated);
+      const updated = updateAdminProfile(admin.id, { name, image });
+      setAdmin(updated);
       setSuccess("Profile updated successfully.");
 
-      // Give the user a moment to see the success message, then return
-      // to their main dashboard.
+      // Give the admin a moment to see the success message, then
+      // return to the admin dashboard overview.
       setTimeout(() => {
-        router.replace("/dashboard");
+        router.replace("/admin/dashboard?section=overview");
       }, 1_000);
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Failed to update profile.");
+      setError(
+        err instanceof AdminAuthError ? err.message : "Failed to update profile."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -91,42 +93,45 @@ export function ProfileSection() {
 
   function handleLogout() {
     signOut();
-    router.push("/auth/signin");
+    router.push("/admin/auth/signin");
     router.refresh();
   }
 
   function handleDeleteAccount() {
-    if (!user) return;
+    if (!admin) return;
 
     setError(null);
     setIsDeleting(true);
 
     try {
-      deleteUserAccount(user.id);
+      deleteAdminAccount(admin.id);
       signOut();
-      clearSessionCookie();
-      router.push("/auth/signin");
+      clearAdminSessionCookie();
+      router.push("/admin/auth/signin");
       router.refresh();
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Failed to delete account.");
+      setError(
+        err instanceof AdminAuthError ? err.message : "Failed to delete account."
+      );
       setIsDeleting(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-2xl">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-4">
-          <ProfileAvatar name={name || "User"} image={image} size="md" theme="indigo" />
+          <ProfileAvatar name={name || "Admin"} image={image} size="md" theme="violet" />
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Profile</h2>
-            <p className="text-sm text-slate-500">Manage your account details</p>
+            <p className="text-sm font-medium text-violet-600">Admin account</p>
+            <h2 className="text-xl font-bold text-slate-900">Profile settings</h2>
+            <p className="text-sm text-slate-500">Manage your admin profile and account</p>
           </div>
         </div>
 
         <form onSubmit={handleSave} className="mt-8 space-y-6">
-          <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-start">
-            <ProfileAvatar name={name || "User"} image={image} size="lg" theme="indigo" />
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-violet-200 bg-violet-50/50 p-5 sm:flex-row sm:items-start">
+            <ProfileAvatar name={name || "Admin"} image={image} size="lg" theme="violet" />
             <div className="flex-1 space-y-3 text-center sm:text-left">
               <p className="text-sm font-medium text-slate-700">Profile photo</p>
               <p className="text-xs text-slate-500">
@@ -136,7 +141,7 @@ export function ProfileSection() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                  className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700"
                 >
                   Upload image
                 </button>
@@ -144,7 +149,7 @@ export function ProfileSection() {
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-white"
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
                   >
                     Remove
                   </button>
@@ -161,11 +166,14 @@ export function ProfileSection() {
           </div>
 
           <div>
-            <label htmlFor="profile-name" className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="admin-profile-name"
+              className="mb-1.5 block text-sm font-medium text-slate-700"
+            >
               Full name
             </label>
             <input
-              id="profile-name"
+              id="admin-profile-name"
               type="text"
               required
               value={name}
@@ -175,9 +183,11 @@ export function ProfileSection() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Admin email
+            </label>
             <p className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              {user?.email ?? "—"}
+              {admin?.email ?? "—"}
             </p>
             <p className="mt-1.5 text-xs text-slate-400">Email cannot be changed.</p>
           </div>
@@ -220,15 +230,15 @@ export function ProfileSection() {
               onClick={() => setShowDeleteConfirm(true)}
               className="flex w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100"
             >
-              Delete account
+              Delete admin account
             </button>
           ) : (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
               <p className="text-sm font-medium text-rose-800">
-                Delete your account permanently?
+                Delete your admin account permanently?
               </p>
               <p className="mt-1 text-xs text-rose-600">
-                This action cannot be undone. All your data will be removed.
+                This action cannot be undone. Your admin account will be removed.
               </p>
               <div className="mt-4 flex gap-2">
                 <button

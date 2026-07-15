@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { UserIcon } from "./icons";
+import { ProfileAvatar } from "@/components/ui/profile-avatar";
 import { cn } from "@/lib/utils";
 
 interface DashboardTopbarProps {
@@ -31,7 +31,7 @@ export function DashboardTopbar({
       <button
         type="button"
         onClick={onProfileClick}
-        aria-label="Open profile"
+        aria-label={showProfile ? "Close profile" : "Open profile"}
         className={cn(
           "flex items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 transition-colors",
           showProfile
@@ -39,9 +39,12 @@ export function DashboardTopbar({
             : "border-slate-200 bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50"
         )}
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-          <UserIcon className="h-4 w-4" />
-        </span>
+        <ProfileAvatar
+          name={user?.name ?? "Profile"}
+          image={user?.image}
+          size="sm"
+          theme="indigo"
+        />
         <span className="hidden max-w-[140px] truncate text-sm font-medium text-slate-700 sm:inline">
           {user?.name ?? "Profile"}
         </span>

@@ -14,9 +14,10 @@ const inputClass =
 interface SignInFormProps {
   callbackUrl?: string;
   registered?: boolean;
+  passwordReset?: boolean;
 }
 
-export function SignInForm({ callbackUrl = "/dashboard", registered }: SignInFormProps) {
+export function SignInForm({ callbackUrl = "/dashboard", registered, passwordReset }: SignInFormProps) {
   const router = useRouter();
   const { setUser } = useAuth();
   const [email, setEmail] = useState("");
@@ -50,6 +51,12 @@ export function SignInForm({ callbackUrl = "/dashboard", registered }: SignInFor
         </p>
       ) : null}
 
+      {passwordReset ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Password updated successfully. Please sign in with your new password.
+        </p>
+      ) : null}
+
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
           Email
@@ -80,6 +87,14 @@ export function SignInForm({ callbackUrl = "/dashboard", registered }: SignInFor
           placeholder="Enter your password"
           className={inputClass}
         />
+        <div className="mt-2 text-right">
+          <Link
+            href="/auth/forgot-password"
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
       {error ? (
