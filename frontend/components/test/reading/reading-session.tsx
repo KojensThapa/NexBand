@@ -273,12 +273,12 @@ export function ReadingSession({
           ) : null}
 
           {activePassage.imageUrl ? (
-            <div className="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={activePassage.imageUrl}
                 alt={activePassage.imageAlt ?? activePassage.title}
-                className="mx-auto max-h-[28rem] w-full object-contain sm:max-h-[32rem]"
+                className="mx-auto block h-auto w-[50%] max-w-full object-contain"
               />
             </div>
           ) : null}
