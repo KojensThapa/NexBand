@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ReadingQuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE_NOT_GIVEN
+  MATCHING_HEADING
+  MATCHING_INFORMATION
+  MATCHING_FEATURES
+  MATCHING_SENTENCE_ENDINGS
+  SENTENCE_COMPLETION
+  SUMMARY_COMPLETION
+  NOTE_COMPLETION
+  TABLE_COMPLETION
+  FLOW_CHART_COMPLETION
+  DIAGRAM_LABELLING
+  SHORT_ANSWER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReadingMockTest {
+  id             String   @id @default(cuid())
+
+  title          String
+  tags           String[]
+
+  duration       Int      @default(60)
+  totalQuestions Int      @default(40)
+
+  isPublished    Boolean  @default(false)
+
+  passages       ReadingPassage[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ReadingPassage {
+  id             String   @id @default(cuid())
+
+  mockTestId     String
+
+  passageNumber  Int
+
+  title          String
+
+  instruction    String?
+
+  passageText    String   @db.Text
+
+  imageUrl       String?
+
+  questions      ReadingQuestion[]
+
+  mockTest ReadingMockTest @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mockTestId, passageNumber])
+}
+
+model ReadingQuestion {
+  id             String   @id @default(cuid())
+
+  passageId      String
+
+  questionNumber Int
+
+  type           ReadingQuestionType
+
+  questionText   String   @db.Text
+
+  options        Json?
+
+  correctAnswer  String[]
+
+  marks          Int      @default(1)
+
+  explanation    String?  @db.Text
+
+  passage ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([passageId, questionNumber])
+}
