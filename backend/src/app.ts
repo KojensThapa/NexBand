@@ -68,6 +68,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import jwtPlugin from "./plugins/jwt";
 import { registerReadingRoutes } from "./modules/reading/reading.routes";
+import { registerListeningRoutes } from "./modules/listening/listening.routes";
 
 import { registerAuthRoutes } from "./modules/auth/auth.routes";
 
@@ -98,6 +99,10 @@ export async function buildApp() {
 
     await app.register(registerReadingRoutes, {
     prefix: "/api/reading",
+  });
+
+  await app.register(registerListeningRoutes, {
+    prefix: "/api/listening",
   });
 
   // Health Check
