@@ -69,12 +69,17 @@ import rateLimit from "@fastify/rate-limit";
 import jwtPlugin from "./plugins/jwt";
 import { registerReadingRoutes } from "./modules/reading/reading.routes";
 import { registerListeningRoutes } from "./modules/listening/listening.routes";
+import { registerSpeakingRoutes } from "./modules/speaking/speaking.routes";
+import { registerWritingRoutes } from "./modules/writing/writing.routes";
 
 import { registerAuthRoutes } from "./modules/auth/auth.routes";
 
 export async function buildApp() {
   const app = Fastify({
     logger: true,
+    // Writing Task 1 accepts the admin form's 5 MB image uploads as base64
+    // data URLs, which are larger than Fastify's default 1 MB JSON limit.
+    bodyLimit: 10 * 1024 * 1024,
   });
 
   // Security
@@ -103,6 +108,14 @@ export async function buildApp() {
 
   await app.register(registerListeningRoutes, {
     prefix: "/api/listening",
+  });
+
+  await app.register(registerSpeakingRoutes, {
+    prefix: "/api/speaking",
+  });
+
+  await app.register(registerWritingRoutes, {
+    prefix: "/api/writing",
   });
 
   // Health Check
