@@ -1,75 +1,80 @@
-# API contract (v1)
+# NexBand API
 
-Base URL in development: `http://127.0.0.1:4000/api/v1`
+Development base URL: `http://localhost:4000`.
 
-All successful responses use `{ "data": ... }`. Errors use `{ "error": { "code", "message", "details?", "requestId" } }`. Protected endpoints require `Authorization: Bearer <accessToken>`.
+Successful responses use `{ "success": true, "data": ... }`; failures use
+`{ "success": false, "message": "..." }`. Authenticated requests send
+`Authorization: Bearer <token>` from `POST /api/auth/login`.
 
-## System
-
-| Method | Path | Access | Purpose |
-| --- | --- | --- | --- |
-| GET | `/` | Public | API metadata |
-| GET | `/health` | Public | Liveness check |
-
-## Authentication
+## Reading learner flow
 
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
-| POST | `/auth/register` | Public | Create student account and issue token |
-| POST | `/auth/login` | Public | Sign in as student |
-| POST | `/auth/admin/register` | Public when enabled | Bootstrap an administrator |
-| POST | `/auth/admin/login` | Public | Sign in as administrator |
-| GET | `/auth/me` | Any signed-in user | Get current account |
+| GET | `/api/reading/tests?page=1&limit=12` | Public | List published test cards |
+| GET | `/api/reading/tests/:testId` | Public | Get published passages and questions |
+| POST | `/api/reading/tests/:testId/attempts` | Signed-in learner | Start a new attempt |
+| PUT | `/api/reading/attempts/:attemptId/answers` | Attempt owner | Autosave all current answers |
+| POST | `/api/reading/attempts/:attemptId/submit` | Attempt owner | Persist final answers and calculate the score |
+| GET | `/api/reading/attempts/:attemptId/result` | Attempt owner | Get the saved score |
 
-Registration expects `name`, `email`, and an 8+ character `password`. Login expects `email` and `password`.
+The public list uses the frontend card fields (`id`, `title`, `totalMinutes`,
+`totalQuestions`, and `tags`). The single-test response uses the existing
+`ReadingMockTest` session shape: `totalMinutes`, `passages[].partNumber`,
+`passages[].passage`, and `questions[].number`/`prompt`. It never includes
+`correctAnswer` or `explanation`.
 
-## Tests and authored content
+Start a test:
 
-| Method | Path | Access | Purpose |
-| --- | --- | --- | --- |
-| GET | `/tests?skill=writing` | Public | List published tests, optionally by IELTS skill |
-| GET | `/tests/:id` | Public | Read one published test |
-| GET | `/admin/tests?skill=writing` | Admin | List drafts and published tests, including answer keys |
-| POST | `/admin/tests` | Admin | Create a test |
-| PATCH | `/admin/tests/:id` | Admin | Update test data |
-| PATCH | `/admin/tests/:id/publish` | Admin | Set published state |
-| DELETE | `/admin/tests/:id` | Admin | Delete test |
+```http
+POST /api/reading/tests/clx.../attempts
+Authorization: Bearer <token>
+```
 
-Creating a test accepts:
+The response contains an `attempt` with its ID and an answer-key-free `test`.
+Keep the attempt ID for autosave and submission.
+
+Autosave answers as the frontend's `Record<questionId, string>` state:
 
 ```json
 {
-  "skill": "writing",
-  "category": "practice",
-  "title": "Academic Task 1: Housing",
-  "description": "Describe the chart.",
-  "content": { "prompt": "...", "imageUrl": "..." },
-  "answerKey": { "rubric": "..." },
-  "published": false
+  "answers": {
+    "clx-question-1": "TRUE",
+    "clx-question-2": "B. The brain strengthens learning connections"
+  }
 }
 ```
 
-`content` is intentionally flexible so existing reading, listening, speaking, and writing shapes can be migrated without forcing one incorrect universal schema. `answerKey` is returned only from administrator endpoints.
-
-## Submissions and reports
-
-| Method | Path | Access | Purpose |
-| --- | --- | --- | --- |
-| POST | `/submissions` | Signed-in learner | Submit an answer; responds `202` while analysis is pending |
-| GET | `/submissions` | Signed-in learner | List own attempts |
-| GET | `/submissions/:id` | Signed-in learner | Read one own attempt |
-| GET | `/reports` | Signed-in learner | List own reports |
-| GET | `/reports/:id` | Signed-in learner | Read one own report |
-
-An example submission:
+Submitting may include the latest local answer map too, which is merged with
+the saved answers before scoring. Submitting a second time is safe: it returns
+the already persisted result instead of creating another one.
 
 ```json
 {
-  "skill": "writing",
-  "testId": "b33fdbdb-4fc1-4551-9011-301f918e833c",
-  "responseText": "My essay answer...",
-  "timeTakenSeconds": 2350
+  "answers": {
+    "clx-question-3": "NOT GIVEN"
+  }
 }
 ```
 
-The response contains a linked `reportId`. Its report starts as `pending` until an analysis worker is added.
+The result records `correctAnswers`, `rawScore`, `totalMarks`, `percentage`,
+and `bandScore`. `basic-v1` gives each question its configured marks, compares
+answers case- and whitespace-insensitively, and estimates a 0–9 band rounded
+to the nearest half band. It is deliberately a basic provisional estimate, not
+an official IELTS conversion table.
+
+## Reading authoring endpoints
+
+These are for admins only and include answer keys where needed.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/reading/mock-tests` | Create a three-passage reading test |
+| GET | `/api/reading/mock-tests` | List all authored tests |
+| GET | `/api/reading/mock-tests/:id` | Get one authored test |
+| PATCH | `/api/reading/mock-tests/:id` | Update a test |
+| DELETE | `/api/reading/mock-tests/:id` | Delete a test |
+| PATCH | `/api/reading/mock-tests/:id/publish` | Publish a test |
+| PATCH | `/api/reading/mock-tests/:id/unpublish` | Remove a test from learner access |
+
+Run `npx prisma migrate deploy` in the backend directory before using attempt
+routes against a deployed database.

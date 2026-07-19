@@ -12,6 +12,12 @@ import {
 } from "@/lib/reports/mock-analysis";
 import { saveReport } from "@/lib/reports/storage";
 import {
+  saveListeningAnswers,
+  startListeningAttempt,
+  submitListeningAttempt,
+  type ListeningResult,
+} from "@/services/listening";
+import {
   countListeningQuestions,
   LISTENING_MOCK_SECONDS,
   LISTENING_PART_SECONDS,
@@ -29,6 +35,7 @@ import type {
   ListeningPartNumber,
   ListeningTableCell,
 } from "@/types/listening";
+import type { ListeningFeedbackDetail } from "@/types/report";
 
 interface ListeningSessionProps {
   mockTest: ListeningMockTest;
@@ -71,7 +78,7 @@ function TableCellContent({
     <span className="inline-flex flex-wrap items-center gap-1">
       {cell.map((segment, index) => {
         if (segment.questionNumber) {
-          const qId = `${partId}-q${segment.questionNumber}`;
+          const qId = segment.questionId ?? `${partId}-q${segment.questionNumber}`;
           return (
             <span key={index} className="inline-flex flex-wrap items-center">
               {segment.textBefore}
@@ -90,6 +97,57 @@ function TableCellContent({
       })}
     </span>
   );
+}
+
+function getQuestionId(part: ListeningPart, questionNumber: number) {
+  return (
+    part.questions?.find((question) => question.number === questionNumber)?.id ??
+    `${part.id}-q${questionNumber}`
+  );
+}
+
+function createBackendListeningDetail(
+  taskTitle: string,
+  result: ListeningResult
+): ListeningFeedbackDetail {
+  return {
+    taskTitle,
+    overallScore: result.bandScore,
+    correctCount: result.correctAnswers,
+    totalQuestions: result.totalQuestions,
+    accuracyPercentage: result.percentage,
+    timeTaken: "Recorded by your test session",
+    partScores: [
+      {
+        label: "Full test",
+        score: result.bandScore,
+        correct: result.correctAnswers,
+        total: result.totalQuestions,
+      },
+    ],
+    questionTypePerformance: [
+      {
+        type: "All scored questions",
+        score: result.bandScore,
+        correct: result.correctAnswers,
+        total: result.totalQuestions,
+      },
+    ],
+    strengths:
+      result.percentage >= 70
+        ? ["Strong overall listening accuracy in this submitted test."]
+        : ["You completed a persisted listening attempt that you can revisit in your reports."],
+    weakAreas:
+      result.percentage >= 70
+        ? ["Review individual question types to turn a good result into a more consistent score."]
+        : ["Review missed answers and practise question types where you lost marks."],
+    aiSummary: `Your basic listening score is ${result.correctAnswers} of ${result.totalQuestions} (${result.percentage}%), with a provisional Band ${result.bandScore.toFixed(1)}.`,
+    recommendedTopics: [
+      "Question preview and keyword prediction",
+      "Spelling and number accuracy",
+      "Recognising paraphrase in audio",
+    ],
+  };
 }
 
 export function ListeningSession({
@@ -117,6 +175,8 @@ export function ListeningSession({
     key: string;
     url: string;
   } | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptError, setAttemptError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const activePart =
@@ -166,15 +226,52 @@ export function ListeningSession({
 
   const answeredInPart = useMemo(() => {
     return Array.from({ length: partQuestionCount }, (_, i) => {
-      const qId = `${activePart.id}-q${i + 1}`;
+      const qId = getQuestionId(activePart, i + 1);
       return Boolean(answers[qId]?.trim());
     }).filter(Boolean).length;
-  }, [activePart.id, answers, partQuestionCount]);
+  }, [activePart, answers, partQuestionCount]);
 
   const totalAnswered = useMemo(
     () => Object.values(answers).filter((v) => v.trim()).length,
     [answers]
   );
+
+  useEffect(() => {
+    if (!mockTest.isBackendTest || isPartOnly) return;
+
+    let active = true;
+    void startListeningAttempt(mockTest.id)
+      .then(({ attempt }) => {
+        if (active) setAttemptId(attempt.id);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setAttemptError(
+            error instanceof Error
+              ? error.message
+              : "Could not start the listening attempt."
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isPartOnly, mockTest.id, mockTest.isBackendTest]);
+
+  useEffect(() => {
+    if (!attemptId || !mockTest.isBackendTest) return;
+
+    const timeout = window.setTimeout(() => {
+      void saveListeningAnswers(attemptId, answers).catch((error: unknown) => {
+        setAttemptError(
+          error instanceof Error ? error.message : "Answers could not be saved."
+        );
+      });
+    }, 600);
+
+    return () => window.clearTimeout(timeout);
+  }, [answers, attemptId, mockTest.isBackendTest]);
 
   const handleAnswerChange = (id: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -209,6 +306,39 @@ export function ListeningSession({
     setIsAnalyzing(true);
     pause();
 
+    const taskTitle = isPartOnly
+      ? `${mockTest.title} â€” Part ${initialPart}`
+      : mockTest.title;
+
+    if (mockTest.isBackendTest && !isPartOnly) {
+      if (!attemptId) {
+        setAttemptError("Your attempt is not ready yet. Please sign in and wait a moment before submitting.");
+        setIsAnalyzing(false);
+        return;
+      }
+
+      try {
+        const { result } = await submitListeningAttempt(attemptId, answers);
+        const detail = createBackendListeningDetail(taskTitle, result);
+        const report = createSavedReport(
+          "listening",
+          taskTitle,
+          `${result.correctAnswers} of ${result.totalQuestions} answers correct`,
+          result.bandScore,
+          detail
+        );
+        saveReport(report);
+        router.push(`/report/${report.id}`);
+        return;
+      } catch (error) {
+        setAttemptError(
+          error instanceof Error ? error.message : "Your listening test could not be submitted."
+        );
+        setIsAnalyzing(false);
+        return;
+      }
+    }
+
     const totalQuestions = isPartOnly
       ? partQuestionCount
       : countMockTestQuestions(mockTest);
@@ -233,7 +363,10 @@ export function ListeningSession({
   }, [
     initialPart,
     isPartOnly,
+    attemptId,
+    answers,
     mockTest.title,
+    mockTest.isBackendTest,
     pause,
     router,
     totalAnswered,
@@ -334,6 +467,12 @@ export function ListeningSession({
           {questionOffset + 1}–{displayQuestionEnd}
         </div>
 
+        {attemptError ? (
+          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
+            {attemptError}
+          </div>
+        ) : null}
+
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-lg font-semibold text-slate-900">
@@ -402,7 +541,7 @@ export function ListeningSession({
                   { length: countListeningQuestions(activePart) - partQuestionCount },
                   (_, i) => {
                   const num = partQuestionCount + i + 1;
-                  const qId = `${activePart.id}-q${num}`;
+                  const qId = getQuestionId(activePart, num);
                   return (
                     <div
                       key={qId}
@@ -433,7 +572,7 @@ export function ListeningSession({
               {mockTest.parts.map((part) => {
                 const partCount = countPartQuestions(part);
                 const partAnswered = Array.from({ length: partCount }, (_, i) =>
-                  Boolean(answers[`${part.id}-q${i + 1}`]?.trim())
+                  Boolean(answers[getQuestionId(part, i + 1)]?.trim())
                 ).filter(Boolean).length;
 
                 return (

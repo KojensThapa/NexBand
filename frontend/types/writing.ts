@@ -12,6 +12,10 @@ export type WritingTask1Type =
 export interface WritingTask {
   /** Stable id, e.g. "task-1" / "task-2". */
   id: string;
+  /** Parent test ID for server-published writing tasks. */
+  testId?: string;
+  /** True when this task is served by the Writing API rather than local demo data. */
+  isBackendTest?: boolean;
   /** 1 = report/letter, 2 = essay. */
   taskNumber: WritingTaskNumber;
   /** Short label shown on the tab, e.g. "Task 1". */
@@ -37,6 +41,9 @@ export interface WritingTask {
 export interface WritingMockTest {
   id: string;
   title: string;
+  category?: "mock" | "task-1" | "task-2";
+  /** True when this test is served by the Writing API rather than local demo data. */
+  isBackendTest?: boolean;
   /** Total time across both tasks, usually 60 minutes. */
   totalMinutes: number;
   tasks: WritingTask[];

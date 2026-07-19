@@ -1,8 +1,10 @@
-import { prisma } from "../../config/prisma";
+import type { Prisma } from "@prisma/client";
+
+import { prisma } from "../../../config/prisma";
 import {
-  CreateListeningMockTestInput,
+  type CreateListeningMockTestInput,
   toDatabaseListeningQuestionType,
-} from "./listening.schemas";
+} from "../listening.schemas";
 
 const listeningMockTestInclude = {
   parts: {
@@ -17,7 +19,7 @@ const listeningMockTestInclude = {
       },
     },
   },
-};
+} satisfies Prisma.ListeningMockTestInclude;
 
 function createParts(data: CreateListeningMockTestInput) {
   return data.parts.map((part) => ({
@@ -44,7 +46,8 @@ function createParts(data: CreateListeningMockTestInput) {
   }));
 }
 
-export class ListeningRepository {
+/** Persistence owned by the administrative Listening authoring workflow. */
+export class ListeningAdminRepository {
   async createMockTest(data: CreateListeningMockTestInput & { totalQuestions: number }) {
     return prisma.listeningMockTest.create({
       data: {
@@ -118,41 +121,6 @@ export class ListeningRepository {
       where: { id },
       data: {
         isPublished: false,
-      },
-      include: listeningMockTestInclude,
-    });
-  }
-
-  async findPublished(page: number, limit: number) {
-    const skip = (page - 1) * limit;
-
-    const [tests, total] = await Promise.all([
-      prisma.listeningMockTest.findMany({
-        where: {
-          isPublished: true,
-        },
-        skip,
-        take: limit,
-        orderBy: {
-          createdAt: "desc",
-        },
-        include: listeningMockTestInclude,
-      }),
-      prisma.listeningMockTest.count({
-        where: {
-          isPublished: true,
-        },
-      }),
-    ]);
-
-    return { tests, total };
-  }
-
-  async findPublishedById(id: string) {
-    return prisma.listeningMockTest.findFirst({
-      where: {
-        id,
-        isPublished: true,
       },
       include: listeningMockTestInclude,
     });

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnalysisLoader } from "@/components/reports/analysis-loader";
 import { SubmitTestButton } from "@/components/test/submit-test-button";
 import { useTimer } from "@/hooks/useTimer";
@@ -13,6 +13,11 @@ import {
 import { saveReport } from "@/lib/reports/storage";
 import { cn } from "@/lib/utils";
 import { countWords } from "@/lib/exams/ielts-writing";
+import {
+  saveWritingDraft,
+  startWritingAttempt,
+  submitWritingAttempt,
+} from "@/services/writing";
 import type { WritingMockTest, WritingTask } from "@/types/writing";
 
 type WritingMode = "mock" | "task-1" | "task-2";
@@ -41,6 +46,10 @@ export function WritingSession({
   const searchParams = useSearchParams();
   const resolvedBackHref = searchParams.get("back") ?? backHref;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptError, setAttemptError] = useState<string | null>(null);
+  const [draftStatus, setDraftStatus] = useState<string | null>(null);
+  const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
 
   const visibleTasks = useMemo(() => {
     if (singleTask) return [singleTask];
@@ -54,6 +63,13 @@ export function WritingSession({
   const [texts, setTexts] = useState<Record<string, string>>(() =>
     Object.fromEntries(visibleTasks.map((task) => [task.id, ""]))
   );
+
+  const backendTestId = mockTest?.isBackendTest
+    ? mockTest.id
+    : singleTask?.isBackendTest
+      ? singleTask.testId
+      : undefined;
+  const isBackendTest = Boolean(backendTestId);
 
   const timerSeconds = useMemo(() => {
     if (singleTask) return singleTask.recommendedMinutes * 60;
@@ -76,6 +92,59 @@ export function WritingSession({
   const canSubmit = activeTask ? wordCount >= submitMinimum : false;
   const meetsRecommended = activeTask ? wordCount >= activeTask.minWords : false;
 
+  const draftEssays = useMemo(
+    () =>
+      visibleTasks
+        .map((task) => ({ taskId: task.id, content: texts[task.id] ?? "" }))
+        .filter((essay) => essay.content.length > 0),
+    [texts, visibleTasks]
+  );
+
+  useEffect(() => {
+    if (!backendTestId) return;
+
+    let active = true;
+    void startWritingAttempt(backendTestId)
+      .then(({ attempt }) => {
+        if (active) {
+          setAttemptId(attempt.id);
+          setAttemptError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setAttemptError(
+            error instanceof Error
+              ? error.message
+              : "Could not start the writing attempt."
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [backendTestId]);
+
+  useEffect(() => {
+    if (!attemptId || !isBackendTest || draftEssays.length === 0 || submissionMessage) return;
+
+    const timeout = window.setTimeout(() => {
+      setDraftStatus("Saving draft…");
+      void saveWritingDraft(attemptId, draftEssays)
+        .then(() => {
+          setDraftStatus("Draft saved");
+          setAttemptError(null);
+        })
+        .catch((error: unknown) => {
+          setDraftStatus(null);
+          setAttemptError(error instanceof Error ? error.message : "Draft could not be saved.");
+        });
+    }, 700);
+
+    return () => window.clearTimeout(timeout);
+  }, [attemptId, draftEssays, isBackendTest, submissionMessage]);
+
   const handleChange = (value: string) => {
     if (!activeTask) return;
     setTexts((prev) => ({ ...prev, [activeTask.id]: value }));
@@ -83,8 +152,33 @@ export function WritingSession({
 
   const handleSubmit = useCallback(async () => {
     if (!activeTask || !canSubmit) return;
-    setIsAnalyzing(true);
     pause();
+
+    if (isBackendTest) {
+      if (!attemptId) {
+        setAttemptError("Your attempt is not ready yet. Please sign in and wait a moment before submitting.");
+        return;
+      }
+
+      try {
+        const { attempt, alreadySubmitted } = await submitWritingAttempt(attemptId, draftEssays);
+        setSubmissionMessage(
+          alreadySubmitted
+            ? "This essay is already queued for analysis."
+            : `Essay stored successfully. Status: ${attempt.status.replaceAll("_", " ")}.`
+        );
+        setDraftStatus(null);
+        setAttemptError(null);
+        return;
+      } catch (error) {
+        setAttemptError(
+          error instanceof Error ? error.message : "Your essay could not be submitted."
+        );
+        return;
+      }
+    }
+
+    setIsAnalyzing(true);
 
     const detail = await analyzeWritingSubmission({
       taskTitle: activeTask.title,
@@ -110,7 +204,10 @@ export function WritingSession({
   }, [
     activeTask,
     activeText,
+    attemptId,
     canSubmit,
+    draftEssays,
+    isBackendTest,
     mockTest,
     pause,
     router,
@@ -215,6 +312,17 @@ export function WritingSession({
         </div>
       </header>
 
+      {attemptError ? (
+        <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
+          {attemptError}
+        </div>
+      ) : null}
+      {submissionMessage ? (
+        <div className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-center text-sm font-medium text-amber-800">
+          {submissionMessage}
+        </div>
+      ) : null}
+
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <section className="flex w-1/2 flex-col overflow-y-auto border-r border-slate-200 bg-white p-4 sm:p-6">
           <div className="mb-3 flex items-start justify-between gap-3">
@@ -279,11 +387,13 @@ export function WritingSession({
           <p className="mt-3 text-xs text-slate-500">
             Aim for at least {activeTask.minWords} words within{" "}
             {activeTask.recommendedMinutes} minutes.
+            {isBackendTest && draftStatus ? ` ${draftStatus}.` : ""}
           </p>
 
           <SubmitTestButton
+            label={isBackendTest ? "Submit essay" : undefined}
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || Boolean(submissionMessage)}
             className="mt-4"
           />
         </section>

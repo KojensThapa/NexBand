@@ -15,6 +15,7 @@ import {
   persistSessionUser,
 } from "@/lib/auth/local-auth";
 import { clearSessionCookie } from "@/lib/auth/session";
+import { signOutApiUser } from "@/services/auth";
 import type { User } from "@/types/user";
 
 interface AuthContextValue {
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserState(null);
     clearAuthStorage();
     clearSessionCookie();
+    signOutApiUser();
   }, []);
 
   const value = useMemo(

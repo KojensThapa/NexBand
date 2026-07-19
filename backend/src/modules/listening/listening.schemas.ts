@@ -145,3 +145,29 @@ export const updateListeningMockTestSchema = createListeningMockTestSchema;
 export type UpdateListeningMockTestInput = z.infer<
   typeof updateListeningMockTestSchema
 >;
+
+/** Learner attempt input. Keys are persisted ListeningQuestion IDs. */
+export const listeningAnswersSchema = z
+  .record(z.string().min(1), z.string().max(5_000))
+  .refine((answers) => Object.keys(answers).length <= 200, {
+    message: "Too many answers supplied.",
+  });
+
+export const saveListeningAnswersSchema = z.object({
+  answers: listeningAnswersSchema,
+});
+
+export const submitListeningAttemptSchema = z.object({
+  // The latest local answers can be submitted with the final request so an
+  // in-flight autosave never causes a learner's final response to be missed.
+  answers: listeningAnswersSchema.optional(),
+});
+
+export const publishedListeningTestsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(12),
+});
+
+export type ListeningAnswers = z.infer<typeof listeningAnswersSchema>;
+export type SaveListeningAnswersInput = z.infer<typeof saveListeningAnswersSchema>;
+export type SubmitListeningAttemptInput = z.infer<typeof submitListeningAttemptSchema>;

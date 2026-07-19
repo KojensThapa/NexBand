@@ -156,3 +156,30 @@ export type CreateWritingTestInput = z.infer<typeof createWritingTestSchema>;
 export const updateWritingTestSchema = createWritingTestSchema;
 
 export type UpdateWritingTestInput = z.infer<typeof updateWritingTestSchema>;
+
+export const publishedWritingTestsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(12),
+  category: writingCategorySchema.optional(),
+});
+
+const writingEssaySchema = z.object({
+  taskId: z.string().trim().min(1).max(191),
+  // Drafts may be empty while the learner is composing. Submission requires
+  // at least one non-empty saved essay in the service layer.
+  content: z.string().max(50_000),
+});
+
+export const saveWritingDraftSchema = z.object({
+  essays: z.array(writingEssaySchema).min(1).max(2),
+});
+
+export const submitWritingAttemptSchema = z.object({
+  // The current editor sends its latest contents here as well as autosaving,
+  // so a final keystroke is never lost if a draft request is still in flight.
+  essays: z.array(writingEssaySchema).max(2).optional(),
+});
+
+export type WritingEssayInput = z.infer<typeof writingEssaySchema>;
+export type SaveWritingDraftInput = z.infer<typeof saveWritingDraftSchema>;
+export type SubmitWritingAttemptInput = z.infer<typeof submitWritingAttemptSchema>;

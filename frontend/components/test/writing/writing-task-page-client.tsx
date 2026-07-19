@@ -11,6 +11,7 @@ import {
   getAdminPracticeTasks,
 } from "@/lib/admin/writing-to-exam";
 import { getAdminWritingQuestions } from "@/lib/admin/writing-storage";
+import { getPublishedWritingTest } from "@/services/writing";
 import type { WritingMockTest, WritingTask } from "@/types/writing";
 
 type WritingMode = "mock" | "task-1" | "task-2";
@@ -29,51 +30,76 @@ export function WritingTaskPageClient({ mode, taskId }: WritingTaskPageClientPro
   >(null);
 
   useEffect(() => {
-    if (taskId.startsWith("admin-writing-") || taskId.startsWith("mock-")) {
-      const questions = getAdminWritingQuestions();
+    let active = true;
+
+    void Promise.resolve().then(() => {
+      if (!active) return;
+
+      if (taskId.startsWith("admin-writing-") || taskId.startsWith("mock-")) {
+        const questions = getAdminWritingQuestions();
+
+        if (mode === "mock") {
+          const adminMocks = buildAdminMockTests(questions, { publishedOnly: true });
+          const mockTest = adminMocks.find((test) => test.id === taskId);
+          if (mockTest) {
+            setResolved({ kind: "mock", mockTest });
+            return;
+          }
+        }
+
+        const adminTasks = getAdminPracticeTasks(questions, mode === "task-1" ? 1 : 2, {
+          publishedOnly: true,
+        });
+        const adminTask = adminTasks.find((task) => task.id === taskId);
+        if (adminTask) {
+          setResolved({ kind: "single", task: adminTask });
+          return;
+        }
+      }
 
       if (mode === "mock") {
-        const adminMocks = buildAdminMockTests(questions, { publishedOnly: true });
-        const mockTest = adminMocks.find((test) => test.id === taskId);
-        if (mockTest) {
+        const mockTest = getWritingMockTest(taskId);
+        if (mockTest.id === taskId) {
           setResolved({ kind: "mock", mockTest });
           return;
         }
       }
 
-      const adminTasks = getAdminPracticeTasks(questions, mode === "task-1" ? 1 : 2, {
-        publishedOnly: true,
-      });
-      const adminTask = adminTasks.find((task) => task.id === taskId);
-      if (adminTask) {
-        setResolved({ kind: "single", task: adminTask });
+      const task = getWritingPracticeTask(taskId);
+      if (task) {
+        if (mode === "task-1" && task.taskNumber !== 1) {
+          setResolved({ kind: "not-found" });
+          return;
+        }
+        if (mode === "task-2" && task.taskNumber !== 2) {
+          setResolved({ kind: "not-found" });
+          return;
+        }
+        setResolved({ kind: "single", task });
         return;
       }
-    }
 
-    if (mode === "mock") {
-      const mockTest = getWritingMockTest(taskId);
-      if (mockTest.id === taskId) {
-        setResolved({ kind: "mock", mockTest });
-        return;
-      }
-    }
+      void getPublishedWritingTest(taskId)
+        .then((test) => {
+          if (!active) return;
 
-    const task = getWritingPracticeTask(taskId);
-    if (task) {
-      if (mode === "task-1" && task.taskNumber !== 1) {
-        setResolved({ kind: "not-found" });
-        return;
-      }
-      if (mode === "task-2" && task.taskNumber !== 2) {
-        setResolved({ kind: "not-found" });
-        return;
-      }
-      setResolved({ kind: "single", task });
-      return;
-    }
+          if (mode === "mock") {
+            setResolved(test.category === "mock" ? { kind: "mock", mockTest: test } : { kind: "not-found" });
+            return;
+          }
 
-    setResolved({ kind: "not-found" });
+          const taskNumber = mode === "task-1" ? 1 : 2;
+          const task = test.tasks.find((candidate) => candidate.taskNumber === taskNumber);
+          setResolved(task ? { kind: "single", task } : { kind: "not-found" });
+        })
+        .catch(() => {
+          if (active) setResolved({ kind: "not-found" });
+        });
+    });
+
+    return () => {
+      active = false;
+    };
   }, [mode, taskId]);
 
   if (!resolved) {

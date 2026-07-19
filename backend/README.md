@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-The API starts at `http://127.0.0.1:4000`, and its health check is available at `GET /api/v1/health`.
+The API starts at `http://127.0.0.1:4000`, and its service check is available at `GET /`.
 
 Useful commands:
 
@@ -22,8 +22,14 @@ npm run build
 npm start
 ```
 
-See [architecture.md](docs/architecture.md) for the module and storage design, and [API.md](docs/API.md) for the initial API contract.
+See [architecture.md](docs/architecture.md) for the module and storage design, and [API.md](docs/API.md) for the current API contract.
 
 ## Important persistence note
 
-The supplied `Memory*Repository` classes are a development/test adapter. They are intentionally non-persistent and data resets whenever the process restarts. The application only depends on repository interfaces, so the production step is to implement those interfaces with PostgreSQL and replace `createMemoryRepositories()` in `src/app.ts`. Do that before deploying real user data.
+The reading and listening modules persist mock tests, learner attempts, answers,
+and results through Prisma/PostgreSQL. Apply all migrations before running the
+API against a new database:
+
+```bash
+npx prisma migrate deploy
+```

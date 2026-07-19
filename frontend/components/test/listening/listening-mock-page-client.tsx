@@ -6,6 +6,7 @@ import { getListeningMockTest } from "@/lib/exams/ielts-listening";
 import { buildAdminListeningMockTests } from "@/lib/admin/listening-to-exam";
 import { getAdminListeningTests } from "@/lib/admin/listening-storage";
 import type { ListeningMockTest, ListeningPartNumber } from "@/types/listening";
+import { getPublishedListeningTest } from "@/services/listening";
 
 interface ListeningMockPageClientProps {
   testId: string;
@@ -22,6 +23,8 @@ export function ListeningMockPageClient({
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    let active = true;
+
     if (testId.startsWith("admin-listening-")) {
       const adminTests = getAdminListeningTests();
       const adminMocks = buildAdminListeningMockTests(adminTests, { publishedOnly: true });
@@ -42,7 +45,19 @@ export function ListeningMockPageClient({
       return;
     }
 
-    setNotFound(true);
+    void getPublishedListeningTest(testId)
+      .then((test) => {
+        if (!active) return;
+        setMockTest(test);
+        setNotFound(false);
+      })
+      .catch(() => {
+        if (active) setNotFound(true);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [testId]);
 
   if (notFound) {

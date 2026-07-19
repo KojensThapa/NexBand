@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getWritingTaskHref,
   WRITING_MOCK_TESTS,
@@ -15,6 +15,7 @@ import {
 import { useAdminWritingQuestions } from "@/hooks/useAdminWritingQuestions";
 import type { WritingTask, WritingTask1Type } from "@/types/writing";
 import { cn } from "@/lib/utils";
+import { getPublishedWritingTests, type WritingPublishedTestSummary } from "@/services/writing";
 
 const MODE_TABS: { id: WritingBoardMode; label: string }[] = [
   { id: "mock", label: "Mock Test" },
@@ -114,14 +115,32 @@ function TaskCard({
 
 export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
   const [mode, setMode] = useState<WritingBoardMode>("task-1");
-  const { questions: adminQuestions, version } = useAdminWritingQuestions();
+  const { questions: adminQuestions } = useAdminWritingQuestions();
+  const [backendTests, setBackendTests] = useState<WritingPublishedTestSummary[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    void getPublishedWritingTests()
+      .then((tests) => {
+        if (active) setBackendTests(tests);
+      })
+      .catch(() => {
+        // Local practice content remains available when the backend is offline.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const cards = useMemo(() => {
     if (mode === "mock") {
       const adminMocks = buildAdminMockTests(adminQuestions, { publishedOnly: true });
       const allMocks = [...WRITING_MOCK_TESTS, ...adminMocks];
+      const backendMocks = backendTests.filter((test) => test.category === "mock");
 
-      return allMocks.map((mock) => {
+      const localCards = allMocks.map((mock) => {
         const task1 = mock.tasks.find((task) => task.taskNumber === 1);
         const task2 = mock.tasks.find((task) => task.taskNumber === 2);
         const parts = [
@@ -144,6 +163,23 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
           href: getWritingTaskHref("mock", mock.id, backHref),
         };
       });
+
+      const backendCards = backendMocks.map((mock) => {
+        const parts = mock.tasks.map((task) => ({
+          label: `Part ${task.taskNumber}`,
+          title: task.title,
+        }));
+
+        return {
+          id: mock.id,
+          title: mock.title,
+          typeLabel: `Part 1 + Part 2 Â· ${mock.totalMinutes} min`,
+          parts,
+          href: getWritingTaskHref("mock", mock.id, backHref),
+        };
+      });
+
+      return [...localCards, ...backendCards];
     }
 
     const staticTasks =
@@ -156,12 +192,25 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
     });
 
     const tasks = [...staticTasks, ...adminTasks];
+    const backendTasks = backendTests
+      .filter((test) => test.category === mode)
+      .flatMap((test) =>
+        test.tasks
+          .filter((task) => task.taskNumber === (mode === "task-1" ? 1 : 2))
+          .map((task) => ({
+            ...task,
+            href: getWritingTaskHref(mode, test.id, backHref),
+          }))
+      );
 
-    return tasks.map((task) => ({
-      ...task,
-      href: getWritingTaskHref(mode, task.id, backHref),
-    }));
-  }, [mode, backHref, adminQuestions, version]);
+    return [
+      ...tasks.map((task) => ({
+        ...task,
+        href: getWritingTaskHref(mode, task.id, backHref),
+      })),
+      ...backendTasks,
+    ];
+  }, [mode, backHref, adminQuestions, backendTests]);
 
   return (
     <div className="space-y-6">

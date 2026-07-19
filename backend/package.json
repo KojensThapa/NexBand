@@ -10,7 +10,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/app.test.ts"
+    "test": "tsx --test tests/app.test.ts tests/reading.service.test.ts tests/listening.user.test.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",

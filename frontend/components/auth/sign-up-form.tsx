@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AuthError, registerUser } from "@/lib/auth/local-auth";
+import { registerApiUser } from "@/services/auth";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -24,11 +24,14 @@ export function SignUpForm() {
     setIsSubmitting(true);
 
     try {
-      registerUser({ name, email, password, confirmPassword });
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+      await registerApiUser({ name, email, password });
       router.push("/auth/signin?registered=1");
       router.refresh();
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Sign up failed. Please try again.");
+      setError(err instanceof Error ? err.message : "Sign up failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getListeningTaskHref,
   LISTENING_MOCK_TESTS,
@@ -9,6 +9,10 @@ import {
 import { buildAdminListeningMockTests } from "@/lib/admin/listening-to-exam";
 import { useAdminListeningTests } from "@/hooks/useAdminListeningTests";
 import type { ListeningMockTest } from "@/types/listening";
+import {
+  getPublishedListeningTests,
+  type ListeningTestCard,
+} from "@/services/listening";
 import { cn } from "@/lib/utils";
 
 const ICON_STYLES: Record<
@@ -55,7 +59,10 @@ function MockTestCard({
   test,
   backHref,
 }: {
-  test: ListeningMockTest;
+  test: Pick<
+    ListeningMockTest,
+    "id" | "title" | "typeLabel" | "iconStyle" | "isBackendTest"
+  >;
   backHref?: string;
 }) {
   const style = ICON_STYLES[test.iconStyle];
@@ -92,30 +99,49 @@ function MockTestCard({
         </Link>
       </div>
 
-      <div className="mt-4 border-t border-slate-100 pt-4">
-        <p className="text-sm text-slate-500">Practice by part:</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {([1, 2, 3, 4] as const).map((part) => (
-            <Link
-              key={part}
-              href={getListeningTaskHref(test.id, { part, backHref })}
-              className="rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800 transition-colors hover:bg-violet-100"
-            >
-              Part {part}
-            </Link>
-          ))}
+      {!test.isBackendTest ? (
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="text-sm text-slate-500">Practice by part:</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {([1, 2, 3, 4] as const).map((part) => (
+              <Link
+                key={part}
+                href={getListeningTaskHref(test.id, { part, backHref })}
+                className="rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800 transition-colors hover:bg-violet-100"
+              >
+                Part {part}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
     </article>
   );
 }
 
 export function ListeningTaskBoard({ backHref }: { backHref?: string } = {}) {
   const { tests: adminTests } = useAdminListeningTests();
+  const [publishedTests, setPublishedTests] = useState<ListeningTestCard[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    void getPublishedListeningTests()
+      .then((tests) => {
+        if (active) setPublishedTests(tests);
+      })
+      // Static fixtures remain available when the API is not running during UI work.
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const allMocks = useMemo(() => {
     const adminMocks = buildAdminListeningMockTests(adminTests, { publishedOnly: true });
-    return [...LISTENING_MOCK_TESTS, ...adminMocks];
-  }, [adminTests]);
+    return [...publishedTests, ...LISTENING_MOCK_TESTS, ...adminMocks];
+  }, [adminTests, publishedTests]);
 
   return (
     <div className="space-y-6">

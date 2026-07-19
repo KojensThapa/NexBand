@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { loginUser, AuthError } from "@/lib/auth/local-auth";
 import { setSessionCookie } from "@/lib/auth/session";
+import { loginApiUser } from "@/services/auth";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -31,13 +31,13 @@ export function SignInForm({ callbackUrl = "/dashboard", registered, passwordRes
     setIsSubmitting(true);
 
     try {
-      const user = loginUser({ email, password });
+      const user = await loginApiUser({ email, password });
       setUser(user);
       setSessionCookie();
       router.push(callbackUrl);
       router.refresh();
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Sign in failed. Please try again.");
+      setError(err instanceof Error ? err.message : "Sign in failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

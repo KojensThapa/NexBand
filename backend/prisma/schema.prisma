@@ -46,6 +46,11 @@ enum ListeningIconStyle {
   microphone
 }
 
+enum ListeningAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
 enum SpeakingCategory {
   MOCK
   PART_1
@@ -69,12 +74,28 @@ enum WritingTask1Type {
   PIE
 }
 
+enum WritingAttemptStatus {
+  DRAFT
+  PENDING_ANALYSIS
+}
+
+enum ReadingAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
 model User {
   id        String   @id @default(cuid())
   fullName  String
   email     String   @unique
   password  String
   role      Role     @default(USER)
+
+  readingAttempts ReadingAttempt[]
+  readingResults  ReadingResult[]
+  listeningAttempts ListeningAttempt[]
+  listeningResults  ListeningResult[]
+  writingAttempts WritingAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -92,6 +113,7 @@ model ReadingMockTest {
   isPublished    Boolean  @default(false)
 
   passages       ReadingPassage[]
+  attempts       ReadingAttempt[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -149,6 +171,47 @@ model ReadingQuestion {
   @@unique([passageId, questionNumber])
 }
 
+model ReadingAttempt {
+  id          String               @id @default(cuid())
+  userId      String
+  mockTestId  String
+  status      ReadingAttemptStatus @default(IN_PROGRESS)
+  // Stored as { [readingQuestionId]: answer } to match the frontend session
+  // state and support autosaving individual answers.
+  answers     Json
+  startedAt   DateTime             @default(now())
+  submittedAt DateTime?
+  updatedAt   DateTime             @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mockTest ReadingMockTest @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  result   ReadingResult?
+
+  @@index([userId, updatedAt])
+  @@index([mockTestId])
+}
+
+model ReadingResult {
+  id               String   @id @default(cuid())
+  attemptId        String   @unique
+  userId           String
+  correctAnswers   Int
+  totalQuestions   Int
+  rawScore         Int
+  totalMarks       Int
+  percentage       Float
+  // This is a deliberately simple provisional estimate. A future scoring
+  // engine can replace it while retaining the attempt and answer history.
+  bandScore        Float
+  algorithmVersion String   @default("basic-v1")
+  createdAt        DateTime @default(now())
+
+  attempt ReadingAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
 model ListeningMockTest {
   id String @id @default(cuid())
 
@@ -160,6 +223,7 @@ model ListeningMockTest {
   isPublished    Boolean            @default(false)
 
   parts ListeningPart[]
+  attempts ListeningAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -204,6 +268,46 @@ model ListeningQuestion {
   updatedAt DateTime @updatedAt
 
   @@unique([partId, questionNumber])
+}
+
+model ListeningAttempt {
+  id          String                 @id @default(cuid())
+  userId      String
+  mockTestId  String
+  status      ListeningAttemptStatus @default(IN_PROGRESS)
+  // Map of ListeningQuestion ID to the answer currently entered by the learner.
+  answers     Json
+  startedAt   DateTime               @default(now())
+  submittedAt DateTime?
+  updatedAt   DateTime               @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mockTest ListeningMockTest @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  result   ListeningResult?
+
+  @@index([userId, updatedAt])
+  @@index([mockTestId])
+}
+
+model ListeningResult {
+  id               String   @id @default(cuid())
+  attemptId        String   @unique
+  userId           String
+  correctAnswers   Int
+  totalQuestions   Int
+  rawScore         Int
+  totalMarks       Int
+  percentage       Float
+  // Deliberately provisional. A future IELTS scoring engine can replace it
+  // without losing completed attempts or answer history.
+  bandScore        Float
+  algorithmVersion String   @default("basic-v1")
+  createdAt        DateTime @default(now())
+
+  attempt ListeningAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model SpeakingMockTest {
@@ -265,6 +369,7 @@ model WritingTest {
   isPublished Boolean         @default(false)
 
   tasks WritingTask[]
+  attempts WritingAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -284,9 +389,43 @@ model WritingTask {
   imageAlt String?
 
   test WritingTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  essays WritingEssay[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([testId, taskNumber])
+}
+
+model WritingAttempt {
+  id          String               @id @default(cuid())
+  userId      String
+  testId      String
+  status      WritingAttemptStatus @default(DRAFT)
+  startedAt   DateTime             @default(now())
+  submittedAt DateTime?
+  updatedAt   DateTime             @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test    WritingTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  essays  WritingEssay[]
+
+  @@index([userId, updatedAt])
+  @@index([testId])
+}
+
+model WritingEssay {
+  id        String   @id @default(cuid())
+  attemptId String
+  taskId    String
+  content   String   @db.Text
+  wordCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attempt WritingAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  task    WritingTask    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, taskId])
+  @@index([taskId])
 }

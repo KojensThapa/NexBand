@@ -1,8 +1,9 @@
-import { ListeningRepository } from "./listening.repository";
-import { CreateListeningMockTestInput } from "./listening.schemas";
+import { ListeningAdminRepository } from "./listening.admin.repository";
+import type { CreateListeningMockTestInput } from "../listening.schemas";
 
-export class ListeningService {
-  private listeningRepository = new ListeningRepository();
+/** Validation and use-cases for administrative Listening test authoring. */
+export class ListeningAdminService {
+  constructor(private readonly listeningRepository = new ListeningAdminRepository()) {}
 
   private validateMockTest(data: CreateListeningMockTestInput) {
     if (data.parts.length !== 4) {
@@ -44,11 +45,7 @@ export class ListeningService {
 
   async createMockTest(data: CreateListeningMockTestInput) {
     const totalQuestions = this.validateMockTest(data);
-
-    return this.listeningRepository.createMockTest({
-      ...data,
-      totalQuestions,
-    });
+    return this.listeningRepository.createMockTest({ ...data, totalQuestions });
   }
 
   async getAllMockTests() {
@@ -61,7 +58,6 @@ export class ListeningService {
 
   async updateMockTest(id: string, data: CreateListeningMockTestInput) {
     const totalQuestions = this.validateMockTest(data);
-
     return this.listeningRepository.update(id, data, totalQuestions);
   }
 
@@ -75,23 +71,5 @@ export class ListeningService {
 
   async unpublishMockTest(id: string) {
     return this.listeningRepository.unpublish(id);
-  }
-
-  async getPublishedTests(page: number, limit: number) {
-    const { tests, total } = await this.listeningRepository.findPublished(page, limit);
-
-    return {
-      tests,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  }
-
-  async getPublishedTestById(id: string) {
-    return this.listeningRepository.findPublishedById(id);
   }
 }
