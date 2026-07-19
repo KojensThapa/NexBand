@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { buildApp } from "../src/app";
 
-test("service status and reading-route guards are available without a database", async (t) => {
+test("service status and route guards are available without a database", async (t) => {
   const app = await buildApp();
   t.after(async () => app.close());
 
@@ -11,18 +11,18 @@ test("service status and reading-route guards are available without a database",
   assert.equal(health.statusCode, 200);
   assert.equal(health.json().success, true);
 
-  const invalidPage = await app.inject({
+  const invalidReadingPage = await app.inject({
     method: "GET",
     url: "/api/reading/tests?limit=51",
   });
-  assert.equal(invalidPage.statusCode, 400);
-  assert.equal(invalidPage.json().success, false);
+  assert.equal(invalidReadingPage.statusCode, 400);
+  assert.equal(invalidReadingPage.json().success, false);
 
-  const unauthenticatedStart = await app.inject({
+  const unauthenticatedReadingStart = await app.inject({
     method: "POST",
     url: "/api/reading/tests/test-id/attempts",
   });
-  assert.equal(unauthenticatedStart.statusCode, 401);
+  assert.equal(unauthenticatedReadingStart.statusCode, 401);
 
   const invalidListeningPage = await app.inject({
     method: "GET",
@@ -36,4 +36,16 @@ test("service status and reading-route guards are available without a database",
     url: "/api/listening/tests/test-id/attempts",
   });
   assert.equal(unauthenticatedListeningStart.statusCode, 401);
+
+  const invalidSpeakingQuery = await app.inject({
+    method: "GET",
+    url: "/api/speaking/tests?limit=51",
+  });
+  assert.equal(invalidSpeakingQuery.statusCode, 400);
+
+  const unauthenticatedSpeakingStart = await app.inject({
+    method: "POST",
+    url: "/api/speaking/tests/test-id/attempts",
+  });
+  assert.equal(unauthenticatedSpeakingStart.statusCode, 401);
 });

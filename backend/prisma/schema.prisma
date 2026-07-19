@@ -58,6 +58,16 @@ enum SpeakingCategory {
   PART_3
 }
 
+enum SpeakingAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum SpeakingEvaluationMode {
+  BASIC
+  AI
+}
+
 enum WritingCategory {
   MOCK
   TASK_1
@@ -91,14 +101,105 @@ model User {
   password  String
   role      Role     @default(USER)
 
-  readingAttempts ReadingAttempt[]
-  readingResults  ReadingResult[]
+  readingAttempts   ReadingAttempt[]
+  readingResults    ReadingResult[]
   listeningAttempts ListeningAttempt[]
   listeningResults  ListeningResult[]
-  writingAttempts WritingAttempt[]
+  writingAttempts   WritingAttempt[]
+  speakingAttempts  SpeakingAttempt[]
+  speakingResults   SpeakingResult[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SpeakingTest {
+  id          String           @id @default(cuid())
+  title       String
+  category    SpeakingCategory
+  isPublished Boolean          @default(false)
+
+  parts    SpeakingPart[]
+  attempts SpeakingAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SpeakingPart {
+  id         String @id @default(cuid())
+  testId     String
+  partNumber Int
+
+  cueCardTitle       String?
+  cueCardDescription String? @db.Text
+  bulletPoints       String[] @default([])
+  closingQuestion    String? @db.Text
+  preparationMinutes Int @default(1)
+  speakingMinutes    Int @default(2)
+  durationMinutes    Int @default(5)
+  topic              String?
+
+  questions SpeakingQuestion[]
+  test      SpeakingTest       @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([testId, partNumber])
+}
+
+model SpeakingQuestion {
+  id             String @id @default(cuid())
+  partId         String
+  questionNumber Int
+  text           String @db.Text
+
+  part SpeakingPart @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([partId, questionNumber])
+}
+
+model SpeakingAttempt {
+  id         String                @id @default(cuid())
+  userId     String
+  testId     String
+  status     SpeakingAttemptStatus @default(IN_PROGRESS)
+  recordings Json
+  startedAt  DateTime              @default(now())
+  submittedAt DateTime?
+  updatedAt DateTime @updatedAt
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test   SpeakingTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  result SpeakingResult?
+
+  @@index([userId, updatedAt])
+  @@index([testId])
+}
+
+model SpeakingResult {
+  id                   String                 @id @default(cuid())
+  attemptId            String                 @unique
+  userId               String
+  recordingCount       Int
+  totalQuestions       Int
+  totalDurationSeconds Int
+  completionPercentage Float
+  basicScore           Float
+  estimatedBandScore   Float
+  evaluationMode       SpeakingEvaluationMode @default(BASIC)
+  algorithmVersion     String                 @default("basic-v1")
+  feedback             Json?
+  createdAt            DateTime               @default(now())
+
+  attempt SpeakingAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model ReadingMockTest {
@@ -308,58 +409,6 @@ model ListeningResult {
   user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
-}
-
-model SpeakingMockTest {
-  id          String           @id @default(cuid())
-  title       String
-  category    SpeakingCategory
-  isPublished Boolean          @default(false)
-
-  parts SpeakingPart[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model SpeakingPart {
-  id         String @id @default(cuid())
-  mockTestId String
-  partNumber Int
-
-  // Part 2 fields. They remain nullable for standalone Part 1 and Part 3
-  // practice content, while defaults preserve the frontend's expected shape.
-  cueCardTitle       String?
-  cueCardDescription String? @db.Text
-  bulletPoints       String[] @default([])
-  closingQuestion    String? @db.Text
-  preparationMinutes Int @default(1)
-  speakingMinutes    Int @default(2)
-
-  // Part 3 field.
-  topic String?
-
-  questions SpeakingQuestion[]
-  mockTest  SpeakingMockTest  @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([mockTestId, partNumber])
-}
-
-model SpeakingQuestion {
-  id             String @id @default(cuid())
-  partId         String
-  questionNumber Int
-  text           String @db.Text
-
-  part SpeakingPart @relation(fields: [partId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([partId, questionNumber])
 }
 
 model WritingTest {
