@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 
 import { authenticate } from "../../../middleware/authenticate";
+import { authorize } from "../../../middleware/authorize";
 import {
   publishedReadingTestsQuerySchema,
   saveReadingAnswersSchema,
@@ -9,6 +10,7 @@ import {
 import { ReadingUserController } from "./reading.user.controller";
 
 const readingUserController = new ReadingUserController();
+const userOnly = [authenticate, authorize("USER")];
 
 function validationFailed(reply: FastifyReply, errors: unknown) {
   return reply.status(400).send({
@@ -33,13 +35,13 @@ export async function registerReadingUserRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     "/tests/:id/attempts",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => readingUserController.startAttempt(request as any, reply)
   );
 
   fastify.put(
     "/attempts/:id/answers",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => {
       const parsed = saveReadingAnswersSchema.safeParse(request.body);
       if (!parsed.success) return validationFailed(reply, parsed.error.flatten().fieldErrors);
@@ -51,7 +53,7 @@ export async function registerReadingUserRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     "/attempts/:id/submit",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => {
       const parsed = submitReadingAttemptSchema.safeParse(request.body ?? {});
       if (!parsed.success) return validationFailed(reply, parsed.error.flatten().fieldErrors);
@@ -63,7 +65,7 @@ export async function registerReadingUserRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/attempts/:id/result",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => readingUserController.getResult(request as any, reply)
   );
 }

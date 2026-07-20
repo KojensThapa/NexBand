@@ -42,6 +42,7 @@ function toPublicUser(user: StoredUser): User {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: "USER",
     image: user.image,
     createdAt: user.createdAt,
   };
@@ -101,6 +102,7 @@ export function registerUser(input: {
     name,
     email,
     password,
+    role: "USER",
     createdAt: new Date().toISOString(),
   };
 

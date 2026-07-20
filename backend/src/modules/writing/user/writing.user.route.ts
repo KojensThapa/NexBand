@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 
 import { authenticate } from "../../../middleware/authenticate";
+import { authorize } from "../../../middleware/authorize";
 import {
   publishedWritingTestsQuerySchema,
   saveWritingDraftSchema,
@@ -9,6 +10,7 @@ import {
 import { WritingUserController } from "./writing.user.controller";
 
 const writingUserController = new WritingUserController();
+const userOnly = [authenticate, authorize("USER")];
 
 function validationFailed(reply: FastifyReply, errors: unknown) {
   return reply.status(400).send({
@@ -32,11 +34,11 @@ export async function registerWritingUserRoutes(fastify: FastifyInstance) {
     writingUserController.getPublishedTestById(request as never, reply)
   );
 
-  fastify.post("/tests/:id/attempts", { preHandler: authenticate }, async (request, reply) =>
+  fastify.post("/tests/:id/attempts", { preHandler: userOnly }, async (request, reply) =>
     writingUserController.startAttempt(request as never, reply)
   );
 
-  fastify.put("/attempts/:id/draft", { preHandler: authenticate }, async (request, reply) => {
+  fastify.put("/attempts/:id/draft", { preHandler: userOnly }, async (request, reply) => {
     const parsed = saveWritingDraftSchema.safeParse(request.body);
     if (!parsed.success) return validationFailed(reply, parsed.error.flatten().fieldErrors);
 
@@ -44,7 +46,7 @@ export async function registerWritingUserRoutes(fastify: FastifyInstance) {
     return writingUserController.saveDraft(request as never, reply);
   });
 
-  fastify.post("/attempts/:id/submit", { preHandler: authenticate }, async (request, reply) => {
+  fastify.post("/attempts/:id/submit", { preHandler: userOnly }, async (request, reply) => {
     const parsed = submitWritingAttemptSchema.safeParse(request.body ?? {});
     if (!parsed.success) return validationFailed(reply, parsed.error.flatten().fieldErrors);
 

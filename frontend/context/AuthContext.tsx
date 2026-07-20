@@ -10,12 +10,12 @@ import {
   type ReactNode,
 } from "react";
 import {
-  clearAuthStorage,
+  clearUserSession,
   getStoredSessionUser,
   persistSessionUser,
-} from "@/lib/auth/local-auth";
+} from "@/lib/auth/client-session";
 import { clearSessionCookie } from "@/lib/auth/session";
-import { signOutApiUser } from "@/services/auth";
+import { getCurrentUser, signOutApiUser } from "@/services/auth";
 import type { User } from "@/types/user";
 
 interface AuthContextValue {
@@ -32,8 +32,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setUserState(getStoredSessionUser());
-    setIsLoading(false);
+    let isMounted = true;
+
+    async function restoreSession() {
+      const storedUser = getStoredSessionUser();
+      if (isMounted) setUserState(storedUser);
+
+      const currentUser = await getCurrentUser();
+      if (!isMounted) return;
+
+      if (currentUser) {
+        setUserState(currentUser);
+        persistSessionUser(currentUser);
+      } else {
+        setUserState(null);
+        clearUserSession();
+        clearSessionCookie();
+      }
+
+      setIsLoading(false);
+    }
+
+    void restoreSession();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const setUser = useCallback((nextUser: User | null) => {
@@ -43,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => {
     setUserState(null);
-    clearAuthStorage();
+    clearUserSession();
     clearSessionCookie();
     signOutApiUser();
   }, []);

@@ -100,6 +100,9 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(USER)
+  // Profile photos are stored as a validated data URL for now. Keeping this
+  // nullable lets an account fall back to its initials after a photo is removed.
+  image     String?  @db.Text
 
   readingAttempts   ReadingAttempt[]
   readingResults    ReadingResult[]

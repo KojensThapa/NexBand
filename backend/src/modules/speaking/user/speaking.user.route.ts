@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 
 import { authenticate } from "../../../middleware/authenticate";
+import { authorize } from "../../../middleware/authorize";
 import {
   publishedSpeakingTestsQuerySchema,
   saveSpeakingRecordingsSchema,
@@ -9,6 +10,7 @@ import {
 import { SpeakingUserController } from "./speaking.user.controller";
 
 const speakingUserController = new SpeakingUserController();
+const userOnly = [authenticate, authorize("USER")];
 
 function validationFailed(reply: FastifyReply, errors: unknown) {
   return reply.status(400).send({
@@ -33,19 +35,19 @@ export async function registerSpeakingUserRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     "/tests/:id/attempts",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => speakingUserController.startAttempt(request as any, reply)
   );
 
   fastify.get(
     "/attempts/:id",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => speakingUserController.getAttempt(request as any, reply)
   );
 
   fastify.put(
     "/attempts/:id/recordings",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => {
       const parsed = saveSpeakingRecordingsSchema.safeParse(request.body);
       if (!parsed.success) return validationFailed(reply, parsed.error.flatten().fieldErrors);
@@ -57,7 +59,7 @@ export async function registerSpeakingUserRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     "/attempts/:id/submit",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => {
       const parsed = submitSpeakingAttemptSchema.safeParse(request.body ?? {});
       if (!parsed.success) return validationFailed(reply, parsed.error.flatten().fieldErrors);
@@ -69,7 +71,7 @@ export async function registerSpeakingUserRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/attempts/:id/result",
-    { preHandler: authenticate },
+    { preHandler: userOnly },
     async (request, reply) => speakingUserController.getResult(request as any, reply)
   );
 }

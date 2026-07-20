@@ -1,5 +1,7 @@
--- CreateEnum
-CREATE TYPE "SpeakingCategory" AS ENUM ('MOCK', 'PART_1', 'PART_2', 'PART_3');
+-- The earlier 20260718193000 migration already created the base speaking
+-- models. Upgrade those tables in place so existing authored tests and
+-- questions are preserved rather than attempting to recreate their enum and
+-- tables.
 
 -- CreateEnum
 CREATE TYPE "SpeakingAttemptStatus" AS ENUM ('IN_PROGRESS', 'SUBMITTED');
@@ -7,48 +9,14 @@ CREATE TYPE "SpeakingAttemptStatus" AS ENUM ('IN_PROGRESS', 'SUBMITTED');
 -- CreateEnum
 CREATE TYPE "SpeakingEvaluationMode" AS ENUM ('BASIC', 'AI');
 
--- CreateTable
-CREATE TABLE "SpeakingTest" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "category" "SpeakingCategory" NOT NULL,
-    "isPublished" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+-- Rename the existing base test model to the final API model.
+ALTER TABLE "SpeakingMockTest" RENAME TO "SpeakingTest";
+ALTER TABLE "SpeakingTest" RENAME CONSTRAINT "SpeakingMockTest_pkey" TO "SpeakingTest_pkey";
 
-    CONSTRAINT "SpeakingTest_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SpeakingPart" (
-    "id" TEXT NOT NULL,
-    "testId" TEXT NOT NULL,
-    "partNumber" INTEGER NOT NULL,
-    "cueCardTitle" TEXT,
-    "cueCardDescription" TEXT,
-    "bulletPoints" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "closingQuestion" TEXT,
-    "preparationMinutes" INTEGER NOT NULL DEFAULT 1,
-    "speakingMinutes" INTEGER NOT NULL DEFAULT 2,
-    "durationMinutes" INTEGER NOT NULL DEFAULT 5,
-    "topic" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "SpeakingPart_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SpeakingQuestion" (
-    "id" TEXT NOT NULL,
-    "partId" TEXT NOT NULL,
-    "questionNumber" INTEGER NOT NULL,
-    "text" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "SpeakingQuestion_pkey" PRIMARY KEY ("id")
-);
+ALTER TABLE "SpeakingPart" RENAME COLUMN "mockTestId" TO "testId";
+ALTER TABLE "SpeakingPart" RENAME CONSTRAINT "SpeakingPart_mockTestId_fkey" TO "SpeakingPart_testId_fkey";
+ALTER INDEX "SpeakingPart_mockTestId_partNumber_key" RENAME TO "SpeakingPart_testId_partNumber_key";
+ALTER TABLE "SpeakingPart" ADD COLUMN "durationMinutes" INTEGER NOT NULL DEFAULT 5;
 
 -- CreateTable
 CREATE TABLE "SpeakingAttempt" (
@@ -84,12 +52,6 @@ CREATE TABLE "SpeakingResult" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SpeakingPart_testId_partNumber_key" ON "SpeakingPart"("testId", "partNumber");
-
--- CreateIndex
-CREATE UNIQUE INDEX "SpeakingQuestion_partId_questionNumber_key" ON "SpeakingQuestion"("partId", "questionNumber");
-
--- CreateIndex
 CREATE INDEX "SpeakingAttempt_userId_updatedAt_idx" ON "SpeakingAttempt"("userId", "updatedAt");
 
 -- CreateIndex
@@ -100,12 +62,6 @@ CREATE UNIQUE INDEX "SpeakingResult_attemptId_key" ON "SpeakingResult"("attemptI
 
 -- CreateIndex
 CREATE INDEX "SpeakingResult_userId_createdAt_idx" ON "SpeakingResult"("userId", "createdAt");
-
--- AddForeignKey
-ALTER TABLE "SpeakingPart" ADD CONSTRAINT "SpeakingPart_testId_fkey" FOREIGN KEY ("testId") REFERENCES "SpeakingTest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SpeakingQuestion" ADD CONSTRAINT "SpeakingQuestion_partId_fkey" FOREIGN KEY ("partId") REFERENCES "SpeakingPart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SpeakingAttempt" ADD CONSTRAINT "SpeakingAttempt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

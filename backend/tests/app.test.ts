@@ -48,4 +48,35 @@ test("service status and route guards are available without a database", async (
     url: "/api/speaking/tests/test-id/attempts",
   });
   assert.equal(unauthenticatedSpeakingStart.statusCode, 401);
+
+  const userToken = app.jwt.sign({
+    id: "user-id",
+    email: "user@example.com",
+    role: "USER",
+  });
+  const forbiddenAdminRequest = await app.inject({
+    method: "GET",
+    url: "/api/auth/admin-test",
+    headers: { authorization: `Bearer ${userToken}` },
+  });
+  assert.equal(forbiddenAdminRequest.statusCode, 403);
+
+  const adminToken = app.jwt.sign({
+    id: "admin-id",
+    email: "admin@example.com",
+    role: "ADMIN",
+  });
+  const permittedAdminRequest = await app.inject({
+    method: "GET",
+    url: "/api/auth/admin-test",
+    headers: { authorization: `Bearer ${adminToken}` },
+  });
+  assert.equal(permittedAdminRequest.statusCode, 200);
+
+  const forbiddenLearnerRequest = await app.inject({
+    method: "POST",
+    url: "/api/reading/tests/test-id/attempts",
+    headers: { authorization: `Bearer ${adminToken}` },
+  });
+  assert.equal(forbiddenLearnerRequest.statusCode, 403);
 });

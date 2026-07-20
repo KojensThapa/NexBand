@@ -31,9 +31,9 @@ export function SignInForm({ callbackUrl = "/dashboard", registered, passwordRes
     setIsSubmitting(true);
 
     try {
-      const user = await loginApiUser({ email, password });
+      const { user, token } = await loginApiUser({ email, password });
       setUser(user);
-      setSessionCookie();
+      setSessionCookie(token);
       router.push(callbackUrl);
       router.refresh();
     } catch (err) {

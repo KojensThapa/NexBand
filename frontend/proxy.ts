@@ -4,7 +4,9 @@ import type { NextRequest } from "next/server";
 const userProtectedPrefixes = ["/dashboard", "/profile", "/test", "/result"];
 const adminProtectedPrefixes = ["/admin/dashboard"];
 
-export function middleware(request: NextRequest) {
+// This is an optimistic navigation guard. The Fastify API verifies the JWT and
+// role again before allowing access to any account or protected application data.
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isUserProtected = userProtectedPrefixes.some((prefix) =>
@@ -15,7 +17,7 @@ export function middleware(request: NextRequest) {
   );
 
   if (isAdminProtected) {
-    const hasAdminSession = request.cookies.has("nexband_admin_session");
+    const hasAdminSession = Boolean(request.cookies.get("nexband_admin_session")?.value);
 
     if (!hasAdminSession) {
       const signIn = new URL("/admin/auth/signin", request.url);
@@ -30,8 +32,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // TODO: validate session cookie / JWT when auth is wired
-  const hasSession = request.cookies.has("nexband_session");
+  const hasSession = Boolean(request.cookies.get("nexband_session")?.value);
 
   if (!hasSession) {
     const signIn = new URL("/auth/signin", request.url);

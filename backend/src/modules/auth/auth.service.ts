@@ -50,14 +50,44 @@
 //   }
 // }
 import bcrypt from "bcrypt";
+import type { Role } from "@prisma/client";
 import { AuthRepository } from "./auth.repository";
-import { RegisterInput } from "./auth.schemas";
-import { LoginInput } from "./auth.schemas";
+import type { LoginInput, RegisterInput, UpdateProfileInput } from "./auth.schemas";
+
+type PublicUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: Role;
+  image: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export class AuthService {
   private authRepository = new AuthRepository();
 
-  async register(data: RegisterInput) {
+  private toPublicUser(user: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: Role;
+    image: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): PublicUser {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      image: user.image,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
+
+  async register(data: RegisterInput, role: Role) {
     // Check if email already exists
     const existingUser = await this.authRepository.findUserByEmail(data.email);
 
@@ -72,22 +102,17 @@ export class AuthService {
     const user = await this.authRepository.createUser({
       ...data,
       password: hashedPassword,
+      role,
     });
 
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-    };
+    return this.toPublicUser(user);
   }
 
-    async login(data: LoginInput) {
+  async login(data: LoginInput, role: Role) {
     // Find user by email
     const user = await this.authRepository.findUserByEmail(data.email);
 
-    if (!user) {
+    if (!user || user.role !== role) {
       throw new Error("Invalid email or password");
     }
 
@@ -101,14 +126,25 @@ export class AuthService {
       throw new Error("Invalid email or password");
     }
 
-    // JWT token will be added next
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-    };
+    return this.toPublicUser(user);
+  }
+
+  async getUser(id: string) {
+    const user = await this.authRepository.findUserById(id);
+    if (!user) throw new Error("Account not found");
+
+    return this.toPublicUser(user);
+  }
+
+  async updateProfile(id: string, data: UpdateProfileInput) {
+    await this.getUser(id);
+    const user = await this.authRepository.updateUser(id, data);
+    return this.toPublicUser(user);
+  }
+
+  async deleteAccount(id: string) {
+    await this.getUser(id);
+    await this.authRepository.deleteUser(id);
   }
 }
 

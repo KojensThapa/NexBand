@@ -4,12 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ProfileAvatar } from "@/components/ui/profile-avatar";
-import {
-  AdminAuthError,
-  deleteAdminAccount,
-  updateAdminProfile,
-} from "@/lib/admin/auth/local-admin-auth";
-import { clearAdminSessionCookie } from "@/lib/admin/auth/session";
+import { deleteCurrentAccount, updateCurrentAdmin } from "@/services/user";
 import { cn } from "@/lib/utils";
 
 const MAX_PROFILE_IMAGE_MB = 2;
@@ -64,7 +59,7 @@ export function AdminProfileSection() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleSave(event: React.FormEvent) {
+  async function handleSave(event: React.FormEvent) {
     event.preventDefault();
     if (!admin) return;
 
@@ -73,7 +68,7 @@ export function AdminProfileSection() {
     setIsSaving(true);
 
     try {
-      const updated = updateAdminProfile(admin.id, { name, image });
+      const updated = await updateCurrentAdmin({ name, image: image ?? null });
       setAdmin(updated);
       setSuccess("Profile updated successfully.");
 
@@ -83,9 +78,7 @@ export function AdminProfileSection() {
         router.replace("/admin/dashboard?section=overview");
       }, 1_000);
     } catch (err) {
-      setError(
-        err instanceof AdminAuthError ? err.message : "Failed to update profile."
-      );
+      setError(err instanceof Error ? err.message : "Failed to update profile.");
     } finally {
       setIsSaving(false);
     }
@@ -97,22 +90,19 @@ export function AdminProfileSection() {
     router.refresh();
   }
 
-  function handleDeleteAccount() {
+  async function handleDeleteAccount() {
     if (!admin) return;
 
     setError(null);
     setIsDeleting(true);
 
     try {
-      deleteAdminAccount(admin.id);
+      await deleteCurrentAccount();
       signOut();
-      clearAdminSessionCookie();
       router.push("/admin/auth/signin");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof AdminAuthError ? err.message : "Failed to delete account."
-      );
+      setError(err instanceof Error ? err.message : "Failed to delete account.");
       setIsDeleting(false);
     }
   }

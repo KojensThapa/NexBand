@@ -10,11 +10,12 @@ import {
   type ReactNode,
 } from "react";
 import {
-  clearAdminAuthStorage,
+  clearAdminSession,
   getStoredAdminSession,
   persistAdminSession,
-} from "@/lib/admin/auth/local-admin-auth";
+} from "@/lib/auth/client-session";
 import { clearAdminSessionCookie } from "@/lib/admin/auth/session";
+import { getCurrentAdmin, signOutApiUser } from "@/services/auth";
 import type { Admin } from "@/types/admin";
 
 interface AdminAuthContextValue {
@@ -31,8 +32,31 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setAdminState(getStoredAdminSession());
-    setIsLoading(false);
+    let isMounted = true;
+
+    async function restoreSession() {
+      const storedAdmin = getStoredAdminSession();
+      if (isMounted) setAdminState(storedAdmin);
+
+      const currentAdmin = await getCurrentAdmin();
+      if (!isMounted) return;
+
+      if (currentAdmin) {
+        setAdminState(currentAdmin);
+        persistAdminSession(currentAdmin);
+      } else {
+        setAdminState(null);
+        clearAdminSession();
+        clearAdminSessionCookie();
+      }
+
+      setIsLoading(false);
+    }
+
+    void restoreSession();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const setAdmin = useCallback((nextAdmin: Admin | null) => {
@@ -42,8 +66,9 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => {
     setAdminState(null);
-    clearAdminAuthStorage();
+    clearAdminSession();
     clearAdminSessionCookie();
+    signOutApiUser();
   }, []);
 
   const value = useMemo(

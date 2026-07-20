@@ -4,12 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ProfileAvatar } from "@/components/ui/profile-avatar";
-import {
-  AuthError,
-  deleteUserAccount,
-  updateUserProfile,
-} from "@/lib/auth/local-auth";
-import { clearSessionCookie } from "@/lib/auth/session";
+import { deleteCurrentAccount, updateCurrentUser } from "@/services/user";
 import { cn } from "@/lib/utils";
 
 const MAX_PROFILE_IMAGE_MB = 2;
@@ -64,7 +59,7 @@ export function ProfileSection() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleSave(event: React.FormEvent) {
+  async function handleSave(event: React.FormEvent) {
     event.preventDefault();
     if (!user) return;
 
@@ -73,7 +68,7 @@ export function ProfileSection() {
     setIsSaving(true);
 
     try {
-      const updated = updateUserProfile(user.id, { name, image });
+      const updated = await updateCurrentUser({ name, image: image ?? null });
       setUser(updated);
       setSuccess("Profile updated successfully.");
 
@@ -83,7 +78,7 @@ export function ProfileSection() {
         router.replace("/dashboard");
       }, 1_000);
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Failed to update profile.");
+      setError(err instanceof Error ? err.message : "Failed to update profile.");
     } finally {
       setIsSaving(false);
     }
@@ -95,20 +90,19 @@ export function ProfileSection() {
     router.refresh();
   }
 
-  function handleDeleteAccount() {
+  async function handleDeleteAccount() {
     if (!user) return;
 
     setError(null);
     setIsDeleting(true);
 
     try {
-      deleteUserAccount(user.id);
+      await deleteCurrentAccount();
       signOut();
-      clearSessionCookie();
       router.push("/auth/signin");
       router.refresh();
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : "Failed to delete account.");
+      setError(err instanceof Error ? err.message : "Failed to delete account.");
       setIsDeleting(false);
     }
   }

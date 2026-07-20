@@ -74,14 +74,14 @@
 
 import { FastifyInstance } from "fastify";
 import { AuthController } from "./auth.controller";
-import { registerSchema, loginSchema} from "./auth.schemas";
+import { registerSchema, loginSchema, updateProfileSchema } from "./auth.schemas";
 import { authenticate } from "./auth.middleware";
 import { authorize } from "./role.middleware";
 
 const authController = new AuthController();
 
 export async function registerAuthRoutes(fastify: FastifyInstance) {
-  // fastify.post("/register", authController.register.bind(authController));
+  // A role is selected by the endpoint, never by untrusted client input.
   fastify.post("/register", async (request, reply) => {
     const result = registerSchema.safeParse(request.body);
 
@@ -93,7 +93,7 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
       });
     }
 
-    return authController.register(request as any, reply);
+    return authController.register(request as any, reply, "USER");
   });
 
   fastify.post("/login", async (request, reply) => {
@@ -106,7 +106,40 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
         errors: result.error.flatten().fieldErrors,
       });
     }
-    return authController.login(request as any, reply);
+    return authController.login(request as any, reply, "USER");
+  });
+
+  fastify.post("/admin/register", async (request, reply) => {
+    if (process.env.ALLOW_ADMIN_REGISTRATION === "false") {
+      return reply.status(403).send({
+        success: false,
+        message: "Admin registration is disabled.",
+      });
+    }
+
+    const result = registerSchema.safeParse(request.body);
+    if (!result.success) {
+      return reply.status(400).send({
+        success: false,
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
+    }
+
+    return authController.register(request as any, reply, "ADMIN");
+  });
+
+  fastify.post("/admin/login", async (request, reply) => {
+    const result = loginSchema.safeParse(request.body);
+    if (!result.success) {
+      return reply.status(400).send({
+        success: false,
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
+    }
+
+    return authController.login(request as any, reply, "ADMIN");
   });
 
   fastify.get(
@@ -116,6 +149,22 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
     },
     authController.me.bind(authController)
   );
+
+  fastify.patch("/me", { preHandler: authenticate }, async (request, reply) => {
+    const result = updateProfileSchema.safeParse(request.body);
+    if (!result.success) {
+      return reply.status(400).send({
+        success: false,
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
+    }
+
+    request.body = result.data;
+    return authController.updateProfile(request as any, reply);
+  });
+
+  fastify.delete("/me", { preHandler: authenticate }, authController.deleteAccount.bind(authController));
 
   fastify.get(
     "/admin-test",

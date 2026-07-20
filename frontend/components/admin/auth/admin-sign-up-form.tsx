@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AdminAuthError, registerAdmin } from "@/lib/admin/auth/local-admin-auth";
+import { registerApiAdmin } from "@/services/auth";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -24,12 +24,15 @@ export function AdminSignUpForm() {
     setIsSubmitting(true);
 
     try {
-      registerAdmin({ name, email, password, confirmPassword });
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+      await registerApiAdmin({ name, email, password });
       router.push("/admin/auth/signin?registered=1");
       router.refresh();
     } catch (err) {
       setError(
-        err instanceof AdminAuthError ? err.message : "Sign up failed. Please try again."
+        err instanceof Error ? err.message : "Sign up failed. Please try again."
       );
     } finally {
       setIsSubmitting(false);
@@ -82,10 +85,10 @@ export function AdminSignUpForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={6}
+          minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="At least 6 characters"
+          placeholder="8+ characters, uppercase, lowercase, and number"
           className={inputClass}
         />
       </div>
@@ -102,7 +105,7 @@ export function AdminSignUpForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={6}
+          minLength={8}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Re-enter your password"

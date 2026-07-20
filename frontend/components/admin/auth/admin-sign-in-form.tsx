@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { AdminAuthError, loginAdmin } from "@/lib/admin/auth/local-admin-auth";
+import { loginApiAdmin } from "@/services/auth";
 import { setAdminSessionCookie } from "@/lib/admin/auth/session";
 import { cn } from "@/lib/utils";
 
@@ -35,14 +35,14 @@ export function AdminSignInForm({
     setIsSubmitting(true);
 
     try {
-      const admin = loginAdmin({ email, password });
+      const { user: admin, token } = await loginApiAdmin({ email, password });
       setAdmin(admin);
-      setAdminSessionCookie();
+      setAdminSessionCookie(token);
       router.push(callbackUrl);
       router.refresh();
     } catch (err) {
       setError(
-        err instanceof AdminAuthError ? err.message : "Sign in failed. Please try again."
+        err instanceof Error ? err.message : "Sign in failed. Please try again."
       );
     } finally {
       setIsSubmitting(false);

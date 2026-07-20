@@ -42,6 +42,7 @@ function toPublicAdmin(admin: StoredAdmin): Admin {
     id: admin.id,
     name: admin.name,
     email: admin.email,
+    role: "ADMIN",
     image: admin.image,
     createdAt: admin.createdAt,
   };
@@ -101,6 +102,7 @@ export function registerAdmin(input: {
     name,
     email,
     password,
+    role: "ADMIN",
     createdAt: new Date().toISOString(),
   };
 
