@@ -5,6 +5,7 @@ import { ReadingSession } from "@/components/test/reading/reading-session";
 import { getReadingMockTest } from "@/lib/exams/ielts-reading";
 import { getAdminReadingTaskById } from "@/lib/admin/reading-to-exam";
 import { getAdminReadingTests } from "@/lib/admin/reading-storage";
+import { getPublishedReadingTest } from "@/services/reading";
 import type { ReadingMockTest } from "@/types/reading";
 
 interface ReadingTaskPageClientProps {
@@ -23,23 +24,43 @@ export function ReadingTaskPageClient({
   const [resolved, setResolved] = useState<ResolvedSession | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     const adminTests = getAdminReadingTests();
     const adminTask = getAdminReadingTaskById(adminTests, taskId, {
       publishedOnly: true,
     });
 
     if (adminTask) {
-      setResolved({ kind: "mock", mockTest: adminTask });
-      return;
+      void Promise.resolve(adminTask).then((test) => {
+        if (active) setResolved({ kind: "mock", mockTest: test });
+      });
+      return () => {
+        active = false;
+      };
     }
 
     const mockTest = getReadingMockTest(taskId);
     if (mockTest.id === taskId) {
-      setResolved({ kind: "mock", mockTest });
-      return;
+      void Promise.resolve(mockTest).then((test) => {
+        if (active) setResolved({ kind: "mock", mockTest: test });
+      });
+      return () => {
+        active = false;
+      };
     }
 
-    setResolved({ kind: "not-found" });
+    void getPublishedReadingTest(taskId)
+      .then((test) => {
+        if (active) setResolved({ kind: "mock", mockTest: test });
+      })
+      .catch(() => {
+        if (active) setResolved({ kind: "not-found" });
+      });
+
+    return () => {
+      active = false;
+    };
   }, [taskId]);
 
   if (!resolved) {

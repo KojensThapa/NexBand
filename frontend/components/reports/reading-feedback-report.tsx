@@ -18,6 +18,7 @@ export function ReadingFeedbackReport({ report, header }: ReadingFeedbackReportP
     overallScore: report.overallScore,
     status: "Completed",
     aiSummary: report.aiSummary,
+    summaryLabel: "Evaluation Summary",
   };
 
   return (
@@ -53,8 +54,10 @@ export function ReadingFeedbackReport({ report, header }: ReadingFeedbackReportP
           {report.sectionScores.map((section) => (
             <div key={section.label} className="space-y-2">
               <ScoreProgressBar
-                label={`${section.label} (${section.correct}/${section.total} correct)`}
+                label={`${section.label} (${section.correct}/${section.total} correct)${section.status ? ` · ${section.status}` : ""}`}
                 score={section.score}
+                maxScore={section.maxScore}
+                valueSuffix={section.maxScore === 100 ? "%" : undefined}
                 color="bg-violet-500"
               />
             </div>
@@ -67,8 +70,10 @@ export function ReadingFeedbackReport({ report, header }: ReadingFeedbackReportP
           {report.questionTypePerformance.map((entry) => (
             <ScoreProgressBar
               key={entry.type}
-              label={`${entry.type} (${entry.correct}/${entry.total})`}
+              label={`${entry.type} (${entry.correct}/${entry.total})${entry.status ? ` · ${entry.status}` : ""}`}
               score={entry.score}
+              maxScore={entry.maxScore}
+              valueSuffix={entry.maxScore === 100 ? "%" : undefined}
               color="bg-emerald-500"
             />
           ))}
@@ -80,7 +85,7 @@ export function ReadingFeedbackReport({ report, header }: ReadingFeedbackReportP
         <StrengthsList title="Weak Areas" items={report.weakAreas} variant="weakness" />
       </div>
 
-      <ReportCard title="AI Feedback Summary">
+      <ReportCard title="Evaluation Summary">
         <p className="text-sm leading-relaxed text-slate-600">{report.aiSummary}</p>
       </ReportCard>
 

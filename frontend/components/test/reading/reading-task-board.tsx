@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getReadingTaskHref,
   READING_MOCK_TESTS,
 } from "@/lib/exams/ielts-reading";
 import { buildAdminReadingMockTests } from "@/lib/admin/reading-to-exam";
 import { useAdminReadingTests } from "@/hooks/useAdminReadingTests";
+import { getPublishedReadingTests, type ReadingTestCard } from "@/services/reading";
 
 function PlayIcon({ className }: { className?: string }) {
   return (
@@ -67,17 +68,33 @@ function TaskCard({
 
 export function ReadingTaskBoard({ backHref }: { backHref?: string } = {}) {
   const { tests: adminTests } = useAdminReadingTests();
+  const [publishedTests, setPublishedTests] = useState<ReadingTestCard[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    void getPublishedReadingTests()
+      .then((tests) => {
+        if (active) setPublishedTests(tests);
+      })
+      // Static fixtures stay available when the API is not running during UI work.
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const cards = useMemo(() => {
     const adminMocks = buildAdminReadingMockTests(adminTests, { publishedOnly: true });
-    const allMocks = [...READING_MOCK_TESTS, ...adminMocks];
+    const allMocks = [...publishedTests, ...READING_MOCK_TESTS, ...adminMocks];
     return allMocks.map((mock) => ({
       id: mock.id,
       title: mock.title,
       typeLabel: `Full test · ${mock.totalMinutes} min`,
       href: getReadingTaskHref(mock.id, backHref),
     }));
-  }, [backHref, adminTests]);
+  }, [backHref, adminTests, publishedTests]);
 
   return (
     <div className="space-y-6">

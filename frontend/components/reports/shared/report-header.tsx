@@ -12,6 +12,7 @@ export function ReportHeader({
   cefrLevel,
   status = "Completed",
   aiSummary,
+  summaryLabel = "AI Summary",
   backHref,
   backLabel = "Back to My Reports",
   skillLabel,
@@ -65,7 +66,7 @@ export function ReportHeader({
 
         <div className="mt-6 rounded-xl border border-violet-100 bg-violet-50/60 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-[#553285]">
-            AI Summary
+            {summaryLabel}
           </p>
           <p className="mt-2 text-sm leading-relaxed text-slate-700">{aiSummary}</p>
         </div>

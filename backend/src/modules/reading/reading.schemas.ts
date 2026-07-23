@@ -9,6 +9,7 @@ export const readingQuestionSchema = z.object({
   type: z.enum([
     "MULTIPLE_CHOICE",
     "TRUE_FALSE_NOT_GIVEN",
+    "YES_NO_NOT_GIVEN",
     "MATCHING_HEADING",
     "MATCHING_INFORMATION",
     "MATCHING_FEATURES",

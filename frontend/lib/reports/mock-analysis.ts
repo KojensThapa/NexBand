@@ -350,14 +350,15 @@ export function createSavedReport(
   taskTitle: string,
   taskDescription: string,
   score: number,
-  detail: SavedReport["detail"]
+  detail: SavedReport["detail"],
+  status: SavedReport["status"] = "Completed"
 ): SavedReport {
   return {
     id: `report-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     skill,
     taskTitle,
     taskDescription,
-    status: "Completed",
+    status,
     score,
     createdAt: new Date().toISOString(),
     detail,

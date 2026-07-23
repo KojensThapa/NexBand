@@ -38,6 +38,8 @@ export interface SectionScoreEntry {
   score: number;
   correct: number;
   total: number;
+  maxScore?: number;
+  status?: "Attempted" | "Not Attempted";
 }
 
 export interface QuestionTypePerformanceEntry {
@@ -45,6 +47,8 @@ export interface QuestionTypePerformanceEntry {
   score: number;
   correct: number;
   total: number;
+  maxScore?: number;
+  status?: "Attempted" | "Not Attempted";
 }
 
 export interface WritingFeedbackDetail {
@@ -133,7 +137,7 @@ export interface SavedReport {
   skill: IeltsSkill;
   taskTitle: string;
   taskDescription: string;
-  status: "Completed";
+  status: "Completed" | "Incomplete";
   score: number;
   createdAt: string;
   detail:
@@ -150,6 +154,7 @@ export interface ReportHeaderMeta {
   cefrLevel?: string;
   status?: string;
   aiSummary: string;
+  summaryLabel?: string;
   backHref?: string;
   backLabel?: string;
 }

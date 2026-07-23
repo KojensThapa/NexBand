@@ -6,6 +6,7 @@ interface ScoreProgressBarProps {
   maxScore?: number;
   color?: string;
   showValue?: boolean;
+  valueSuffix?: string;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export function ScoreProgressBar({
   maxScore = 9,
   color = "bg-[#553285]",
   showValue = true,
+  valueSuffix = "",
   className,
 }: ScoreProgressBarProps) {
   const percentage = Math.min(100, Math.max(0, (score / maxScore) * 100));
@@ -25,7 +27,7 @@ export function ScoreProgressBar({
         <span className="text-sm font-medium text-slate-700">{label}</span>
         {showValue ? (
           <span className="text-sm font-semibold text-slate-900">
-            {score.toFixed(1)}
+            {score.toFixed(1)}{valueSuffix}
           </span>
         ) : null}
       </div>

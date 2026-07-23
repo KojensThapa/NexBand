@@ -1,6 +1,10 @@
 import { Prisma, ReadingAttemptStatus } from "@prisma/client";
 
-import { calculateBasicReadingScore } from "../algorithm/readingAlgorithm";
+import {
+  evaluateReadingTest,
+  type ReadingQuestionType,
+  type ReadingSection,
+} from "../algorithm/readingAlgorithm";
 import { ReadingRepository } from "../reading.repository";
 import type { ReadingAnswers } from "../reading.schemas";
 
@@ -48,12 +52,53 @@ function readAnswers(value: Prisma.JsonValue): ReadingAnswers {
   );
 }
 
+type EvaluationPassage = {
+  passageNumber: number;
+  questions: Array<{
+    id: string;
+    type: string;
+    correctAnswer: string[];
+  }>;
+};
+
+/** Adapts persisted Reading data to the pure evaluation algorithm's input. */
+function evaluateAttempt(passages: readonly EvaluationPassage[], answers: ReadingAnswers) {
+  const questions = passages.flatMap((passage) =>
+    passage.questions.map((question) => ({
+      id: question.id,
+      section: passage.passageNumber as ReadingSection,
+      type: question.type as ReadingQuestionType,
+      correctAnswer: question.correctAnswer,
+    }))
+  );
+  const report = evaluateReadingTest({ questions, answers });
+  const bandScore = report.overallBand ?? report.estimatedBand ?? 0;
+
+  return {
+    report,
+    persistedResult: {
+      correctAnswers: report.correctAnswers,
+      totalQuestions: report.totalQuestions,
+      // Reading is scored per question by this algorithm, irrespective of the
+      // legacy configurable marks field kept for older records.
+      rawScore: report.correctAnswers,
+      totalMarks: report.totalQuestions,
+      percentage: report.attemptAccuracy ?? 0,
+      bandScore,
+      algorithmVersion: "reading-evaluator-v1",
+      report: report as unknown as Prisma.InputJsonValue,
+    },
+  };
+}
+
 function toLearnerQuestionType(type: string) {
   switch (type) {
     case "MULTIPLE_CHOICE":
       return "multiple-choice" as const;
     case "TRUE_FALSE_NOT_GIVEN":
       return "true-false-not-given" as const;
+    case "YES_NO_NOT_GIVEN":
+      return "yes-no-not-given" as const;
     case "SHORT_ANSWER":
       return "short-answer" as const;
     case "MATCHING_HEADING":
@@ -189,12 +234,12 @@ export class ReadingUserService {
     };
     this.validateAnswers(new Set(questions.map((question) => question.id)), answers);
 
-    const score = calculateBasicReadingScore(questions, answers);
+    const { persistedResult } = evaluateAttempt(attempt.mockTest.passages, answers);
     const completed = await this.readingRepository.completeAttempt(
       userId,
       attemptId,
       answers,
-      score
+      persistedResult
     );
 
     if (!completed.attempt || !completed.result) {

@@ -38,6 +38,8 @@ export interface ReadingMockTest {
   title: string;
   totalMinutes: number;
   passages: ReadingPassage[];
+  /** True only for a published backend test with a persisted attempt and report. */
+  isBackendTest?: boolean;
 }
 
 export interface ReadingAnswer {

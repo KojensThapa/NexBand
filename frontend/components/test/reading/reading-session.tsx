@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnalysisLoader } from "@/components/reports/analysis-loader";
 import { SubmitTestButton } from "@/components/test/submit-test-button";
 import { useTimer } from "@/hooks/useTimer";
@@ -11,16 +11,62 @@ import {
   createSavedReport,
 } from "@/lib/reports/mock-analysis";
 import { saveReport } from "@/lib/reports/storage";
+import {
+  saveReadingAnswers,
+  startReadingAttempt,
+  submitReadingAttempt,
+  type ReadingResult,
+} from "@/services/reading";
 import { cn } from "@/lib/utils";
 import type {
   ReadingMockTest,
-  ReadingPassage,
   ReadingQuestion,
 } from "@/types/reading";
+import type { ReadingFeedbackDetail } from "@/types/report";
 
 interface ReadingSessionProps {
   mockTest: ReadingMockTest;
   backHref?: string;
+}
+
+function createBackendReadingDetail(
+  taskTitle: string,
+  result: ReadingResult
+): ReadingFeedbackDetail {
+  const evaluation = result.report;
+  const band = evaluation?.overallBand ?? evaluation?.estimatedBand ?? result.bandScore;
+  const accuracy = evaluation?.attemptAccuracy ?? result.percentage;
+
+  return {
+    taskTitle,
+    overallScore: band,
+    correctCount: evaluation?.correctAnswers ?? result.correctAnswers,
+    totalQuestions: evaluation?.totalQuestions ?? result.totalQuestions,
+    accuracyPercentage: accuracy,
+    timeTaken: "Recorded by your test session",
+    sectionScores: (evaluation?.sectionPerformance ?? []).map((section) => ({
+      label: `Section ${section.section}`,
+      score: section.accuracy ?? 0,
+      maxScore: 100,
+      correct: section.correct,
+      total: section.attempted + section.skipped,
+      status: section.status,
+    })),
+    questionTypePerformance: (evaluation?.questionTypePerformance ?? []).map((performance) => ({
+      type: performance.label,
+      score: performance.accuracy ?? 0,
+      maxScore: 100,
+      correct: performance.correct,
+      total: performance.total,
+      status: performance.status,
+    })),
+    strengths: evaluation?.strengths ?? [],
+    weakAreas: evaluation?.weakAreas ?? [],
+    aiSummary: evaluation
+      ? `${evaluation.status} submission: ${evaluation.correctAnswers} correct from ${evaluation.attemptedQuestions} attempted (${accuracy}% attempt accuracy). ${evaluation.status === "Completed" ? "Overall" : "Estimated"} Band ${band.toFixed(1)}.`
+      : `Your deterministic Reading score is ${result.correctAnswers} of ${result.totalQuestions}, with Band ${band.toFixed(1)}.`,
+    recommendedTopics: evaluation?.recommendations ?? [],
+  };
 }
 
 function QuestionInput({
@@ -79,6 +125,8 @@ export function ReadingSession({
   const searchParams = useSearchParams();
   const resolvedBackHref = searchParams.get("back") ?? backHref;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptError, setAttemptError] = useState<string | null>(null);
 
   const visiblePassages = mockTest.passages;
 
@@ -116,9 +164,74 @@ export function ReadingSession({
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  useEffect(() => {
+    if (!mockTest.isBackendTest) return;
+
+    let active = true;
+    void startReadingAttempt(mockTest.id)
+      .then(({ attempt }) => {
+        if (active) setAttemptId(attempt.id);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setAttemptError(
+            error instanceof Error ? error.message : "Could not start the reading attempt."
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [mockTest.id, mockTest.isBackendTest]);
+
+  useEffect(() => {
+    if (!attemptId || !mockTest.isBackendTest) return;
+
+    const timeout = window.setTimeout(() => {
+      void saveReadingAnswers(attemptId, answers).catch((error: unknown) => {
+        setAttemptError(
+          error instanceof Error ? error.message : "Answers could not be saved."
+        );
+      });
+    }, 600);
+
+    return () => window.clearTimeout(timeout);
+  }, [answers, attemptId, mockTest.isBackendTest]);
+
   const handleSubmit = useCallback(async () => {
     setIsAnalyzing(true);
     pause();
+
+    if (mockTest.isBackendTest) {
+      if (!attemptId) {
+        setAttemptError("Your attempt is not ready yet. Please sign in and wait a moment before submitting.");
+        setIsAnalyzing(false);
+        return;
+      }
+
+      try {
+        const { result } = await submitReadingAttempt(attemptId, answers);
+        const detail = createBackendReadingDetail(sessionTitle, result);
+        const report = createSavedReport(
+          "reading",
+          `IELTS Reading — ${sessionTitle}`,
+          `${detail.correctCount} of ${detail.totalQuestions} answers correct`,
+          detail.overallScore,
+          detail,
+          result.report?.status ?? "Completed"
+        );
+        saveReport(report);
+        router.push(`/report/${report.id}`);
+        return;
+      } catch (error) {
+        setAttemptError(
+          error instanceof Error ? error.message : "Your reading test could not be submitted."
+        );
+        setIsAnalyzing(false);
+        return;
+      }
+    }
 
     const detail = await analyzeReadingSubmission({
       taskTitle: sessionTitle,
@@ -146,7 +259,9 @@ export function ReadingSession({
   }, [
     allQuestions,
     answeredCount,
+    attemptId,
     answers,
+    mockTest.isBackendTest,
     pause,
     router,
     sessionTitle,
@@ -248,6 +363,12 @@ export function ReadingSession({
           </div>
         </div>
       </header>
+
+      {attemptError ? (
+        <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
+          {attemptError}
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <section className="flex w-1/2 flex-col overflow-y-auto border-r border-slate-200 bg-white p-4 sm:p-6">

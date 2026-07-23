@@ -36,6 +36,7 @@ export function ReportViewer({ report }: ReportViewerProps) {
           : report.skill === "reading"
             ? (report.detail as ReadingFeedbackDetail).aiSummary
             : (report.detail as ListeningFeedbackDetail).aiSummary,
+    ...(report.skill === "reading" ? { summaryLabel: "Evaluation Summary" } : {}),
     ...(report.skill === "writing" || report.skill === "speaking"
       ? {
           cefrLevel: (report.detail as WritingFeedbackDetail | SpeakingFeedbackDetail)

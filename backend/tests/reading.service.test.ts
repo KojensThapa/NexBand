@@ -99,9 +99,20 @@ test("submitting an attempt merges final answers, saves one result, and rejects 
     mockTest: {
       passages: [
         {
+          passageNumber: 1,
           questions: [
-            { id: "q1", correctAnswer: ["YES"], marks: 1 },
-            { id: "q2", correctAnswer: ["NO"], marks: 2 },
+            {
+              id: "q1",
+              type: "YES_NO_NOT_GIVEN",
+              correctAnswer: ["YES"],
+              marks: 1,
+            },
+            {
+              id: "q2",
+              type: "YES_NO_NOT_GIVEN",
+              correctAnswer: ["NO"],
+              marks: 2,
+            },
           ],
         },
       ],
@@ -129,18 +140,76 @@ test("submitting an attempt merges final answers, saves one result, and rejects 
   const service = new ReadingService(repository as never);
 
   const submitted = await service.submitAttempt("user-1", "attempt-1", { q2: " no " });
-  assert.equal(submitted.result.rawScore, 3);
-  assert.deepEqual(completedWith, {
-    answers: { q1: "yes", q2: " no " },
-    score: {
-      correctAnswers: 2,
-      totalQuestions: 2,
-      rawScore: 3,
-      totalMarks: 3,
-      percentage: 100,
-      bandScore: 9,
-      algorithmVersion: "basic-v1",
-    },
+  assert.equal(submitted.result.rawScore, 2);
+  const persisted = completedWith as {
+    answers: Record<string, string>;
+    score: Record<string, unknown>;
+  };
+  assert.deepEqual(persisted.answers, { q1: "yes", q2: " no " });
+  assert.equal(persisted.score.correctAnswers, 2);
+  assert.equal(persisted.score.totalQuestions, 2);
+  assert.equal(persisted.score.rawScore, 2);
+  assert.equal(persisted.score.totalMarks, 2);
+  assert.equal(persisted.score.percentage, 100);
+  assert.equal(persisted.score.bandScore, 1.5);
+  assert.equal(persisted.score.algorithmVersion, "reading-evaluator-v1");
+  assert.deepEqual(persisted.score.report, {
+    status: "Completed",
+    totalQuestions: 2,
+    attemptedQuestions: 2,
+    skippedQuestions: 0,
+    correctAnswers: 2,
+    wrongAnswers: 0,
+    attemptAccuracy: 100,
+    overallBand: 1.5,
+    estimatedBand: null,
+    sectionPerformance: [
+      {
+        section: 1,
+        attempted: 2,
+        skipped: 0,
+        correct: 2,
+        wrong: 0,
+        accuracy: 100,
+        status: "Attempted",
+      },
+      {
+        section: 2,
+        attempted: 0,
+        skipped: 0,
+        correct: 0,
+        wrong: 0,
+        accuracy: null,
+        status: "Not Attempted",
+      },
+      {
+        section: 3,
+        attempted: 0,
+        skipped: 0,
+        correct: 0,
+        wrong: 0,
+        accuracy: null,
+        status: "Not Attempted",
+      },
+    ],
+    questionTypePerformance: [
+      {
+        type: "YES_NO_NOT_GIVEN",
+        label: "Yes / No / Not Given",
+        total: 2,
+        attempted: 2,
+        correct: 2,
+        accuracy: 100,
+        status: "Attempted",
+      },
+    ],
+    strengths: [
+      "Good performance in Section 1",
+      "Strong Yes / No / Not Given skills",
+      "Excellent reading comprehension",
+    ],
+    weakAreas: [],
+    recommendations: [],
   });
 
   await assert.rejects(

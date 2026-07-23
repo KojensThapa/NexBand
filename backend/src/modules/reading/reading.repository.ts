@@ -58,6 +58,7 @@ type ReadingResultData = {
   percentage: number;
   bandScore: number;
   algorithmVersion: string;
+  report: Prisma.InputJsonValue;
 };
 
 export class ReadingRepository {
