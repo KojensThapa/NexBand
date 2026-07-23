@@ -241,7 +241,6 @@ export class ReadingService {
       );
     }
 
-    const usedQuestionNumbers = new Set<number>();
     let totalQuestions = 0;
 
     for (const passage of data.passages) {
@@ -253,11 +252,12 @@ export class ReadingService {
       }
 
       totalQuestions += passage.questions.length;
+      const usedQuestionNumbers = new Set<number>();
 
       for (const question of passage.questions) {
         if (usedQuestionNumbers.has(question.questionNumber)) {
           throw new ReadingServiceError(
-            `Question number ${question.questionNumber} is duplicated.`,
+            `Question number ${question.questionNumber} is duplicated in passage ${passage.passageNumber}.`,
             400
           );
         }

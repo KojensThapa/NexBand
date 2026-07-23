@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ReadingSession } from "@/components/test/reading/reading-session";
-import { getReadingMockTest } from "@/lib/exams/ielts-reading";
-import { getAdminReadingTaskById } from "@/lib/admin/reading-to-exam";
-import { getAdminReadingTests } from "@/lib/admin/reading-storage";
 import { getPublishedReadingTest } from "@/services/reading";
 import type { ReadingMockTest } from "@/types/reading";
 
@@ -13,49 +10,29 @@ interface ReadingTaskPageClientProps {
   backHref?: string;
 }
 
-type ResolvedSession =
-  | { kind: "mock"; mockTest: ReadingMockTest }
-  | { kind: "not-found" };
-
 export function ReadingTaskPageClient({
   taskId,
   backHref = "/test/ielts/reading",
 }: ReadingTaskPageClientProps) {
-  const [resolved, setResolved] = useState<ResolvedSession | null>(null);
+  const [mockTest, setMockTest] = useState<ReadingMockTest | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    const adminTests = getAdminReadingTests();
-    const adminTask = getAdminReadingTaskById(adminTests, taskId, {
-      publishedOnly: true,
-    });
-
-    if (adminTask) {
-      void Promise.resolve(adminTask).then((test) => {
-        if (active) setResolved({ kind: "mock", mockTest: test });
-      });
-      return () => {
-        active = false;
-      };
-    }
-
-    const mockTest = getReadingMockTest(taskId);
-    if (mockTest.id === taskId) {
-      void Promise.resolve(mockTest).then((test) => {
-        if (active) setResolved({ kind: "mock", mockTest: test });
-      });
-      return () => {
-        active = false;
-      };
-    }
-
     void getPublishedReadingTest(taskId)
       .then((test) => {
-        if (active) setResolved({ kind: "mock", mockTest: test });
+        if (active) {
+          setMockTest(test);
+          setError(null);
+        }
       })
-      .catch(() => {
-        if (active) setResolved({ kind: "not-found" });
+      .catch((requestError: unknown) => {
+        if (active) {
+          setError(
+            requestError instanceof Error ? requestError.message : "Reading test not found."
+          );
+        }
       });
 
     return () => {
@@ -63,24 +40,22 @@ export function ReadingTaskPageClient({
     };
   }, [taskId]);
 
-  if (!resolved) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
-        Loading reading test…
-      </div>
-    );
-  }
-
-  if (resolved.kind === "not-found") {
+  if (error) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
         <p className="text-lg font-medium text-slate-900">Reading test not found</p>
-        <p className="text-sm text-slate-500">
-          This test may have been removed or is not published yet.
-        </p>
+        <p className="text-sm text-slate-500">{error}</p>
       </div>
     );
   }
 
-  return <ReadingSession mockTest={resolved.mockTest} backHref={backHref} />;
+  if (!mockTest) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
+        Loading Reading test…
+      </div>
+    );
+  }
+
+  return <ReadingSession mockTest={mockTest} backHref={backHref} />;
 }

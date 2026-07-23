@@ -76,19 +76,19 @@ type ApiEnvelope<T> = { success: true; data: T };
 export async function getPublishedReadingTests(): Promise<ReadingTestCard[]> {
   const response = await apiFetch<
     ApiEnvelope<{ tests: Omit<ReadingTestCard, "isBackendTest">[]; pagination: unknown }>
-  >("/reading/tests?limit=50");
+  >("/api/reading/tests?limit=50");
 
   return response.data.tests.map((test) => ({ ...test, isBackendTest: true as const }));
 }
 
 export async function getPublishedReadingTest(testId: string): Promise<ReadingMockTest> {
-  const response = await apiFetch<ApiEnvelope<ReadingMockTest>>(`/reading/tests/${testId}`);
+  const response = await apiFetch<ApiEnvelope<ReadingMockTest>>(`/api/reading/tests/${testId}`);
   return { ...response.data, isBackendTest: true };
 }
 
 export async function startReadingAttempt(testId: string) {
   const response = await apiFetch<ApiEnvelope<{ attempt: ReadingAttempt; test: ReadingMockTest }>>(
-    `/reading/tests/${testId}/attempts`,
+    `/api/reading/tests/${testId}/attempts`,
     { method: "POST" }
   );
   return response.data;
@@ -96,7 +96,7 @@ export async function startReadingAttempt(testId: string) {
 
 export async function saveReadingAnswers(attemptId: string, answers: Record<string, string>) {
   const response = await apiFetch<ApiEnvelope<ReadingAttempt>>(
-    `/reading/attempts/${attemptId}/answers`,
+    `/api/reading/attempts/${attemptId}/answers`,
     { method: "PUT", body: JSON.stringify({ answers }) }
   );
   return response.data;
@@ -105,7 +105,7 @@ export async function saveReadingAnswers(attemptId: string, answers: Record<stri
 export async function submitReadingAttempt(attemptId: string, answers: Record<string, string>) {
   const response = await apiFetch<
     ApiEnvelope<{ attempt: ReadingAttempt; result: ReadingResult; alreadySubmitted: boolean }>
-  >(`/reading/attempts/${attemptId}/submit`, {
+  >(`/api/reading/attempts/${attemptId}/submit`, {
     method: "POST",
     body: JSON.stringify({ answers }),
   });
@@ -114,7 +114,7 @@ export async function submitReadingAttempt(attemptId: string, answers: Record<st
 
 export async function getReadingResult(attemptId: string) {
   const response = await apiFetch<ApiEnvelope<ReadingResult>>(
-    `/reading/attempts/${attemptId}/result`
+    `/api/reading/attempts/${attemptId}/result`
   );
   return response.data;
 }

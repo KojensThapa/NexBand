@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   AdminReadingPassage,
   AdminReadingQuestion,
@@ -19,17 +19,19 @@ import {
 } from "@/lib/admin/reading-constants";
 import {
   countAdminReadingQuestions,
-  createEmptyPassage,
   createEmptyQuestion,
   createEmptyReadingDraft,
-  deleteAdminReadingTest,
   getAdminReadingValidationError,
   isAdminReadingPassageValid,
   isAdminReadingTestValid,
-  saveAdminReadingTest,
-  setAdminReadingTestPublished,
 } from "@/lib/admin/reading-storage";
-import { useAdminReadingTests } from "@/hooks/useAdminReadingTests";
+import {
+  createAdminReadingTest,
+  deleteAdminReadingTest,
+  getAdminReadingTests,
+  setAdminReadingTestPublished,
+  updateAdminReadingTest,
+} from "@/services/reading-admin";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -78,7 +80,7 @@ function moveQuestion(
 }
 
 export function ReadingSection() {
-  const { tests, version } = useAdminReadingTests();
+  const [tests, setTests] = useState<AdminReadingTest[]>([]);
   const mockTests = useMemo(
     () => tests.filter((test) => test.category === "mock"),
     [tests]
@@ -91,6 +93,16 @@ export function ReadingSection() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loadTests = useCallback(async () => {
+    setTests(await getAdminReadingTests());
+  }, []);
+
+  useEffect(() => {
+    void loadTests().catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : "Failed to load reading tests.");
+    });
+  }, [loadTests]);
 
   const currentPassage = draft.passages[activePassageIndex];
   const canSave = useMemo(() => isAdminReadingTestValid(draft), [draft]);
@@ -202,7 +214,7 @@ export function ReadingSection() {
     updatePassage(currentPassage.id, { questions: next });
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
@@ -219,10 +231,10 @@ export function ReadingSection() {
         .map((tag) => tag.trim())
         .filter(Boolean);
 
-      saveAdminReadingTest({
-        id: mode === "edit" ? draft.id : undefined,
+      const payload = {
+        id: draft.id,
         title: draft.title.trim(),
-        category: "mock",
+        category: "mock" as const,
         tags,
         published: draft.published,
         totalQuestions: draft.totalQuestions,
@@ -238,7 +250,16 @@ export function ReadingSection() {
               questionNumber: index + 1,
             })),
         })),
-      });
+      };
+      const saved =
+        mode === "edit"
+          ? await updateAdminReadingTest(draft.id, payload)
+          : await createAdminReadingTest(payload);
+
+      if (saved.published !== draft.published) {
+        await setAdminReadingTestPublished(saved.id, draft.published);
+      }
+      await loadTests();
 
       setDraft(emptyDraft());
       setMode("create");
@@ -274,14 +295,19 @@ export function ReadingSection() {
     setError(null);
   }
 
-  function handleDelete(id: string) {
-    deleteAdminReadingTest(id);
-    if (mode === "edit" && draft.id === id) {
-      handleCancelEdit();
+  async function handleDelete(id: string) {
+    try {
+      await deleteAdminReadingTest(id);
+      await loadTests();
+      if (mode === "edit" && draft.id === id) {
+        handleCancelEdit();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete reading test.");
     }
   }
 
-  function handleTogglePublish(test: AdminReadingTest) {
+  async function handleTogglePublish(test: AdminReadingTest) {
     if (!test.published) {
       const validationError = getAdminReadingValidationError(test);
       if (validationError) {
@@ -291,7 +317,8 @@ export function ReadingSection() {
         return;
       }
     }
-    setAdminReadingTestPublished(test.id, !test.published);
+    await setAdminReadingTestPublished(test.id, !test.published);
+    await loadTests();
     setError(null);
     setSuccess(
       test.published
@@ -469,7 +496,6 @@ export function ReadingSection() {
 
       <div
         ref={savedListRef}
-        key={version}
         className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8"
       >
         <h2 className="text-lg font-semibold text-slate-900">Saved reading tests</h2>
