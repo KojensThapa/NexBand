@@ -64,11 +64,65 @@ URL or `audioStorageKey`.
 
 ## Evaluation
 
-[`speakingAlgorithm.ts`](../src/modules/speaking/algorithm/speakingAlgorithm.ts)
-contains the current `basic-v1` evaluator. It calculates recording coverage
-and duration only, then saves `basicScore`, `estimatedBandScore`, and honest
-completion feedback. It is not an IELTS language-quality score.
+The existing `POST /attempts/:attemptId/submit` workflow remains a
+`basic-v1` completion estimate for recorder compatibility. It calculates only
+recording coverage and duration; it is not an IELTS language-quality score.
 
-To add AI later, transcribe durable audio, add an AI evaluator beside the basic
-algorithm, and save its results with `evaluationMode: AI`. Keep the basic
-result/version so learners and admins can distinguish the two.
+## Provider-backed speaking reports
+
+| Method | Path | Access | Purpose |
+| --- | --- | --- | --- |
+| POST | `/submissions` | Learner | Analyse one part or a complete three-part mock test |
+| GET | `/submissions/:id` | Submission owner | Read recordings and persisted part/mock reports |
+
+`POST /submissions` accepts durable audio references grouped by IELTS part.
+Use `mode: "part"` with one part or `mode: "mock"` with Parts 1, 2, and 3.
+An upstream trusted transcript may be supplied during migration; otherwise the
+speech-to-text provider receives the audio URL/key.
+
+```json
+{
+  "mode": "part",
+  "testId": "optional-speaking-test-id",
+  "parts": [
+    {
+      "partNumber": 2,
+      "questionMetadata": {
+        "topic": "Travel",
+        "expectedDurationSeconds": 120
+      },
+      "recordings": [
+        {
+          "responseKey": "part2-main",
+          "audioStorageKey": "speaking/user-1/part2.webm",
+          "durationSeconds": 118
+        }
+      ]
+    }
+  ]
+}
+```
+
+The service calls only these provider ports: speech-to-text, grammar analysis,
+and pronunciation analysis. The pure
+[`speakingAlgorithm.ts`](../src/modules/speaking/algorithm/speakingAlgorithm.ts)
+then calculates fluency, vocabulary, filler penalties, overall half-band,
+CEFR, strengths, weak areas, and rule-based recommendations. It never calls
+an API, database, Fastify, or an AI SDK.
+
+Configure generic JSON provider adapters with these optional server variables:
+
+- `SPEAKING_STT_ENDPOINT` and `SPEAKING_STT_API_KEY`
+- `SPEAKING_GRAMMAR_ENDPOINT` and `SPEAKING_GRAMMAR_API_KEY`
+- `SPEAKING_PRONUNCIATION_ENDPOINT` and `SPEAKING_PRONUNCIATION_API_KEY`
+
+The adapters forward their request contract as JSON. They expect respectively
+`{ transcript, confidence? }`, `{ score, errors, suggestions }`, and
+`{ score, confidenceScore, mispronouncedWords, supported }` responses. Scores
+should be IELTS-band equivalents from 0 to 9. Without a configured provider,
+the API fails clearly rather than fabricating grammar or pronunciation data.
+
+Migration `20260724090000_add_ai_speaking_evaluations` adds
+`SpeakingSubmission`, `SpeakingRecording`, `SpeakingEvaluation`, and
+`SpeakingReport`. Each part gets its own report; a mock submission also stores
+a combined `mock` report.

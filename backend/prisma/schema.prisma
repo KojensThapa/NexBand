@@ -69,6 +69,23 @@ enum SpeakingEvaluationMode {
   AI
 }
 
+enum SpeakingSubmissionMode {
+  PART
+  MOCK
+}
+
+enum SpeakingSubmissionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SpeakingReportScope {
+  PART
+  MOCK
+}
+
 enum WritingCategory {
   MOCK
   TASK_1
@@ -112,6 +129,7 @@ model User {
   writingAttempts   WritingAttempt[]
   speakingAttempts  SpeakingAttempt[]
   speakingResults   SpeakingResult[]
+  speakingSubmissions SpeakingSubmission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -125,6 +143,7 @@ model SpeakingTest {
 
   parts    SpeakingPart[]
   attempts SpeakingAttempt[]
+  submissions SpeakingSubmission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -180,6 +199,7 @@ model SpeakingAttempt {
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   test   SpeakingTest @relation(fields: [testId], references: [id], onDelete: Cascade)
   result SpeakingResult?
+  submission SpeakingSubmission?
 
   @@index([userId, updatedAt])
   @@index([testId])
@@ -204,6 +224,109 @@ model SpeakingResult {
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// AI-assisted submissions live alongside the legacy SpeakingAttempt result so
+// recorded practice history remains compatible while the richer pipeline is
+// adopted. A mock submission stores all parts and one combined report.
+model SpeakingSubmission {
+  id          String                   @id @default(cuid())
+  userId      String
+  testId      String?
+  attemptId   String?                  @unique
+  mode        SpeakingSubmissionMode
+  status      SpeakingSubmissionStatus @default(PENDING)
+  errorMessage String?                 @db.Text
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test        SpeakingTest?   @relation(fields: [testId], references: [id], onDelete: SetNull)
+  attempt     SpeakingAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  recordings  SpeakingRecording[]
+  evaluations SpeakingEvaluation[]
+  reports     SpeakingReport[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([testId])
+  @@index([status])
+}
+
+model SpeakingRecording {
+  id              String   @id @default(cuid())
+  submissionId    String
+  responseKey     String
+  partNumber      Int
+  audioUrl        String?  @db.Text
+  audioStorageKey String?
+  mimeType        String?
+  transcript      String?  @db.Text
+  durationSeconds Int
+
+  submission SpeakingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  evaluation SpeakingEvaluation?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([submissionId, partNumber, responseKey])
+  @@index([submissionId, partNumber])
+}
+
+model SpeakingEvaluation {
+  id                   String   @id @default(cuid())
+  submissionId         String
+  recordingId          String   @unique
+  partNumber           Int
+  transcript           String   @db.Text
+  grammarScore         Float
+  pronunciationScore   Float
+  pronunciationConfidence Float
+  grammarErrors        Json
+  grammarSuggestions   Json
+  mispronouncedWords   Json
+  providerData         Json?
+
+  submission SpeakingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  recording  SpeakingRecording  @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([submissionId, partNumber])
+}
+
+model SpeakingReport {
+  id                   String                   @id @default(cuid())
+  submissionId         String
+  reportKey            String
+  scope                SpeakingReportScope
+  status               SpeakingSubmissionStatus @default(COMPLETED)
+  partNumber           Int?
+  transcript           String                   @db.Text
+  durationSeconds      Int
+  wordsPerMinute       Float
+  fluencyScore         Float
+  vocabularyScore      Float
+  grammarScore         Float
+  pronunciationScore   Float
+  overallBand          Float
+  cefrLevel            String
+  fillerWords          Json
+  mispronouncedWords   Json
+  strengths            Json
+  weakAreas            Json
+  recommendations      Json
+  evaluationData       Json
+  algorithmVersion     String
+
+  submission SpeakingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([submissionId, reportKey])
+  @@index([submissionId, scope])
 }
 
 model ReadingMockTest {

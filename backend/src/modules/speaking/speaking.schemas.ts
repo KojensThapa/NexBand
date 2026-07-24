@@ -68,6 +68,78 @@ export const submitSpeakingAttemptSchema = z.object({
   recordings: speakingRecordingsSchema.optional(),
 });
 
+const questionMetadataSchema = z.object({
+  questionIds: z.array(z.string().trim().min(1).max(500)).max(30).optional(),
+  topic: z.string().trim().max(500).optional(),
+  prompt: z.string().trim().max(10_000).optional(),
+  expectedDurationSeconds: z.number().int().min(1).max(10_800).optional(),
+  questionCount: z.number().int().min(1).max(30).optional(),
+});
+
+const speakingEvaluationRecordingSchema = z
+  .object({
+    responseKey: z.string().trim().min(1).max(500),
+    audioUrl: z.string().trim().min(1).max(20_000).optional(),
+    audioStorageKey: z.string().trim().min(1).max(1_000).optional(),
+    mimeType: z.string().trim().min(1).max(255).optional(),
+    durationSeconds: z.number().int().min(1).max(10_800),
+    // This is permitted only for trusted upstream STT workflows. When absent,
+    // the configured speech-to-text provider receives the audio reference.
+    transcript: z.string().trim().min(1).max(100_000).optional(),
+    questionMetadata: questionMetadataSchema.default({}),
+  })
+  .refine((recording) => recording.audioUrl || recording.audioStorageKey, {
+    message: "A recording needs an audioUrl or audioStorageKey.",
+  });
+
+const speakingEvaluationPartSchema = z.object({
+  partNumber: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  questionMetadata: questionMetadataSchema.default({}),
+  recordings: z.array(speakingEvaluationRecordingSchema).min(1).max(30),
+});
+
+/**
+ * An evaluation submission can represent a standalone IELTS part or all
+ * three parts in one mock test. Audio itself should already be stored behind
+ * a durable URL/key; storage upload is intentionally separate from scoring.
+ */
+export const createSpeakingSubmissionSchema = z
+  .object({
+    mode: z.enum(["part", "mock"]),
+    testId: z.string().trim().min(1).max(500).optional(),
+    attemptId: z.string().trim().min(1).max(500).optional(),
+    parts: z.array(speakingEvaluationPartSchema).min(1).max(3),
+  })
+  .superRefine((submission, ctx) => {
+    const partNumbers = submission.parts.map((part) => part.partNumber);
+    if (new Set(partNumbers).size !== partNumbers.length) {
+      ctx.addIssue({ code: "custom", path: ["parts"], message: "Each speaking part can be submitted only once." });
+    }
+    if (submission.mode === "part" && submission.parts.length !== 1) {
+      ctx.addIssue({ code: "custom", path: ["parts"], message: "A part submission must contain exactly one part." });
+    }
+    if (
+      submission.mode === "mock" &&
+      (submission.parts.length !== 3 || !([1, 2, 3] as const).every((part) => partNumbers.includes(part)))
+    ) {
+      ctx.addIssue({ code: "custom", path: ["parts"], message: "A mock submission must contain Parts 1, 2, and 3." });
+    }
+    for (const [partIndex, part] of submission.parts.entries()) {
+      const responseKeys = part.recordings.map((recording) => recording.responseKey);
+      if (new Set(responseKeys).size !== responseKeys.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["parts", partIndex, "recordings"],
+          message: "Response keys must be unique within a part.",
+        });
+      }
+    }
+  });
+
+export const speakingSubmissionParamsSchema = z.object({
+  id: z.string().trim().min(1).max(500),
+});
+
 export const publishedSpeakingTestsQuerySchema = z.object({
   category: speakingCategorySchema.optional(),
   page: z.coerce.number().int().min(1).default(1),
@@ -80,3 +152,4 @@ export type UpdateSpeakingTestInput = z.infer<typeof updateSpeakingTestSchema>;
 export type SpeakingRecordings = z.infer<typeof speakingRecordingsSchema>;
 export type SaveSpeakingRecordingsInput = z.infer<typeof saveSpeakingRecordingsSchema>;
 export type SubmitSpeakingAttemptInput = z.infer<typeof submitSpeakingAttemptSchema>;
+export type CreateSpeakingSubmissionInput = z.infer<typeof createSpeakingSubmissionSchema>;
