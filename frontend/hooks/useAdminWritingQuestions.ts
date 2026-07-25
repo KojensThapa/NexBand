@@ -2,40 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AdminWritingQuestion } from "@/types/admin";
-import {
-  ADMIN_WRITING_CHANGED_EVENT,
-  ADMIN_WRITING_KEY,
-  getAdminWritingQuestions,
-} from "@/lib/admin/writing-storage";
+import { getAdminWritingQuestions } from "@/services/writing-admin";
 
 export function useAdminWritingQuestions() {
   const [questions, setQuestions] = useState<AdminWritingQuestion[]>([]);
   const [version, setVersion] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const refresh = useCallback(() => {
-    setQuestions(getAdminWritingQuestions());
-    setVersion((current) => current + 1);
+  const refresh = useCallback(async () => {
+    try {
+      const next = await getAdminWritingQuestions();
+      setQuestions(next);
+    } finally {
+      setVersion((current) => current + 1);
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    refresh();
-
-    const handleChange = () => refresh();
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === null || event.key === ADMIN_WRITING_KEY) {
-        refresh();
-      }
-    };
-
-    window.addEventListener(ADMIN_WRITING_CHANGED_EVENT, handleChange);
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener(ADMIN_WRITING_CHANGED_EVENT, handleChange);
-      window.removeEventListener("storage", handleStorage);
-    };
+    void refresh();
   }, [refresh]);
 
-  return { questions, version, refresh };
+  return { questions, version, isLoading, refresh };
 }

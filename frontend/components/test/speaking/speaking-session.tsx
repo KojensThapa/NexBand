@@ -20,6 +20,13 @@ import {
   createSavedReport,
 } from "@/lib/reports/mock-analysis";
 import { saveReport } from "@/lib/reports/storage";
+import {
+  saveSpeakingRecordings,
+  startSpeakingAttempt,
+  submitSpeakingAttempt,
+  type SpeakingResult,
+} from "@/services/speaking";
+import { uploadAudioFile } from "@/services/uploads";
 import { cn } from "@/lib/utils";
 import type {
   SpeakingBoardMode,
@@ -30,8 +37,64 @@ import type {
   SpeakingPartNumber,
   SpeakingRecording,
 } from "@/types/speaking";
+import type { SpeakingFeedbackDetail } from "@/types/report";
 
 type Part2Phase = "prep" | "speak" | "followup";
+
+async function blobUrlToFile(blobUrl: string, filename: string): Promise<File> {
+  const response = await fetch(blobUrl);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: blob.type || "audio/webm" });
+}
+
+function formatDuration(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
+function bandToCefr(band: number): string {
+  if (band >= 8) return "C1+";
+  if (band >= 6.5) return "B2";
+  if (band >= 5) return "B1";
+  if (band >= 3.5) return "A2";
+  return "A1";
+}
+
+function createBackendSpeakingDetail(
+  taskTitle: string,
+  result: SpeakingResult
+): SpeakingFeedbackDetail {
+  const completionScore = Number(((result.completionPercentage / 100) * 9).toFixed(2));
+
+  return {
+    taskTitle,
+    overallScore: result.estimatedBandScore,
+    cefrLevel: bandToCefr(result.estimatedBandScore),
+    recordingCount: result.recordingCount,
+    totalQuestions: result.totalQuestions,
+    criteria: [
+      {
+        id: "completion",
+        label: "Response Completion",
+        score: completionScore,
+        color: "bg-violet-500",
+      },
+    ],
+    recordingStats: {
+      duration: formatDuration(result.totalDurationSeconds),
+      wordsPerMinute: 0,
+    },
+    fillerWords: [],
+    mispronouncedWords: [],
+    strengths: result.feedback?.strengths ?? [],
+    improvements: result.feedback?.improvements ?? [],
+    aiSummary:
+      result.feedback?.summary ??
+      `You completed ${result.recordingCount} of ${result.totalQuestions} prompts, with an estimated Band ${result.estimatedBandScore.toFixed(1)}.`,
+    practiceRecommendations: result.feedback?.improvements ?? [],
+  };
+}
 
 interface SpeakingSessionProps {
   mode: SpeakingBoardMode;
@@ -87,6 +150,20 @@ export function SpeakingSession({
   const [followUpIndex, setFollowUpIndex] = useState(0);
   const [recordings, setRecordings] = useState<Record<string, SpeakingRecording>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isUploadingRecording, setIsUploadingRecording] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptError, setAttemptError] = useState<string | null>(null);
+
+  const backendTestId = mockTest?.isBackendTest
+    ? mockTest.id
+    : part1Task?.isBackendTest
+      ? part1Task.id
+      : part2Task?.isBackendTest
+        ? part2Task.id
+        : part3Task?.isBackendTest
+          ? part3Task.id
+          : undefined;
+  const isBackendTest = Boolean(backendTestId);
 
   const { speak, stop: stopSpeech } = useTextToSpeech();
 
@@ -128,6 +205,7 @@ export function SpeakingSession({
   const recordingCount = Object.keys(recordings).length;
 
   const canSubmit = useMemo(() => {
+    if (isUploadingRecording) return false;
     if (recordingCount === 0) return false;
     if (mode === "part-1" && part1) {
       return part1.questions.some((q) => recordings[q.id]);
@@ -145,18 +223,79 @@ export function SpeakingSession({
       return hasPart1 && hasPart2 && hasPart3;
     }
     return recordingCount > 0;
-  }, [recordingCount, mode, part1, part2, part3, mockTest, recordings]);
+  }, [recordingCount, mode, part1, part2, part3, mockTest, recordings, isUploadingRecording]);
 
-  const setRecording = useCallback((key: string, value: SpeakingRecording | null) => {
-    setRecordings((prev) => {
+  useEffect(() => {
+    if (!backendTestId) return;
+
+    let active = true;
+    void startSpeakingAttempt(backendTestId)
+      .then(({ attempt }) => {
+        if (active) {
+          setAttemptId(attempt.id);
+          setAttemptError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setAttemptError(
+            error instanceof Error ? error.message : "Could not start the speaking attempt."
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [backendTestId]);
+
+  useEffect(() => {
+    if (!attemptId || !isBackendTest || Object.keys(recordings).length === 0) return;
+
+    const timeout = window.setTimeout(() => {
+      void saveSpeakingRecordings(attemptId, recordings).catch((error: unknown) => {
+        setAttemptError(error instanceof Error ? error.message : "Recordings could not be saved.");
+      });
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [attemptId, isBackendTest, recordings]);
+
+  const setRecording = useCallback(
+    (key: string, value: SpeakingRecording | null) => {
       if (!value) {
-        const next = { ...prev };
-        delete next[key];
-        return next;
+        setRecordings((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        return;
       }
-      return { ...prev, [key]: value };
-    });
-  }, []);
+
+      if (!isBackendTest) {
+        setRecordings((prev) => ({ ...prev, [key]: value }));
+        return;
+      }
+
+      setIsUploadingRecording(true);
+      void blobUrlToFile(value.audioUrl, `${key}.webm`)
+        .then((file) => uploadAudioFile(file))
+        .then((audioUrl) => {
+          setRecordings((prev) => ({
+            ...prev,
+            [key]: { audioUrl, durationSeconds: value.durationSeconds },
+          }));
+          setAttemptError(null);
+        })
+        .catch((error: unknown) => {
+          setAttemptError(
+            error instanceof Error ? error.message : "Recording could not be uploaded."
+          );
+        })
+        .finally(() => setIsUploadingRecording(false));
+    },
+    [isBackendTest]
+  );
 
   const handleSubmit = useCallback(() => {
     // Wait for any in-progress recording to finish saving before running
@@ -166,6 +305,35 @@ export function SpeakingSession({
       setIsAnalyzing(true);
       pause();
       stopSpeech();
+
+      if (isBackendTest) {
+        if (!attemptId) {
+          setAttemptError("Your attempt is not ready yet. Please sign in and wait a moment before submitting.");
+          setIsAnalyzing(false);
+          return;
+        }
+
+        try {
+          const { result } = await submitSpeakingAttempt(attemptId, recordings);
+          const detail = createBackendSpeakingDetail(sessionTitle, result);
+          const report = createSavedReport(
+            "speaking",
+            sessionTitle,
+            `${result.recordingCount} recordings submitted`,
+            detail.overallScore,
+            detail
+          );
+          saveReport(report);
+          router.push(`/report/${report.id}`);
+          return;
+        } catch (error) {
+          setAttemptError(
+            error instanceof Error ? error.message : "Your speaking attempt could not be submitted."
+          );
+          setIsAnalyzing(false);
+          return;
+        }
+      }
 
       const detail = await analyzeSpeakingSubmission({
         taskTitle: sessionTitle,
@@ -188,7 +356,19 @@ export function SpeakingSession({
       saveReport(report);
       router.push(`/report/${report.id}`);
     });
-  }, [sessionTitle, recordingCount, part1, part2, part3, pause, stopSpeech, router]);
+  }, [
+    sessionTitle,
+    recordingCount,
+    part1,
+    part2,
+    part3,
+    pause,
+    stopSpeech,
+    router,
+    isBackendTest,
+    attemptId,
+    recordings,
+  ]);
 
   const part1Question = part1?.questions[part1QuestionIndex];
   const part3Question = part3?.questions[part3QuestionIndex];
@@ -609,6 +789,12 @@ export function SpeakingSession({
             </div>
           </div>
         </header>
+
+        {attemptError ? (
+          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
+            {attemptError}
+          </div>
+        ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {activePart === 1 ? renderPart1() : null}

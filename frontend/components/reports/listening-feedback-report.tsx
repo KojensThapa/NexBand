@@ -16,7 +16,7 @@ export function ListeningFeedbackReport({ report, header }: ListeningFeedbackRep
   const headerMeta: ReportHeaderMeta = header ?? {
     testTitle: report.taskTitle,
     overallScore: report.overallScore,
-    status: "Completed",
+    status: report.status ?? "Completed",
     aiSummary: report.aiSummary,
   };
 
@@ -55,7 +55,9 @@ export function ListeningFeedbackReport({ report, header }: ListeningFeedbackRep
               <ScoreProgressBar
                 label={`${part.label} (${part.correct}/${part.total} correct)`}
                 score={part.score}
+                maxScore={part.maxScore ?? 100}
                 color="bg-violet-500"
+                valueSuffix="%"
               />
             </div>
           ))}
@@ -69,7 +71,9 @@ export function ListeningFeedbackReport({ report, header }: ListeningFeedbackRep
               key={entry.type}
               label={`${entry.type} (${entry.correct}/${entry.total})`}
               score={entry.score}
+              maxScore={entry.maxScore ?? 100}
               color="bg-emerald-500"
+              valueSuffix="%"
             />
           ))}
         </div>

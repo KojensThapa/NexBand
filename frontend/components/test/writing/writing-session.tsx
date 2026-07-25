@@ -14,13 +14,133 @@ import { saveReport } from "@/lib/reports/storage";
 import { cn } from "@/lib/utils";
 import { countWords } from "@/lib/exams/ielts-writing";
 import {
+  createWritingSubmission,
   saveWritingDraft,
   startWritingAttempt,
   submitWritingAttempt,
+  type WritingSubmission,
 } from "@/services/writing";
 import type { WritingMockTest, WritingTask } from "@/types/writing";
+import type { WritingFeedbackDetail } from "@/types/report";
 
 type WritingMode = "mock" | "task-1" | "task-2";
+
+function createBackendWritingDetail(
+  task: WritingTask,
+  responseText: string,
+  submission: WritingSubmission
+): WritingFeedbackDetail {
+  const taskReport = submission.reports.find(
+    (report) => report.scope === "TASK" && report.taskNumber === task.taskNumber
+  );
+  const mockReport = submission.reports.find((report) => report.scope === "MOCK");
+  const report = taskReport ?? mockReport;
+
+  if (!report) {
+    return {
+      taskTitle: task.title,
+      taskPrompt: task.prompt,
+      responseText,
+      wordCount: 0,
+      wordCountStatus: "Not evaluated",
+      overallScore: 0,
+      cefrLevel: "—",
+      criteria: [],
+      errors: [],
+      vocabularyAnalysis: { uniqueWords: 0, repeatedWords: [] },
+      grammarAnalysis: { grammarErrors: 0, spellingErrors: 0, punctuationErrors: 0 },
+      strengths: [],
+      improvements: [],
+      aiSummary: "Evaluation is not available for this submission yet.",
+      suggestedImprovements: [],
+      correctedEssay: responseText,
+    };
+  }
+
+  const wordCountStatus = report.evaluationData?.wordCountMetrics?.isBelowMinimum
+    ? "Below recommended minimum"
+    : "Within target range";
+
+  const errors = [
+    ...report.grammarErrors.map((issue, index) => ({
+      id: index + 1,
+      title: issue.category ?? "Grammar",
+      category: "Grammar",
+      original: "",
+      corrected: issue.suggestion ?? "",
+      explanation: issue.message,
+    })),
+    ...report.spellingErrors.map((issue, index) => ({
+      id: report.grammarErrors.length + index + 1,
+      title: issue.category ?? "Spelling",
+      category: "Spelling",
+      original: "",
+      corrected: issue.suggestion ?? "",
+      explanation: issue.message,
+    })),
+    ...report.punctuationErrors.map((issue, index) => ({
+      id: report.grammarErrors.length + report.spellingErrors.length + index + 1,
+      title: issue.category ?? "Punctuation",
+      category: "Punctuation",
+      original: "",
+      corrected: issue.suggestion ?? "",
+      explanation: issue.message,
+    })),
+  ];
+
+  return {
+    taskTitle: task.title,
+    taskPrompt: task.prompt,
+    responseText,
+    wordCount: report.wordCount,
+    wordCountStatus,
+    overallScore: report.overallBand,
+    cefrLevel: report.cefrLevel,
+    criteria: [
+      {
+        id: "task-achievement",
+        label: task.taskNumber === 1 ? "Task Achievement" : "Task Response",
+        score: report.taskAchievementScore,
+        color: "bg-violet-500",
+      },
+      {
+        id: "coherence",
+        label: "Coherence & Cohesion",
+        score: report.coherenceScore,
+        color: "bg-emerald-500",
+      },
+      {
+        id: "lexical",
+        label: "Lexical Resource",
+        score: report.vocabularyScore,
+        color: "bg-amber-500",
+      },
+      {
+        id: "grammar",
+        label: "Grammatical Range & Accuracy",
+        score: report.grammarScore,
+        color: "bg-rose-500",
+      },
+    ],
+    errors,
+    vocabularyAnalysis: {
+      uniqueWords: report.uniqueWords,
+      repeatedWords: report.repeatedWords,
+    },
+    grammarAnalysis: {
+      grammarErrors: report.grammarErrors.length,
+      spellingErrors: report.spellingErrors.length,
+      punctuationErrors: report.punctuationErrors.length,
+    },
+    strengths: report.strengths,
+    improvements: report.weakAreas,
+    aiSummary:
+      report.evaluationData?.essaySummary ??
+      `${taskReport ? "Task" : "Mock test"} evaluation complete. Overall Band ${report.overallBand.toFixed(1)} (${report.cefrLevel}).`,
+    suggestedImprovements: report.recommendations,
+    correctedEssay: responseText,
+  };
+}
 
 /** Minimum words required before the submit button is enabled for AI feedback. */
 const SUBMIT_MIN_WORDS = 50;
@@ -49,7 +169,6 @@ export function WritingSession({
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [attemptError, setAttemptError] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
-  const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
 
   const visibleTasks = useMemo(() => {
     if (singleTask) return [singleTask];
@@ -127,7 +246,7 @@ export function WritingSession({
   }, [backendTestId]);
 
   useEffect(() => {
-    if (!attemptId || !isBackendTest || draftEssays.length === 0 || submissionMessage) return;
+    if (!attemptId || !isBackendTest || draftEssays.length === 0 || isAnalyzing) return;
 
     const timeout = window.setTimeout(() => {
       setDraftStatus("Saving draft…");
@@ -143,7 +262,7 @@ export function WritingSession({
     }, 700);
 
     return () => window.clearTimeout(timeout);
-  }, [attemptId, draftEssays, isBackendTest, submissionMessage]);
+  }, [attemptId, draftEssays, isBackendTest, isAnalyzing]);
 
   const handleChange = (value: string) => {
     if (!activeTask) return;
@@ -160,21 +279,58 @@ export function WritingSession({
         return;
       }
 
+      setIsAnalyzing(true);
+
       try {
-        const { attempt, alreadySubmitted } = await submitWritingAttempt(attemptId, draftEssays);
-        setSubmissionMessage(
-          alreadySubmitted
-            ? "This essay is already queued for analysis."
-            : `Essay stored successfully. Status: ${attempt.status.replaceAll("_", " ")}.`
-        );
+        await submitWritingAttempt(attemptId, draftEssays);
         setDraftStatus(null);
         setAttemptError(null);
+
+        const submissionTasks = draftEssays.map((essay) => {
+          const task = visibleTasks.find((candidate) => candidate.id === essay.taskId);
+          return {
+            taskId: essay.taskId,
+            taskNumber: (task?.taskNumber ?? activeTask.taskNumber) as 1 | 2,
+            essay: essay.content,
+            questionMetadata: task
+              ? {
+                  prompt: task.prompt,
+                  title: task.title,
+                  taskType: task.task1Type ?? task.typeLabel,
+                }
+              : undefined,
+          };
+        });
+
+        const submission = await createWritingSubmission({
+          mode: submissionTasks.length === 2 ? "mock" : "task",
+          testId: backendTestId,
+          attemptId,
+          tasks: submissionTasks,
+        });
+
+        const detail = createBackendWritingDetail(activeTask, activeText, submission);
+        const report = createSavedReport(
+          "writing",
+          mockTest
+            ? `${mockTest.title} — ${activeTask.label}`
+            : singleTask
+              ? `IELTS ${activeTask.label} — ${activeTask.title}`
+              : activeTask.title,
+          activeText.slice(0, 80) + (activeText.length > 80 ? "…" : ""),
+          detail.overallScore,
+          detail
+        );
+        saveReport(report);
+        router.push(`/report/${report.id}`);
         return;
       } catch (error) {
         setAttemptError(
           error instanceof Error ? error.message : "Your essay could not be submitted."
         );
         return;
+      } finally {
+        setIsAnalyzing(false);
       }
     }
 
@@ -317,12 +473,6 @@ export function WritingSession({
           {attemptError}
         </div>
       ) : null}
-      {submissionMessage ? (
-        <div className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-center text-sm font-medium text-amber-800">
-          {submissionMessage}
-        </div>
-      ) : null}
-
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <section className="flex w-1/2 flex-col overflow-y-auto border-r border-slate-200 bg-white p-4 sm:p-6">
           <div className="mb-3 flex items-start justify-between gap-3">
@@ -393,7 +543,7 @@ export function WritingSession({
           <SubmitTestButton
             label={isBackendTest ? "Submit essay" : undefined}
             onClick={handleSubmit}
-            disabled={!canSubmit || Boolean(submissionMessage)}
+            disabled={!canSubmit || isAnalyzing}
             className="mt-4"
           />
         </section>

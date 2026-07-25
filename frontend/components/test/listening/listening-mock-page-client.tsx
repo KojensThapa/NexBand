@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ListeningSession } from "@/components/test/listening/listening-session";
-import { getListeningMockTest } from "@/lib/exams/ielts-listening";
-import { buildAdminListeningMockTests } from "@/lib/admin/listening-to-exam";
-import { getAdminListeningTests } from "@/lib/admin/listening-storage";
 import type { ListeningMockTest, ListeningPartNumber } from "@/types/listening";
 import { getPublishedListeningTest } from "@/services/listening";
 
@@ -24,26 +21,8 @@ export function ListeningMockPageClient({
 
   useEffect(() => {
     let active = true;
-
-    if (testId.startsWith("admin-listening-")) {
-      const adminTests = getAdminListeningTests();
-      const adminMocks = buildAdminListeningMockTests(adminTests, { publishedOnly: true });
-      const match = adminMocks.find((test) => test.id === testId);
-      if (match) {
-        setMockTest(match);
-        setNotFound(false);
-        return;
-      }
-      setNotFound(true);
-      return;
-    }
-
-    const staticTest = getListeningMockTest(testId);
-    if (staticTest.id === testId) {
-      setMockTest(staticTest);
-      setNotFound(false);
-      return;
-    }
+    setMockTest(null);
+    setNotFound(false);
 
     void getPublishedListeningTest(testId)
       .then((test) => {

@@ -2,18 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  getWritingTaskHref,
-  WRITING_MOCK_TESTS,
-  WRITING_PRACTICE_TASKS,
-  type WritingBoardMode,
-} from "@/lib/exams/ielts-writing";
-import {
-  buildAdminMockTests,
-  getAdminPracticeTasks,
-} from "@/lib/admin/writing-to-exam";
-import { useAdminWritingQuestions } from "@/hooks/useAdminWritingQuestions";
-import type { WritingTask, WritingTask1Type } from "@/types/writing";
+import { getWritingTaskHref, type WritingBoardMode } from "@/lib/exams/ielts-writing";
+import type { WritingTask1Type } from "@/types/writing";
 import { cn } from "@/lib/utils";
 import { getPublishedWritingTests, type WritingPublishedTestSummary } from "@/services/writing";
 
@@ -23,10 +13,7 @@ const MODE_TABS: { id: WritingBoardMode; label: string }[] = [
   { id: "task-2", label: "Task 2" },
 ];
 
-const TYPE_STYLES: Record<
-  WritingTask1Type | "essay",
-  { bg: string; icon: string }
-> = {
+const TYPE_STYLES: Record<WritingTask1Type | "essay", { bg: string; icon: string }> = {
   graph: { bg: "bg-sky-100 text-sky-600", icon: "↗" },
   chart: { bg: "bg-emerald-100 text-emerald-600", icon: "▮" },
   table: { bg: "bg-amber-100 text-amber-600", icon: "▦" },
@@ -37,19 +24,9 @@ const TYPE_STYLES: Record<
   essay: { bg: "bg-indigo-100 text-indigo-600", icon: "✎" },
 };
 
-function getTaskStyle(task: WritingTask) {
-  if (task.taskNumber === 2) return TYPE_STYLES.essay;
-  return TYPE_STYLES[task.task1Type ?? "chart"];
-}
-
 function PlayIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      aria-hidden
-    >
+    <svg className={className} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
       <path d="M6.3 4.2a1 1 0 0 1 1.52-.85l7.5 4.8a1 1 0 0 1 0 1.7l-7.5 4.8A1 1 0 0 1 6.3 15.7V4.2Z" />
     </svg>
   );
@@ -64,7 +41,7 @@ function TaskCard({
   href: string;
   parts?: { label: string; title: string }[];
 }) {
-  const style = getTaskStyle(task as WritingTask);
+  const style = task.taskNumber === 2 ? TYPE_STYLES.essay : TYPE_STYLES[task.task1Type ?? "chart"];
 
   return (
     <article className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md">
@@ -115,18 +92,23 @@ function TaskCard({
 
 export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
   const [mode, setMode] = useState<WritingBoardMode>("task-1");
-  const { questions: adminQuestions } = useAdminWritingQuestions();
   const [backendTests, setBackendTests] = useState<WritingPublishedTestSummary[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     void getPublishedWritingTests()
       .then((tests) => {
-        if (active) setBackendTests(tests);
+        if (active) {
+          setBackendTests(tests);
+          setLoadError(null);
+        }
       })
-      .catch(() => {
-        // Local practice content remains available when the backend is offline.
+      .catch((error: unknown) => {
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : "Could not load Writing tests.");
+        }
       });
 
     return () => {
@@ -136,35 +118,8 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
 
   const cards = useMemo(() => {
     if (mode === "mock") {
-      const adminMocks = buildAdminMockTests(adminQuestions, { publishedOnly: true });
-      const allMocks = [...WRITING_MOCK_TESTS, ...adminMocks];
-      const backendMocks = backendTests.filter((test) => test.category === "mock");
-
-      const localCards = allMocks.map((mock) => {
-        const task1 = mock.tasks.find((task) => task.taskNumber === 1);
-        const task2 = mock.tasks.find((task) => task.taskNumber === 2);
-        const parts = [
-          task1 ? { label: "Part 1", title: task1.title } : null,
-          task2 ? { label: "Part 2", title: task2.title } : null,
-        ].filter((part): part is { label: string; title: string } => part !== null);
-
-        const partCountLabel =
-          parts.length === 2
-            ? "Part 1 + Part 2 · 60 min"
-            : parts.length === 1
-              ? `${parts[0].label} only · 60 min`
-              : "Full test · 60 min";
-
-        return {
-          id: mock.id,
-          title: mock.title,
-          typeLabel: partCountLabel,
-          parts,
-          href: getWritingTaskHref("mock", mock.id, backHref),
-        };
-      });
-
-      const backendCards = backendMocks.map((mock) => {
+      const mocks = backendTests.filter((test) => test.category === "mock");
+      return mocks.map((mock) => {
         const parts = mock.tasks.map((task) => ({
           label: `Part ${task.taskNumber}`,
           title: task.title,
@@ -173,26 +128,14 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
         return {
           id: mock.id,
           title: mock.title,
-          typeLabel: `Part 1 + Part 2 Â· ${mock.totalMinutes} min`,
+          typeLabel: `Part 1 + Part 2 · ${mock.totalMinutes} min`,
           parts,
           href: getWritingTaskHref("mock", mock.id, backHref),
         };
       });
-
-      return [...localCards, ...backendCards];
     }
 
-    const staticTasks =
-      mode === "task-1"
-        ? WRITING_PRACTICE_TASKS.filter((task) => task.taskNumber === 1)
-        : WRITING_PRACTICE_TASKS.filter((task) => task.taskNumber === 2);
-
-    const adminTasks = getAdminPracticeTasks(adminQuestions, mode === "task-1" ? 1 : 2, {
-      publishedOnly: true,
-    });
-
-    const tasks = [...staticTasks, ...adminTasks];
-    const backendTasks = backendTests
+    return backendTests
       .filter((test) => test.category === mode)
       .flatMap((test) =>
         test.tasks
@@ -202,15 +145,7 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
             href: getWritingTaskHref(mode, test.id, backHref),
           }))
       );
-
-    return [
-      ...tasks.map((task) => ({
-        ...task,
-        href: getWritingTaskHref(mode, task.id, backHref),
-      })),
-      ...backendTasks,
-    ];
-  }, [mode, backHref, adminQuestions, backendTests]);
+  }, [mode, backHref, backendTests]);
 
   return (
     <div className="space-y-6">
@@ -233,16 +168,28 @@ export function WritingTaskBoard({ backHref }: { backHref?: string } = {}) {
           ))}
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {cards.map((card) => (
-            <TaskCard
-              key={card.id}
-              task={card}
-              href={card.href}
-              parts={"parts" in card ? card.parts : undefined}
-            />
-          ))}
-        </div>
+        {loadError ? (
+          <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {loadError}
+          </p>
+        ) : null}
+
+        {cards.length === 0 && !loadError ? (
+          <p className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+            No published Writing tests are available yet.
+          </p>
+        ) : (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {cards.map((card) => (
+              <TaskCard
+                key={card.id}
+                task={card}
+                href={card.href}
+                parts={"parts" in card ? card.parts : undefined}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,13 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  getListeningTaskHref,
-  LISTENING_MOCK_TESTS,
-} from "@/lib/exams/ielts-listening";
-import { buildAdminListeningMockTests } from "@/lib/admin/listening-to-exam";
-import { useAdminListeningTests } from "@/hooks/useAdminListeningTests";
+import { useEffect, useState } from "react";
+import { getListeningTaskHref } from "@/lib/exams/ielts-listening";
 import type { ListeningMockTest } from "@/types/listening";
 import {
   getPublishedListeningTests,
@@ -59,10 +54,7 @@ function MockTestCard({
   test,
   backHref,
 }: {
-  test: Pick<
-    ListeningMockTest,
-    "id" | "title" | "typeLabel" | "iconStyle" | "isBackendTest"
-  >;
+  test: Pick<ListeningMockTest, "id" | "title" | "typeLabel" | "iconStyle">;
   backHref?: string;
 }) {
   const style = ICON_STYLES[test.iconStyle];
@@ -98,50 +90,34 @@ function MockTestCard({
           Start
         </Link>
       </div>
-
-      {!test.isBackendTest ? (
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <p className="text-sm text-slate-500">Practice by part:</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {([1, 2, 3, 4] as const).map((part) => (
-              <Link
-                key={part}
-                href={getListeningTaskHref(test.id, { part, backHref })}
-                className="rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800 transition-colors hover:bg-violet-100"
-              >
-                Part {part}
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </article>
   );
 }
 
 export function ListeningTaskBoard({ backHref }: { backHref?: string } = {}) {
-  const { tests: adminTests } = useAdminListeningTests();
   const [publishedTests, setPublishedTests] = useState<ListeningTestCard[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     void getPublishedListeningTests()
       .then((tests) => {
-        if (active) setPublishedTests(tests);
+        if (active) {
+          setPublishedTests(tests);
+          setLoadError(null);
+        }
       })
-      // Static fixtures remain available when the API is not running during UI work.
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : "Could not load Listening tests.");
+        }
+      });
 
     return () => {
       active = false;
     };
   }, []);
-
-  const allMocks = useMemo(() => {
-    const adminMocks = buildAdminListeningMockTests(adminTests, { publishedOnly: true });
-    return [...publishedTests, ...LISTENING_MOCK_TESTS, ...adminMocks];
-  }, [adminTests, publishedTests]);
 
   return (
     <div className="space-y-6">
@@ -150,11 +126,23 @@ export function ListeningTaskBoard({ backHref }: { backHref?: string } = {}) {
           Mock Test
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          {allMocks.map((test) => (
-            <MockTestCard key={test.id} test={test} backHref={backHref} />
-          ))}
-        </div>
+        {loadError ? (
+          <p className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {loadError}
+          </p>
+        ) : null}
+
+        {publishedTests.length === 0 && !loadError ? (
+          <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+            No published Listening tests are available yet.
+          </p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-3">
+            {publishedTests.map((test) => (
+              <MockTestCard key={test.id} test={test} backHref={backHref} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

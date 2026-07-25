@@ -549,6 +549,7 @@ model ListeningResult {
   // without losing completed attempts or answer history.
   bandScore        Float
   algorithmVersion String   @default("basic-v1")
+  report           Json?
   createdAt        DateTime @default(now())
 
   attempt ListeningAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)

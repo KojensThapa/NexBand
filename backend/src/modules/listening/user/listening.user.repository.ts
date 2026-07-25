@@ -28,6 +28,7 @@ const publishedListeningTestDetailSelect = {
       partNumber: true,
       title: true,
       instruction: true,
+      audioUrl: true,
       audioDurationSeconds: true,
       mapImageUrl: true,
       mapImageAlt: true,
@@ -67,6 +68,30 @@ const listeningAttemptSelect = {
   updatedAt: true,
 } satisfies Prisma.ListeningAttemptSelect;
 
+/** Only fully authored tests are visible to learners. */
+const learnerReadyPublishedTestWhere = {
+  isPublished: true,
+  AND: [
+    {
+      parts: {
+        every: {
+          audioUrl: { not: null },
+          questions: { some: {} },
+        },
+      },
+    },
+    ...([1, 2, 3, 4] as const).map((partNumber) => ({
+      parts: {
+        some: {
+          partNumber,
+          audioUrl: { not: null },
+          questions: { some: {} },
+        },
+      },
+    })),
+  ],
+} satisfies Prisma.ListeningMockTestWhereInput;
+
 export type ListeningResultData = {
   correctAnswers: number;
   totalQuestions: number;
@@ -75,6 +100,7 @@ export type ListeningResultData = {
   percentage: number;
   bandScore: number;
   algorithmVersion: string;
+  report?: Prisma.InputJsonValue;
 };
 
 /** Persistence owned by the learner Listening attempt and result workflow. */
@@ -84,13 +110,13 @@ export class ListeningUserRepository {
 
     const [tests, total] = await Promise.all([
       prisma.listeningMockTest.findMany({
-        where: { isPublished: true },
+        where: learnerReadyPublishedTestWhere,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
         select: publishedListeningTestSelect,
       }),
-      prisma.listeningMockTest.count({ where: { isPublished: true } }),
+      prisma.listeningMockTest.count({ where: learnerReadyPublishedTestWhere }),
     ]);
 
     return { tests, total };
@@ -98,7 +124,7 @@ export class ListeningUserRepository {
 
   async findPublishedById(id: string) {
     return prisma.listeningMockTest.findFirst({
-      where: { id, isPublished: true },
+      where: { id, ...learnerReadyPublishedTestWhere },
       select: publishedListeningTestDetailSelect,
     });
   }
@@ -107,7 +133,7 @@ export class ListeningUserRepository {
     return prisma.listeningPart.findFirst({
       where: {
         partNumber,
-        mockTest: { id, isPublished: true },
+        mockTest: { id, ...learnerReadyPublishedTestWhere },
       },
       select: { audioUrl: true },
     });

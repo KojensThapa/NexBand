@@ -1,21 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import {
-  getSpeakingTaskHref,
-  SPEAKING_MOCK_TESTS,
-  SPEAKING_PART1_TASKS,
-  SPEAKING_PART2_TASKS,
-  SPEAKING_PART3_TASKS,
-} from "@/lib/exams/ielts-speaking";
-import {
-  buildAdminSpeakingMockTests,
-  buildAdminSpeakingPart1Tasks,
-  buildAdminSpeakingPart2Tasks,
-  buildAdminSpeakingPart3Tasks,
-} from "@/lib/admin/speaking-to-exam";
-import { useAdminSpeakingTests } from "@/hooks/useAdminSpeakingTests";
+import { useEffect, useMemo, useState } from "react";
+import { getSpeakingTaskHref } from "@/lib/exams/ielts-speaking";
+import { getPublishedSpeakingTests, type SpeakingTestCard } from "@/services/speaking";
 import type { SpeakingBoardMode } from "@/types/speaking";
 import { cn } from "@/lib/utils";
 
@@ -91,55 +79,41 @@ function TaskCard({
 
 export function SpeakingTaskBoard({ backHref }: { backHref?: string } = {}) {
   const [mode, setMode] = useState<SpeakingBoardMode>("mock");
-  const { tests: adminTests } = useAdminSpeakingTests();
+  const [backendTests, setBackendTests] = useState<SpeakingTestCard[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void getPublishedSpeakingTests()
+      .then((tests) => {
+        if (active) {
+          setBackendTests(tests);
+          setLoadError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : "Could not load Speaking tests.");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const cards = useMemo(() => {
-    if (mode === "mock") {
-      const adminMocks = buildAdminSpeakingMockTests(adminTests, { publishedOnly: true });
-      const allMocks = [...SPEAKING_MOCK_TESTS, ...adminMocks];
-      return allMocks.map((mock) => ({
-        id: mock.id,
-        title: mock.title,
-        typeLabel: mock.typeLabel,
-        subtitle: `All 3 parts · ~${mock.totalMinutes} min`,
-        href: getSpeakingTaskHref("mock", mock.id, backHref),
+    return backendTests
+      .filter((test) => test.mode === mode)
+      .map((test) => ({
+        id: test.id,
+        title: test.title,
+        typeLabel: test.typeLabel,
+        subtitle: mode === "mock" ? "All 3 parts" : "Published speaking practice",
+        href: getSpeakingTaskHref(mode, test.id, backHref),
       }));
-    }
-
-    if (mode === "part-1") {
-      const adminPart1 = buildAdminSpeakingPart1Tasks(adminTests, { publishedOnly: true });
-      const allPart1 = [...SPEAKING_PART1_TASKS, ...adminPart1];
-      return allPart1.map((task) => ({
-        id: task.id,
-        title: task.title,
-        typeLabel: task.typeLabel,
-        subtitle: `${task.part1.questions.length} questions`,
-        href: getSpeakingTaskHref("part-1", task.id, backHref),
-      }));
-    }
-
-    if (mode === "part-2") {
-      const adminPart2 = buildAdminSpeakingPart2Tasks(adminTests, { publishedOnly: true });
-      const allPart2 = [...SPEAKING_PART2_TASKS, ...adminPart2];
-      return allPart2.map((task) => ({
-        id: task.id,
-        title: task.title,
-        typeLabel: task.typeLabel,
-        subtitle: "Cue card + follow-up",
-        href: getSpeakingTaskHref("part-2", task.id, backHref),
-      }));
-    }
-
-    const adminPart3 = buildAdminSpeakingPart3Tasks(adminTests, { publishedOnly: true });
-    const allPart3 = [...SPEAKING_PART3_TASKS, ...adminPart3];
-    return allPart3.map((task) => ({
-      id: task.id,
-      title: task.title,
-      typeLabel: task.typeLabel,
-      subtitle: `${task.part3.questions.length} discussion questions`,
-      href: getSpeakingTaskHref("part-3", task.id, backHref),
-    }));
-  }, [mode, backHref, adminTests]);
+  }, [mode, backHref, backendTests]);
 
   return (
     <div className="space-y-6">
@@ -162,11 +136,23 @@ export function SpeakingTaskBoard({ backHref }: { backHref?: string } = {}) {
           ))}
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {cards.map((card) => (
-            <TaskCard key={card.id} {...card} />
-          ))}
-        </div>
+        {loadError ? (
+          <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {loadError}
+          </p>
+        ) : null}
+
+        {cards.length === 0 && !loadError ? (
+          <p className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+            No published Speaking tests are available yet.
+          </p>
+        ) : (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {cards.map((card) => (
+              <TaskCard key={card.id} {...card} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

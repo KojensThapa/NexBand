@@ -23,6 +23,43 @@ export interface ListeningAttempt {
   updatedAt: string;
 }
 
+export interface ListeningPartPerformance {
+  part: 1 | 2 | 3 | 4;
+  attempted: number;
+  skipped: number;
+  correct: number;
+  wrong: number;
+  accuracy: number | null;
+  status: "Attempted" | "Not Attempted";
+}
+
+export interface ListeningQuestionTypePerformance {
+  type: string;
+  label: string;
+  total: number;
+  attempted: number;
+  correct: number;
+  accuracy: number | null;
+  status: "Attempted" | "Not Attempted";
+}
+
+export interface ListeningEvaluationReport {
+  status: "Completed" | "Incomplete";
+  totalQuestions: number;
+  attemptedQuestions: number;
+  skippedQuestions: number;
+  correctAnswers: number;
+  wrongAnswers: number;
+  attemptAccuracy: number | null;
+  overallBand: number | null;
+  estimatedBand: number | null;
+  partPerformance: ListeningPartPerformance[];
+  questionTypePerformance: ListeningQuestionTypePerformance[];
+  strengths: string[];
+  weakAreas: string[];
+  recommendations: string[];
+}
+
 export interface ListeningResult {
   id: string;
   attemptId: string;
@@ -33,6 +70,7 @@ export interface ListeningResult {
   percentage: number;
   bandScore: number;
   algorithmVersion: string;
+  report: ListeningEvaluationReport | null;
   createdAt: string;
 }
 
@@ -41,12 +79,12 @@ type ApiEnvelope<T> = { success: true; data: T };
 export async function getPublishedListeningTests() {
   const response = await apiFetch<
     ApiEnvelope<{ tests: Omit<ListeningTestCard, "isBackendTest">[]; pagination: unknown }>
-  >("/listening/tests?limit=50");
+  >("/api/listening/tests?limit=50");
   return response.data.tests.map((test) => ({ ...test, isBackendTest: true as const }));
 }
 
 export async function getPublishedListeningTest(testId: string): Promise<ListeningMockTest> {
-  const response = await apiFetch<ApiEnvelope<ListeningMockTest>>(`/listening/tests/${testId}`);
+  const response = await apiFetch<ApiEnvelope<ListeningMockTest>>(`/api/listening/tests/${testId}`);
   return {
     ...response.data,
     isBackendTest: true,
@@ -61,7 +99,7 @@ export async function getPublishedListeningTest(testId: string): Promise<Listeni
 
 export async function startListeningAttempt(testId: string) {
   const response = await apiFetch<ApiEnvelope<{ attempt: ListeningAttempt; test: ListeningMockTest }>>(
-    `/listening/tests/${testId}/attempts`,
+    `/api/listening/tests/${testId}/attempts`,
     { method: "POST" }
   );
   return response.data;
@@ -72,7 +110,7 @@ export async function saveListeningAnswers(
   answers: Record<string, string>
 ) {
   const response = await apiFetch<ApiEnvelope<ListeningAttempt>>(
-    `/listening/attempts/${attemptId}/answers`,
+    `/api/listening/attempts/${attemptId}/answers`,
     { method: "PUT", body: JSON.stringify({ answers }) }
   );
   return response.data;
@@ -84,7 +122,7 @@ export async function submitListeningAttempt(
 ) {
   const response = await apiFetch<
     ApiEnvelope<{ attempt: ListeningAttempt; result: ListeningResult; alreadySubmitted: boolean }>
-  >(`/listening/attempts/${attemptId}/submit`, {
+  >(`/api/listening/attempts/${attemptId}/submit`, {
     method: "POST",
     body: JSON.stringify({ answers }),
   });
@@ -93,7 +131,7 @@ export async function submitListeningAttempt(
 
 export async function getListeningResult(attemptId: string) {
   const response = await apiFetch<ApiEnvelope<ListeningResult>>(
-    `/listening/attempts/${attemptId}/result`
+    `/api/listening/attempts/${attemptId}/result`
   );
   return response.data;
 }

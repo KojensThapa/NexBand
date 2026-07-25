@@ -14,11 +14,14 @@ import {
   countAdminSpeakingQuestions,
   createEmptyMockTestDraft,
   createEmptySpeakingQuestion,
-  deleteAdminSpeakingTest,
   getAdminSpeakingCategoryLabel,
-  saveAdminSpeakingTest,
-  setAdminSpeakingTestPublished,
 } from "@/lib/admin/speaking-storage";
+import {
+  createAdminSpeakingTest,
+  deleteAdminSpeakingTest,
+  setAdminSpeakingTestPublished,
+  updateAdminSpeakingTest,
+} from "@/services/speaking-admin";
 import { useAdminSpeakingTests } from "@/hooks/useAdminSpeakingTests";
 import { cn } from "@/lib/utils";
 
@@ -116,7 +119,7 @@ function moveQuestion(
 }
 
 export function SpeakingSection() {
-  const { tests, version } = useAdminSpeakingTests();
+  const { tests, version, refresh } = useAdminSpeakingTests();
   const savedListRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<FormMode>("create");
   const [draft, setDraft] = useState<TestDraft>(emptyDraft);
@@ -286,7 +289,7 @@ export function SpeakingSection() {
     };
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
@@ -301,7 +304,16 @@ export function SpeakingSection() {
         );
       }
 
-      saveAdminSpeakingTest(buildSavePayload());
+      const { published, ...payload } = buildSavePayload();
+      const saved =
+        mode === "edit"
+          ? await updateAdminSpeakingTest(draft.id, payload)
+          : await createAdminSpeakingTest(payload);
+
+      if (saved.published !== published) {
+        await setAdminSpeakingTestPublished(saved.id, published);
+      }
+      await refresh();
 
       setDraft(emptyDraft());
       setMode("create");
@@ -336,19 +348,30 @@ export function SpeakingSection() {
     setError(null);
   }
 
-  function handleDelete(id: string) {
-    deleteAdminSpeakingTest(id);
-    if (mode === "edit" && draft.id === id) {
-      handleCancelEdit();
+  async function handleDelete(id: string) {
+    try {
+      await deleteAdminSpeakingTest(id);
+      await refresh();
+      if (mode === "edit" && draft.id === id) {
+        handleCancelEdit();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete speaking content.");
     }
   }
 
-  function handleTogglePublish(test: AdminSpeakingMockTest) {
+  async function handleTogglePublish(test: AdminSpeakingMockTest) {
     if (!test.published && !isDraftValid(loadTestIntoDraft(test))) {
       setError("Cannot publish — complete all required fields first.");
       return;
     }
-    setAdminSpeakingTestPublished(test.id, !test.published);
+    try {
+      await setAdminSpeakingTestPublished(test.id, !test.published);
+      await refresh();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update publish state.");
+    }
   }
 
   const categoryLabel = getAdminSpeakingCategoryLabel(draft.category);

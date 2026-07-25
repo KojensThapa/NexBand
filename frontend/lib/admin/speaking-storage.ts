@@ -11,42 +11,6 @@ import {
   DEFAULT_SPEAK_MINUTES,
 } from "./speaking-constants";
 
-const ADMIN_SPEAKING_KEY = "nexband_admin_speaking_tests";
-
-export { ADMIN_SPEAKING_KEY };
-export const ADMIN_SPEAKING_CHANGED_EVENT = "nexband:admin-speaking-changed";
-
-function notifyAdminSpeakingChanged() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(ADMIN_SPEAKING_CHANGED_EVENT));
-}
-
-function readTests(): AdminSpeakingMockTest[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(ADMIN_SPEAKING_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as AdminSpeakingMockTest[];
-  } catch {
-    return [];
-  }
-}
-
-function writeTests(tests: AdminSpeakingMockTest[]) {
-  localStorage.setItem(ADMIN_SPEAKING_KEY, JSON.stringify(tests));
-  notifyAdminSpeakingChanged();
-}
-
-export function getAdminSpeakingTests(): AdminSpeakingMockTest[] {
-  return readTests().sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
-}
-
-export function getAdminSpeakingTest(id: string): AdminSpeakingMockTest | undefined {
-  return readTests().find((test) => test.id === id);
-}
-
 export function createEmptySpeakingQuestion(): AdminSpeakingQuestion {
   return {
     id: `sq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -81,62 +45,6 @@ export function createEmptyMockTestDraft(
       ),
     },
   };
-}
-
-export type SaveAdminSpeakingTestInput = Omit<
-  AdminSpeakingMockTest,
-  "id" | "createdAt" | "updatedAt"
-> & { id?: string };
-
-export function saveAdminSpeakingTest(
-  input: SaveAdminSpeakingTestInput
-): AdminSpeakingMockTest {
-  const existing = readTests();
-  const now = new Date().toISOString();
-
-  if (input.id) {
-    const index = existing.findIndex((test) => test.id === input.id);
-    if (index !== -1) {
-      const updated: AdminSpeakingMockTest = {
-        ...existing[index],
-        ...input,
-        id: input.id,
-        updatedAt: now,
-      };
-      const next = [...existing];
-      next[index] = updated;
-      writeTests(next);
-      return updated;
-    }
-  }
-
-  const test: AdminSpeakingMockTest = {
-    ...input,
-    id: input.id ?? `admin-speaking-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  writeTests([test, ...existing]);
-  return test;
-}
-
-export function deleteAdminSpeakingTest(id: string) {
-  writeTests(readTests().filter((test) => test.id !== id));
-}
-
-export function setAdminSpeakingTestPublished(id: string, published: boolean) {
-  const existing = readTests();
-  const index = existing.findIndex((test) => test.id === id);
-  if (index === -1) return;
-
-  const next = [...existing];
-  next[index] = {
-    ...next[index],
-    published,
-    updatedAt: new Date().toISOString(),
-  };
-  writeTests(next);
 }
 
 export function countAdminSpeakingQuestions(test: AdminSpeakingMockTest): number {

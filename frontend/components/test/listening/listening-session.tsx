@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnalysisLoader } from "@/components/reports/analysis-loader";
 import { SubmitTestButton } from "@/components/test/submit-test-button";
 import { useTimer } from "@/hooks/useTimer";
-import {
-  analyzeListeningSubmission,
-  createSavedReport,
-} from "@/lib/reports/mock-analysis";
+import { createSavedReport } from "@/lib/reports/mock-analysis";
 import { saveReport } from "@/lib/reports/storage";
 import {
   saveListeningAnswers,
@@ -18,15 +15,10 @@ import {
   type ListeningResult,
 } from "@/services/listening";
 import {
-  countListeningQuestions,
   LISTENING_MOCK_SECONDS,
   LISTENING_PART_SECONDS,
 } from "@/lib/exams/ielts-listening";
-import {
-  countMockTestQuestions,
-  countPartQuestions,
-  getPartQuestionOffset,
-} from "@/lib/admin/listening-to-exam";
+import { countPartQuestions, getPartQuestionOffset } from "@/lib/admin/listening-to-exam";
 import { getListeningAudioUrl } from "@/lib/admin/listening-audio-storage";
 import { cn } from "@/lib/utils";
 import type {
@@ -110,43 +102,41 @@ function createBackendListeningDetail(
   taskTitle: string,
   result: ListeningResult
 ): ListeningFeedbackDetail {
+  const evaluation = result.report;
+  const band = evaluation?.overallBand ?? evaluation?.estimatedBand ?? result.bandScore;
+  const accuracy = evaluation?.attemptAccuracy ?? result.percentage;
+  const status = evaluation?.status ?? "Completed";
+
   return {
     taskTitle,
-    overallScore: result.bandScore,
-    correctCount: result.correctAnswers,
-    totalQuestions: result.totalQuestions,
-    accuracyPercentage: result.percentage,
+    status,
+    overallScore: band,
+    correctCount: evaluation?.correctAnswers ?? result.correctAnswers,
+    totalQuestions: evaluation?.totalQuestions ?? result.totalQuestions,
+    accuracyPercentage: accuracy,
     timeTaken: "Recorded by your test session",
-    partScores: [
-      {
-        label: "Full test",
-        score: result.bandScore,
-        correct: result.correctAnswers,
-        total: result.totalQuestions,
-      },
-    ],
-    questionTypePerformance: [
-      {
-        type: "All scored questions",
-        score: result.bandScore,
-        correct: result.correctAnswers,
-        total: result.totalQuestions,
-      },
-    ],
-    strengths:
-      result.percentage >= 70
-        ? ["Strong overall listening accuracy in this submitted test."]
-        : ["You completed a persisted listening attempt that you can revisit in your reports."],
-    weakAreas:
-      result.percentage >= 70
-        ? ["Review individual question types to turn a good result into a more consistent score."]
-        : ["Review missed answers and practise question types where you lost marks."],
-    aiSummary: `Your basic listening score is ${result.correctAnswers} of ${result.totalQuestions} (${result.percentage}%), with a provisional Band ${result.bandScore.toFixed(1)}.`,
-    recommendedTopics: [
-      "Question preview and keyword prediction",
-      "Spelling and number accuracy",
-      "Recognising paraphrase in audio",
-    ],
+    partScores: (evaluation?.partPerformance ?? []).map((part) => ({
+      label: `Part ${part.part}`,
+      score: part.accuracy ?? 0,
+      maxScore: 100,
+      correct: part.correct,
+      total: part.attempted + part.skipped,
+      status: part.status,
+    })),
+    questionTypePerformance: (evaluation?.questionTypePerformance ?? []).map((performance) => ({
+      type: performance.label,
+      score: performance.accuracy ?? 0,
+      maxScore: 100,
+      correct: performance.correct,
+      total: performance.total,
+      status: performance.status,
+    })),
+    strengths: evaluation?.strengths ?? [],
+    weakAreas: evaluation?.weakAreas ?? [],
+    aiSummary: evaluation
+      ? `${evaluation.status} submission: ${evaluation.correctAnswers} correct from ${evaluation.attemptedQuestions} attempted (${accuracy}% attempt accuracy). ${evaluation.status === "Completed" ? "Overall" : "Estimated"} Band ${band.toFixed(1)}.`
+      : `Your listening score is ${result.correctAnswers} of ${result.totalQuestions}, with Band ${band.toFixed(1)}.`,
+    recommendedTopics: evaluation?.recommendations ?? [],
   };
 }
 
@@ -171,6 +161,7 @@ export function ListeningSession({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [storedAudio, setStoredAudio] = useState<{
     key: string;
     url: string;
@@ -215,7 +206,7 @@ export function ListeningSession({
 
   const timerSeconds = isPartOnly ? LISTENING_PART_SECONDS : LISTENING_MOCK_SECONDS;
 
-  const { formatted, isRunning, isFinished, start, pause, reset } = useTimer(
+  const { formatted, isRunning, isFinished, start, pause } = useTimer(
     timerSeconds,
     { autoStart: true }
   );
@@ -224,20 +215,8 @@ export function ListeningSession({
   const partQuestionCount = countPartQuestions(activePart);
   const displayQuestionEnd = questionOffset + partQuestionCount;
 
-  const answeredInPart = useMemo(() => {
-    return Array.from({ length: partQuestionCount }, (_, i) => {
-      const qId = getQuestionId(activePart, i + 1);
-      return Boolean(answers[qId]?.trim());
-    }).filter(Boolean).length;
-  }, [activePart, answers, partQuestionCount]);
-
-  const totalAnswered = useMemo(
-    () => Object.values(answers).filter((v) => v.trim()).length,
-    [answers]
-  );
-
   useEffect(() => {
-    if (!mockTest.isBackendTest || isPartOnly) return;
+    if (!mockTest.isBackendTest) return;
 
     let active = true;
     void startListeningAttempt(mockTest.id)
@@ -257,7 +236,7 @@ export function ListeningSession({
     return () => {
       active = false;
     };
-  }, [isPartOnly, mockTest.id, mockTest.isBackendTest]);
+  }, [mockTest.id, mockTest.isBackendTest]);
 
   useEffect(() => {
     if (!attemptId || !mockTest.isBackendTest) return;
@@ -278,28 +257,25 @@ export function ListeningSession({
   };
 
   const toggleAudio = () => {
-    if (audioSource && audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        void audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+    const audio = audioRef.current;
+
+    if (!audioSource || !audio) {
+      setAudioError("Audio is unavailable for this part. Please ask the test author to upload it again.");
       return;
     }
-    setIsPlaying(!isPlaying);
-    if (!isPlaying) {
-      const interval = setInterval(() => {
-        setAudioProgress((p) => {
-          if (p >= activePart.audioDurationSeconds) {
-            clearInterval(interval);
-            setIsPlaying(false);
-            return activePart.audioDurationSeconds;
-          }
-          return p + 1;
-        });
-      }, 1000);
+
+    if (!audio.paused) {
+      audio.pause();
+      return;
     }
+
+    setAudioError(null);
+    void audio.play().catch(() => {
+      setIsPlaying(false);
+      setAudioError(
+        "This audio could not be played. Please check that the uploaded file is a supported audio format."
+      );
+    });
   };
 
   const handleFinish = useCallback(async () => {
@@ -310,7 +286,7 @@ export function ListeningSession({
       ? `${mockTest.title} â€” Part ${initialPart}`
       : mockTest.title;
 
-    if (mockTest.isBackendTest && !isPartOnly) {
+    if (mockTest.isBackendTest) {
       if (!attemptId) {
         setAttemptError("Your attempt is not ready yet. Please sign in and wait a moment before submitting.");
         setIsAnalyzing(false);
@@ -324,8 +300,9 @@ export function ListeningSession({
           "listening",
           taskTitle,
           `${result.correctAnswers} of ${result.totalQuestions} answers correct`,
-          result.bandScore,
-          detail
+          detail.overallScore,
+          detail,
+          detail.status
         );
         saveReport(report);
         router.push(`/report/${report.id}`);
@@ -339,27 +316,8 @@ export function ListeningSession({
       }
     }
 
-    const totalQuestions = isPartOnly
-      ? partQuestionCount
-      : countMockTestQuestions(mockTest);
-    const detail = await analyzeListeningSubmission({
-      taskTitle: isPartOnly
-        ? `${mockTest.title} — Part ${initialPart}`
-        : mockTest.title,
-      answeredCount: totalAnswered,
-      totalQuestions,
-    });
-
-    const report = createSavedReport(
-      "listening",
-      isPartOnly ? `${mockTest.title} — Part ${initialPart}` : mockTest.title,
-      `${totalAnswered} answers submitted`,
-      detail.overallScore,
-      detail
-    );
-
-    saveReport(report);
-    router.push(`/report/${report.id}`);
+    setAttemptError("This listening test has no server-side answer key and cannot be scored.");
+    setIsAnalyzing(false);
   }, [
     initialPart,
     isPartOnly,
@@ -369,9 +327,6 @@ export function ListeningSession({
     mockTest.isBackendTest,
     pause,
     router,
-    totalAnswered,
-    partQuestionCount,
-    mockTest,
   ]);
 
   if (!activePart) {
@@ -421,7 +376,9 @@ export function ListeningSession({
                 <button
                   type="button"
                   onClick={toggleAudio}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#553285] text-white"
+                  disabled={!audioSource}
+                  aria-label={isPlaying ? "Pause audio" : "Play audio"}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#553285] text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPlaying ? (
                     <span className="text-xs">❚❚</span>
@@ -457,8 +414,21 @@ export function ListeningSession({
           <audio
             ref={audioRef}
             src={audioSource}
+            preload="metadata"
+            onLoadStart={() => {
+              setAudioProgress(0);
+              setAudioError(null);
+            }}
+            onPlaying={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
             onTimeUpdate={(event) => setAudioProgress(Math.round(event.currentTarget.currentTime))}
             onEnded={() => setIsPlaying(false)}
+            onError={() => {
+              setIsPlaying(false);
+              setAudioError(
+                "This audio could not be loaded. Please ask the test author to upload a supported audio file again."
+              );
+            }}
           />
         ) : null}
 
@@ -470,6 +440,12 @@ export function ListeningSession({
         {attemptError ? (
           <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
             {attemptError}
+          </div>
+        ) : null}
+
+        {audioError || !audioSource ? (
+          <div className="border-b border-rose-100 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
+            {audioError ?? "Audio is unavailable for this part. Please ask the test author to upload it again."}
           </div>
         ) : null}
 
@@ -535,34 +511,6 @@ export function ListeningSession({
               </table>
             </div>
 
-            {partQuestionCount < countListeningQuestions(activePart) ? (
-              <div className="mt-4 space-y-3">
-                {Array.from(
-                  { length: countListeningQuestions(activePart) - partQuestionCount },
-                  (_, i) => {
-                  const num = partQuestionCount + i + 1;
-                  const qId = getQuestionId(activePart, num);
-                  return (
-                    <div
-                      key={qId}
-                      className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3"
-                    >
-                      <QuestionBadge number={questionOffset + num} />
-                      <input
-                        type="text"
-                        value={answers[qId] ?? ""}
-                        onChange={(event) =>
-                          handleAnswerChange(qId, event.target.value)
-                        }
-                        placeholder="Your answer"
-                        className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#553285]"
-                      />
-                    </div>
-                  );
-                }
-                )}
-              </div>
-            ) : null}
           </div>
         </main>
 

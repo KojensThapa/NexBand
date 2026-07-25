@@ -18,14 +18,14 @@ import {
   countAdminListeningQuestions,
   createEmptyMockTestDraft,
   createEmptyQuestion,
-  deleteAdminListeningTest,
-  saveAdminListeningTest,
-  setAdminListeningTestPublished,
 } from "@/lib/admin/listening-storage";
 import {
-  deleteListeningAudio,
-  saveListeningAudio,
-} from "@/lib/admin/listening-audio-storage";
+  createAdminListeningTest,
+  deleteAdminListeningTest,
+  setAdminListeningTestPublished,
+  updateAdminListeningTest,
+} from "@/services/listening-admin";
+import { uploadAudioFile } from "@/services/uploads";
 import { useAdminListeningTests } from "@/hooks/useAdminListeningTests";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ function emptyDraft(): TestDraft {
 function isPartValid(part: AdminListeningPart): boolean {
   if (!part.title.trim() || !part.instruction.trim()) return false;
   if (!part.audioStorageKey && !part.audioUrl) return false;
-  return part.questions.every(
+  return part.questions.length > 0 && part.questions.every(
     (q) => q.questionText.trim() && q.correctAnswer.trim() && q.marks > 0
   );
 }
@@ -89,7 +89,7 @@ function loadTestIntoDraft(test: AdminListeningMockTest): TestDraft {
 }
 
 export function ListeningSection() {
-  const { tests, version } = useAdminListeningTests();
+  const { tests, version, refresh } = useAdminListeningTests();
   const savedListRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<FormMode>("create");
   const [draft, setDraft] = useState<TestDraft>(emptyDraft);
@@ -166,22 +166,18 @@ export function ListeningSection() {
     setIsUploadingAudio(true);
 
     try {
-      const [audioStorageKey, audioDurationSeconds] = await Promise.all([
-        saveListeningAudio(file),
+      const [audioUrl, audioDurationSeconds] = await Promise.all([
+        uploadAudioFile(file),
         getAudioDuration(file),
       ]);
 
-      if (currentPart.audioStorageKey) {
-        void deleteListeningAudio(currentPart.audioStorageKey).catch(() => undefined);
-      }
-
       updatePart(activePart, {
-        audioStorageKey,
-        audioUrl: undefined,
+        audioUrl,
+        audioStorageKey: undefined,
         audioDurationSeconds,
       });
-    } catch {
-      setError("Audio could not be stored locally. Please try a smaller file or free browser storage.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Audio could not be uploaded. Please try again.");
     } finally {
       setIsUploadingAudio(false);
       event.target.value = "";
@@ -251,7 +247,7 @@ export function ListeningSection() {
     updatePart(activePart, { questions: next });
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
@@ -266,13 +262,21 @@ export function ListeningSection() {
         throw new Error("Wait for the audio upload to finish before saving the mock test.");
       }
 
-      saveAdminListeningTest({
-        id: mode === "edit" ? draft.id : undefined,
+      const payload = {
         title: draft.title.trim(),
         iconStyle: draft.iconStyle,
-        published: draft.published,
         parts: draft.parts,
-      });
+      };
+
+      const saved =
+        mode === "edit"
+          ? await updateAdminListeningTest(draft.id, payload)
+          : await createAdminListeningTest(payload);
+
+      if (saved.published !== draft.published) {
+        await setAdminListeningTestPublished(saved.id, draft.published);
+      }
+      await refresh();
 
       setDraft(emptyDraft());
       setMode("create");
@@ -305,24 +309,30 @@ export function ListeningSection() {
     setError(null);
   }
 
-  function handleDelete(test: AdminListeningMockTest) {
-    deleteAdminListeningTest(test.id);
-    void Promise.all(
-      test.parts.flatMap((part) =>
-        part.audioStorageKey ? [deleteListeningAudio(part.audioStorageKey)] : []
-      )
-    ).catch(() => undefined);
-    if (mode === "edit" && draft.id === test.id) {
-      handleCancelEdit();
+  async function handleDelete(test: AdminListeningMockTest) {
+    try {
+      await deleteAdminListeningTest(test.id);
+      await refresh();
+      if (mode === "edit" && draft.id === test.id) {
+        handleCancelEdit();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete mock test.");
     }
   }
 
-  function handleTogglePublish(test: AdminListeningMockTest) {
+  async function handleTogglePublish(test: AdminListeningMockTest) {
     if (!test.published && !isDraftValid(loadTestIntoDraft(test))) {
       setError("Cannot publish — complete all parts and questions first.");
       return;
     }
-    setAdminListeningTestPublished(test.id, !test.published);
+    try {
+      await setAdminListeningTestPublished(test.id, !test.published);
+      await refresh();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update publish state.");
+    }
   }
 
   const partComplete = (num: 1 | 2 | 3 | 4) => {

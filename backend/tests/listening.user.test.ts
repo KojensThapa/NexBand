@@ -39,6 +39,7 @@ test("learner listening projection includes playable content but never answer ke
         partNumber: 1,
         title: "Library enquiry",
         instruction: "Choose the correct answer.",
+        audioUrl: "http://localhost:5000/uploads/audio/library-enquiry.mp3",
         audioDurationSeconds: 120,
         mapImageUrl: null,
         mapImageAlt: null,
@@ -59,7 +60,10 @@ test("learner listening projection includes playable content but never answer ke
   });
 
   assert.equal(testModel.isBackendTest, true);
-  assert.equal(testModel.parts[0]?.audioUrl, "/api/listening/tests/test-1/parts/1/audio");
+  assert.equal(
+    testModel.parts[0]?.audioUrl,
+    "/uploads/audio/library-enquiry.mp3"
+  );
   assert.deepEqual(testModel.parts[0]?.questions[0], {
     id: "question-1",
     number: 1,

@@ -46,6 +46,7 @@ export interface SpeakingMockTest {
   part1: SpeakingPart1;
   part2: SpeakingPart2;
   part3: SpeakingPart3;
+  isBackendTest?: boolean;
 }
 
 /** Standalone Part 1 practice set */
@@ -54,6 +55,7 @@ export interface SpeakingPart1Task {
   title: string;
   typeLabel: string;
   part1: SpeakingPart1;
+  isBackendTest?: boolean;
 }
 
 /** Standalone Part 2 cue-card practice */
@@ -62,6 +64,7 @@ export interface SpeakingPart2Task {
   title: string;
   typeLabel: string;
   part2: SpeakingPart2;
+  isBackendTest?: boolean;
 }
 
 /** Standalone Part 3 discussion practice */
@@ -70,6 +73,7 @@ export interface SpeakingPart3Task {
   title: string;
   typeLabel: string;
   part3: SpeakingPart3;
+  isBackendTest?: boolean;
 }
 
 export interface SpeakingRecording {

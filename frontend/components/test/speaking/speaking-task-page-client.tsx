@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SpeakingSession } from "@/components/test/speaking/speaking-session";
-import {
-  getSpeakingMockTest,
-  getSpeakingPart1Task,
-  getSpeakingPart2Task,
-  getSpeakingPart3Task,
-} from "@/lib/exams/ielts-speaking";
-import { getAdminSpeakingTaskById } from "@/lib/admin/speaking-to-exam";
-import { getAdminSpeakingTests } from "@/lib/admin/speaking-storage";
+import { getPublishedSpeakingTest } from "@/services/speaking";
 import type {
   SpeakingBoardMode,
   SpeakingMockTest,
@@ -39,74 +32,33 @@ export function SpeakingTaskPageClient({
   const [resolved, setResolved] = useState<ResolvedSession | null>(null);
 
   useEffect(() => {
-    if (testId.startsWith("admin-speaking-")) {
-      const adminTests = getAdminSpeakingTests();
-      const task = getAdminSpeakingTaskById(adminTests, mode, testId, {
-        publishedOnly: true,
+    let active = true;
+    setResolved(null);
+
+    void getPublishedSpeakingTest(testId)
+      .then((result) => {
+        if (!active) return;
+        if (result.mode !== mode) {
+          setResolved({ kind: "not-found" });
+          return;
+        }
+        if (result.mode === "mock") {
+          setResolved({ kind: "mock", mockTest: result.task });
+        } else if (result.mode === "part-1") {
+          setResolved({ kind: "part-1", part1Task: result.task });
+        } else if (result.mode === "part-2") {
+          setResolved({ kind: "part-2", part2Task: result.task });
+        } else {
+          setResolved({ kind: "part-3", part3Task: result.task });
+        }
+      })
+      .catch(() => {
+        if (active) setResolved({ kind: "not-found" });
       });
 
-      if (task) {
-        if (mode === "mock") {
-          setResolved({ kind: "mock", mockTest: task as SpeakingMockTest });
-          return;
-        }
-        if (mode === "part-1") {
-          setResolved({ kind: "part-1", part1Task: task as SpeakingPart1Task });
-          return;
-        }
-        if (mode === "part-2") {
-          setResolved({ kind: "part-2", part2Task: task as SpeakingPart2Task });
-          return;
-        }
-        setResolved({ kind: "part-3", part3Task: task as SpeakingPart3Task });
-        return;
-      }
-
-      setResolved({ kind: "not-found" });
-      return;
-    }
-
-    if (mode === "mock") {
-      const mockTest = getSpeakingMockTest(testId);
-      if (mockTest.id === testId) {
-        setResolved({ kind: "mock", mockTest });
-        return;
-      }
-      setResolved({ kind: "not-found" });
-      return;
-    }
-
-    if (mode === "part-1") {
-      const task = getSpeakingPart1Task(testId);
-      if (task) {
-        setResolved({ kind: "part-1", part1Task: task });
-        return;
-      }
-      setResolved({ kind: "not-found" });
-      return;
-    }
-
-    if (mode === "part-2") {
-      const task = getSpeakingPart2Task(testId);
-      if (task) {
-        setResolved({ kind: "part-2", part2Task: task });
-        return;
-      }
-      setResolved({ kind: "not-found" });
-      return;
-    }
-
-    if (mode === "part-3") {
-      const task = getSpeakingPart3Task(testId);
-      if (task) {
-        setResolved({ kind: "part-3", part3Task: task });
-        return;
-      }
-      setResolved({ kind: "not-found" });
-      return;
-    }
-
-    setResolved({ kind: "not-found" });
+    return () => {
+      active = false;
+    };
   }, [mode, testId]);
 
   if (!resolved) {

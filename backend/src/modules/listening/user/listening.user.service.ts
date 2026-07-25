@@ -1,6 +1,12 @@
 import { ListeningAttemptStatus, Prisma } from "@prisma/client";
 
-import { calculateBasicListeningScore } from "../algorithm/listeningAlgorithm";
+import {
+  calculateBasicListeningScore,
+  evaluateListeningTest,
+  type ListeningEvaluationQuestion,
+  type ListeningPart as ListeningPartNumber,
+  type ListeningQuestionType,
+} from "../algorithm/listeningAlgorithm";
 import { ListeningUserRepository } from "./listening.user.repository";
 import { toListeningQuestionTypeInput, type ListeningAnswers } from "../listening.schemas";
 
@@ -16,6 +22,7 @@ type LearnerListeningTestSource = {
     partNumber: number;
     title: string;
     instruction: string;
+    audioUrl: string | null;
     audioDurationSeconds: number;
     mapImageUrl: string | null;
     mapImageAlt: string | null;
@@ -58,6 +65,23 @@ function formatQuestionText(questionText: string, options: string[]): string {
     .join("\n")}`;
 }
 
+function toLearnerAudioUrl(audioUrl: string | null): string | undefined {
+  if (!audioUrl) return undefined;
+
+  // Keep locally uploaded media relative to the API host. This prevents an
+  // authoring machine's localhost URL from being saved into learner tests.
+  try {
+    const url = new URL(audioUrl);
+    if (url.pathname.startsWith("/uploads/")) {
+      return `${url.pathname}${url.search}`;
+    }
+  } catch {
+    // A relative server path or a non-HTTP URL can be used as-is.
+  }
+
+  return audioUrl;
+}
+
 /** Maps the published database projection to the existing listening session UI. */
 export function toLearnerListeningTest(test: LearnerListeningTestSource) {
   return {
@@ -74,10 +98,10 @@ export function toLearnerListeningTest(test: LearnerListeningTestSource) {
       label: `Part ${part.partNumber}`,
       title: part.title,
       instruction: part.instruction,
-      // This endpoint redirects to the configured remote audio source. Keeping
-      // the address behind the API lets the admin storage implementation change
-      // without a frontend release.
-      audioUrl: `/api/listening/tests/${test.id}/parts/${part.partNumber}/audio`,
+      // Send the server-hosted media source itself. An audio element can then
+      // load its real content type instead of attempting to decode an API
+      // redirect or error response as audio.
+      audioUrl: toLearnerAudioUrl(part.audioUrl),
       audioDurationSeconds: part.audioDurationSeconds,
       mapImageUrl: part.mapImageUrl ?? undefined,
       mapImageAlt: part.mapImageAlt ?? undefined,
@@ -191,11 +215,22 @@ export class ListeningUserService {
     this.validateAnswers(new Set(questions.map((question) => question.id)), answers);
 
     const score = calculateBasicListeningScore(questions, answers);
+    const evaluationQuestions: ListeningEvaluationQuestion[] = attempt.mockTest.parts.flatMap(
+      (part) =>
+        part.questions.map((question) => ({
+          id: question.id,
+          part: part.partNumber as ListeningPartNumber,
+          type: question.type as ListeningQuestionType,
+          correctAnswers: [question.correctAnswer],
+        }))
+    );
+    const report = evaluateListeningTest({ questions: evaluationQuestions, answers });
+
     const completed = await this.listeningRepository.completeAttempt(
       userId,
       attemptId,
       answers,
-      score
+      { ...score, report: report as unknown as Prisma.InputJsonValue }
     );
 
     if (!completed.attempt || !completed.result) {

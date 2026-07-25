@@ -2,40 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AdminSpeakingMockTest } from "@/types/admin";
-import {
-  ADMIN_SPEAKING_CHANGED_EVENT,
-  ADMIN_SPEAKING_KEY,
-  getAdminSpeakingTests,
-} from "@/lib/admin/speaking-storage";
+import { getAdminSpeakingTests } from "@/services/speaking-admin";
 
 export function useAdminSpeakingTests() {
   const [tests, setTests] = useState<AdminSpeakingMockTest[]>([]);
   const [version, setVersion] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const refresh = useCallback(() => {
-    setTests(getAdminSpeakingTests());
-    setVersion((current) => current + 1);
+  const refresh = useCallback(async () => {
+    try {
+      const next = await getAdminSpeakingTests();
+      setTests(next);
+    } finally {
+      setVersion((current) => current + 1);
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    refresh();
-
-    const handleChange = () => refresh();
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === null || event.key === ADMIN_SPEAKING_KEY) {
-        refresh();
-      }
-    };
-
-    window.addEventListener(ADMIN_SPEAKING_CHANGED_EVENT, handleChange);
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener(ADMIN_SPEAKING_CHANGED_EVENT, handleChange);
-      window.removeEventListener("storage", handleStorage);
-    };
+    void refresh();
   }, [refresh]);
 
-  return { tests, version, refresh };
+  return { tests, version, isLoading, refresh };
 }

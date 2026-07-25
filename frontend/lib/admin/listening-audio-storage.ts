@@ -22,24 +22,10 @@ function openListeningAudioDatabase(): Promise<IDBDatabase> {
   });
 }
 
-export async function saveListeningAudio(file: File): Promise<string> {
-  const audioKey = `audio-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const database = await openListeningAudioDatabase();
-
-  await new Promise<void>((resolve, reject) => {
-    const transaction = database.transaction(LISTENING_AUDIO_STORE, "readwrite");
-    transaction.objectStore(LISTENING_AUDIO_STORE).put(file, audioKey);
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () =>
-      reject(transaction.error ?? new Error("Unable to save the audio file locally."));
-    transaction.onabort = () =>
-      reject(transaction.error ?? new Error("Saving the audio file was cancelled."));
-  });
-
-  database.close();
-  return audioKey;
-}
-
+/**
+ * Reads audio previously stored in this browser's IndexedDB. Retained for
+ * playback of parts authored before server-side audio upload existed.
+ */
 export async function getListeningAudioUrl(audioKey: string): Promise<string | undefined> {
   const database = await openListeningAudioDatabase();
 
@@ -53,18 +39,4 @@ export async function getListeningAudioUrl(audioKey: string): Promise<string | u
 
   database.close();
   return audio ? URL.createObjectURL(audio) : undefined;
-}
-
-export async function deleteListeningAudio(audioKey: string): Promise<void> {
-  const database = await openListeningAudioDatabase();
-
-  await new Promise<void>((resolve, reject) => {
-    const transaction = database.transaction(LISTENING_AUDIO_STORE, "readwrite");
-    transaction.objectStore(LISTENING_AUDIO_STORE).delete(audioKey);
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () =>
-      reject(transaction.error ?? new Error("Unable to remove the locally stored audio file."));
-  });
-
-  database.close();
 }

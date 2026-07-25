@@ -29,10 +29,11 @@ export async function apiFetch<T>(
   options?: RequestInit
 ): Promise<T> {
   const token = getApiToken();
+  const isFormData = typeof FormData !== "undefined" && options?.body instanceof FormData;
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
-      ...(options?.body != null ? { "Content-Type": "application/json" } : {}),
+      ...(options?.body != null && !isFormData ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },

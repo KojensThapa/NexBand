@@ -1,12 +1,16 @@
+import path from "node:path";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
+import staticFiles from "@fastify/static";
 import jwtPlugin from "./plugins/jwt";
 import { registerReadingRoutes } from "./modules/reading/reading.routes";
 import { registerListeningRoutes } from "./modules/listening/listening.routes";
 import { registerSpeakingRoutes } from "./modules/speaking/speaking.routes";
 import { registerWritingRoutes } from "./modules/writing/writing.routes";
+import { registerUploadRoutes } from "./modules/uploads/uploads.routes";
 
 import { registerAuthRoutes } from "./modules/auth/auth.routes";
 
@@ -26,7 +30,12 @@ export async function buildApp() {
     allowedHeaders: ["Content-Type", "Authorization"],
   });
 
-  await app.register(helmet);
+  // The learner app and API are commonly served from different origins during
+  // development and deployment. Uploaded listening audio must therefore be
+  // embeddable by the learner's <audio> element.
+  await app.register(helmet, {
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  });
 
   await app.register(rateLimit, {
     max: 100,
@@ -34,6 +43,15 @@ export async function buildApp() {
   });
 
   await app.register(jwtPlugin);
+
+  await app.register(multipart, {
+    limits: { fileSize: 15 * 1024 * 1024, files: 1 },
+  });
+
+  await app.register(staticFiles, {
+    root: path.join(__dirname, "..", "uploads"),
+    prefix: "/uploads/",
+  });
 
   // Routes
   await app.register(registerAuthRoutes, {
@@ -54,6 +72,10 @@ export async function buildApp() {
 
   await app.register(registerWritingRoutes, {
     prefix: "/api/writing",
+  });
+
+  await app.register(registerUploadRoutes, {
+    prefix: "/api/uploads",
   });
 
   // Health Check

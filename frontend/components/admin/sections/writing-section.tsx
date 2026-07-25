@@ -3,16 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AdminWritingCategory, AdminWritingQuestion } from "@/types/admin";
 import {
-  deleteAdminMockTest,
-  deleteAdminWritingQuestion,
   groupAdminSavedWritingItems,
   isAdminMockTestComplete,
   isAdminWritingQuestionComplete,
-  saveAdminWritingQuestion,
-  setAdminMockTestPublished,
-  setAdminWritingQuestionPublished,
   type AdminSavedWritingItem,
 } from "@/lib/admin/writing-storage";
+import {
+  deleteAdminWritingTest,
+  saveAdminMockTest,
+  saveAdminPracticeQuestion,
+  setAdminWritingTestPublished,
+} from "@/services/writing-admin";
 import { useAdminWritingQuestions } from "@/hooks/useAdminWritingQuestions";
 import { cn } from "@/lib/utils";
 
@@ -101,7 +102,7 @@ function loadMockPartsIntoDrafts(parts: AdminWritingQuestion[]): Record<"mock-1"
 }
 
 export function WritingSection() {
-  const { questions, version } = useAdminWritingQuestions();
+  const { questions, version, refresh } = useAdminWritingQuestions();
   const savedListRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<FormMode>("create");
   const [editingMockId, setEditingMockId] = useState<string | null>(null);
@@ -212,56 +213,32 @@ export function WritingSection() {
     reader.readAsDataURL(file);
   }
 
-  function saveMockTest(existingMockTestId?: string) {
+  async function saveMockTest(existingMockTestId?: string) {
     const trimmedMockTitle = mockTestTitle.trim();
-    const mockTestId =
-      existingMockTestId ??
-      `mock-${trimmedMockTitle.toLowerCase().replace(/\s+/g, "-")}`;
     const part1Visual = VISUAL_TYPE_OPTIONS.find(
       (option) => option.value === mockPart1.visualType
     );
 
-    saveAdminWritingQuestion({
-      id: editingMockId
-        ? questions.find(
-            (question) =>
-              question.category === "mock" &&
-              question.mockTestId === editingMockId &&
-              question.taskNumber === 1
-          )?.id
-        : undefined,
-      category: "mock",
-      taskNumber: 1,
-      title: mockPart1.title.trim(),
-      prompt: mockPart1.prompt.trim(),
-      imageUrl: mockPart1.imagePreview ?? undefined,
-      imageAlt: mockPart1.imageAlt.trim() || mockPart1.title.trim(),
-      task1Type: mockPart1.visualType,
-      typeLabel: part1Visual?.typeLabel,
-      mockTestId,
-      mockTestTitle: trimmedMockTitle,
-    });
-
-    saveAdminWritingQuestion({
-      id: editingMockId
-        ? questions.find(
-            (question) =>
-              question.category === "mock" &&
-              question.mockTestId === editingMockId &&
-              question.taskNumber === 2
-          )?.id
-        : undefined,
-      category: "mock",
-      taskNumber: 2,
-      title: mockPart2.title.trim(),
-      prompt: mockPart2.prompt.trim(),
-      typeLabel: "Essay",
-      mockTestId,
-      mockTestTitle: trimmedMockTitle,
+    await saveAdminMockTest({
+      mockTestId: existingMockTestId,
+      title: trimmedMockTitle,
+      part1: {
+        title: mockPart1.title.trim(),
+        prompt: mockPart1.prompt.trim(),
+        imageUrl: mockPart1.imagePreview ?? undefined,
+        imageAlt: mockPart1.imageAlt.trim() || mockPart1.title.trim(),
+        task1Type: mockPart1.visualType,
+        typeLabel: part1Visual?.typeLabel,
+      },
+      part2: {
+        title: mockPart2.title.trim(),
+        prompt: mockPart2.prompt.trim(),
+        typeLabel: "Essay",
+      },
     });
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
@@ -272,7 +249,8 @@ export function WritingSection() {
         if (!mockTestReady) {
           throw new Error("Complete Part 1 and Part 2 before saving the mock test.");
         }
-        saveMockTest(editingMockId ?? undefined);
+        await saveMockTest(editingMockId ?? undefined);
+        await refresh();
         clearMockDrafts();
         setMode("create");
         setSuccess(
@@ -289,10 +267,9 @@ export function WritingSection() {
           (option) => option.value === draft.visualType
         );
 
-        saveAdminWritingQuestion({
+        await saveAdminPracticeQuestion({
           id: editingQuestionId ?? undefined,
           category,
-          taskNumber: category === "task-2" ? 2 : 1,
           title: draft.title.trim(),
           prompt: draft.prompt.trim(),
           imageUrl: draft.imagePreview ?? undefined,
@@ -300,6 +277,7 @@ export function WritingSection() {
           task1Type: category === "task-1" ? draft.visualType : undefined,
           typeLabel: category === "task-2" ? "Essay" : selectedVisual?.typeLabel,
         });
+        await refresh();
 
         clearCurrentDraft();
         setMode("create");
@@ -318,17 +296,27 @@ export function WritingSection() {
     }
   }
 
-  function handleDeletePractice(id: string) {
-    deleteAdminWritingQuestion(id);
-    if (mode === "edit" && editingQuestionId === id) {
-      handleCancelEdit();
+  async function handleDeletePractice(id: string) {
+    try {
+      await deleteAdminWritingTest(id);
+      await refresh();
+      if (mode === "edit" && editingQuestionId === id) {
+        handleCancelEdit();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete question.");
     }
   }
 
-  function handleDeleteMock(mockTestId: string) {
-    deleteAdminMockTest(mockTestId);
-    if (mode === "edit" && editingMockId === mockTestId) {
-      handleCancelEdit();
+  async function handleDeleteMock(mockTestId: string) {
+    try {
+      await deleteAdminWritingTest(mockTestId);
+      await refresh();
+      if (mode === "edit" && editingMockId === mockTestId) {
+        handleCancelEdit();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete mock test.");
     }
   }
 
@@ -360,22 +348,32 @@ export function WritingSection() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleTogglePublishMock(item: Extract<AdminSavedWritingItem, { kind: "mock" }>) {
+  async function handleTogglePublishMock(item: Extract<AdminSavedWritingItem, { kind: "mock" }>) {
     if (!item.published && !isAdminMockTestComplete(item.parts)) {
       setError("Cannot publish — complete Part 1 and Part 2 first.");
       return;
     }
-    setAdminMockTestPublished(item.mockTestId, !item.published);
-    setError(null);
+    try {
+      await setAdminWritingTestPublished(item.mockTestId, !item.published);
+      await refresh();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update publish state.");
+    }
   }
 
-  function handleTogglePublishPractice(question: AdminWritingQuestion) {
+  async function handleTogglePublishPractice(question: AdminWritingQuestion) {
     if (!question.published && !isAdminWritingQuestionComplete(question)) {
       setError("Cannot publish — complete all required fields first.");
       return;
     }
-    setAdminWritingQuestionPublished(question.id, !question.published);
-    setError(null);
+    try {
+      await setAdminWritingTestPublished(question.id, !question.published);
+      await refresh();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update publish state.");
+    }
   }
 
   function handleCategoryChange(nextCategory: AdminWritingCategory) {

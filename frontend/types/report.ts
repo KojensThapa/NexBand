@@ -94,6 +94,7 @@ export interface ReadingFeedbackDetail {
 
 export interface ListeningFeedbackDetail {
   taskTitle: string;
+  status?: "Completed" | "Incomplete";
   overallScore: number;
   correctCount: number;
   totalQuestions: number;

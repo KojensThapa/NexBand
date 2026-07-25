@@ -5,14 +5,10 @@ import type {
   WritingEvaluationResult,
   WritingMockReport,
 } from "../algorithm/types";
-import {
-  HttpEssayAnalysisProvider,
-  UnconfiguredEssayAnalysisProvider,
-} from "../providers/essay.provider";
-import {
-  HttpGrammarProvider,
-  UnconfiguredGrammarProvider,
-} from "../providers/grammar.provider";
+import { HttpEssayAnalysisProvider } from "../providers/essay.provider";
+import { HttpGrammarProvider } from "../providers/grammar.provider";
+import { LocalEssayAnalysisProvider } from "../providers/local-essay.provider";
+import { LocalGrammarProvider } from "../providers/local-grammar.provider";
 import {
   WritingProviderError,
   type EssayAnalysisProvider,
@@ -46,13 +42,13 @@ export function createWritingProvidersFromEnvironment(
           endpoint: environment.WRITING_GRAMMAR_ENDPOINT,
           apiKey: environment.WRITING_GRAMMAR_API_KEY,
         })
-      : new UnconfiguredGrammarProvider(),
+      : new LocalGrammarProvider(),
     essayAnalysis: environment.WRITING_ESSAY_ENDPOINT
       ? new HttpEssayAnalysisProvider({
           endpoint: environment.WRITING_ESSAY_ENDPOINT,
           apiKey: environment.WRITING_ESSAY_API_KEY,
         })
-      : new UnconfiguredEssayAnalysisProvider(),
+      : new LocalEssayAnalysisProvider(),
   };
 }
 
