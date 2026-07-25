@@ -183,3 +183,49 @@ export const submitWritingAttemptSchema = z.object({
 export type WritingEssayInput = z.infer<typeof writingEssaySchema>;
 export type SaveWritingDraftInput = z.infer<typeof saveWritingDraftSchema>;
 export type SubmitWritingAttemptInput = z.infer<typeof submitWritingAttemptSchema>;
+
+const writingQuestionMetadataSchema = z.object({
+  prompt: z.string().trim().min(1).max(10_000).optional(),
+  title: z.string().trim().min(1).max(500).optional(),
+  taskType: z.string().trim().min(1).max(100).optional(),
+  expectedKeywords: z.array(z.string().trim().min(1).max(100)).max(100).optional(),
+});
+
+const writingEvaluationTaskSchema = z.object({
+  // Optional for standalone practice. When supplied, persistence links the
+  // report to the authored WritingTask.
+  taskId: z.string().trim().min(1).max(191).optional(),
+  taskNumber: z.union([z.literal(1), z.literal(2)]),
+  essay: z.string().trim().min(1, "An essay is required").max(50_000),
+  questionMetadata: writingQuestionMetadataSchema.default({}),
+});
+
+/** Provider-backed Writing evaluation. A task can be submitted independently or as a full mock. */
+export const createWritingSubmissionSchema = z
+  .object({
+    mode: z.enum(["task", "mock"]),
+    testId: z.string().trim().min(1).max(191).optional(),
+    attemptId: z.string().trim().min(1).max(191).optional(),
+    tasks: z.array(writingEvaluationTaskSchema).min(1).max(2),
+  })
+  .superRefine((submission, context) => {
+    const numbers = submission.tasks.map((task) => task.taskNumber);
+    if (new Set(numbers).size !== numbers.length) {
+      context.addIssue({ code: "custom", path: ["tasks"], message: "Each Writing task can be submitted only once." });
+    }
+    if (submission.mode === "task" && submission.tasks.length !== 1) {
+      context.addIssue({ code: "custom", path: ["tasks"], message: "An individual submission needs exactly one task." });
+    }
+    if (
+      submission.mode === "mock" &&
+      (submission.tasks.length !== 2 || !numbers.includes(1) || !numbers.includes(2))
+    ) {
+      context.addIssue({ code: "custom", path: ["tasks"], message: "A mock submission must contain Task 1 and Task 2." });
+    }
+  });
+
+export const writingSubmissionParamsSchema = z.object({
+  id: z.string().trim().min(1).max(191),
+});
+
+export type CreateWritingSubmissionInput = z.infer<typeof createWritingSubmissionSchema>;

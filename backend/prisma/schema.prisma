@@ -107,6 +107,23 @@ enum WritingAttemptStatus {
   PENDING_ANALYSIS
 }
 
+enum WritingSubmissionMode {
+  TASK
+  MOCK
+}
+
+enum WritingSubmissionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum WritingReportScope {
+  TASK
+  MOCK
+}
+
 enum ReadingAttemptStatus {
   IN_PROGRESS
   SUBMITTED
@@ -127,6 +144,7 @@ model User {
   listeningAttempts ListeningAttempt[]
   listeningResults  ListeningResult[]
   writingAttempts   WritingAttempt[]
+  writingSubmissions WritingSubmission[]
   speakingAttempts  SpeakingAttempt[]
   speakingResults   SpeakingResult[]
   speakingSubmissions SpeakingSubmission[]
@@ -547,6 +565,7 @@ model WritingTest {
 
   tasks WritingTask[]
   attempts WritingAttempt[]
+  submissions WritingSubmission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -567,6 +586,7 @@ model WritingTask {
 
   test WritingTest @relation(fields: [testId], references: [id], onDelete: Cascade)
   essays WritingEssay[]
+  evaluations WritingEvaluation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -586,9 +606,98 @@ model WritingAttempt {
   user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   test    WritingTest @relation(fields: [testId], references: [id], onDelete: Cascade)
   essays  WritingEssay[]
+  submission WritingSubmission?
 
   @@index([userId, updatedAt])
   @@index([testId])
+}
+
+// Provider-backed Writing submissions coexist with the existing draft flow.
+// This preserves learner drafts while storing full task and mock reports.
+model WritingSubmission {
+  id           String                  @id @default(cuid())
+  userId       String
+  testId       String?
+  attemptId    String?                 @unique
+  mode         WritingSubmissionMode
+  status       WritingSubmissionStatus @default(PENDING)
+  errorMessage String?                 @db.Text
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test        WritingTest?    @relation(fields: [testId], references: [id], onDelete: SetNull)
+  attempt     WritingAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  evaluations WritingEvaluation[]
+  reports     WritingReport[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([testId])
+  @@index([status])
+}
+
+model WritingEvaluation {
+  id                   String   @id @default(cuid())
+  submissionId         String
+  taskId               String?
+  taskNumber           Int
+  essay                String   @db.Text
+  wordCount            Int
+  uniqueWords          Int
+  repeatedWords        Json
+  grammarScore         Float
+  vocabularyScore      Float
+  taskAchievementScore Float
+  coherenceScore       Float
+  grammarErrors        Json
+  spellingErrors       Json
+  punctuationErrors    Json
+  grammarSuggestions   Json
+  providerData         Json?
+
+  submission WritingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  task       WritingTask?      @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([submissionId, taskNumber])
+  @@index([submissionId, taskNumber])
+  @@index([taskId])
+}
+
+model WritingReport {
+  id                   String                  @id @default(cuid())
+  submissionId         String
+  reportKey            String
+  scope                WritingReportScope
+  status               WritingSubmissionStatus @default(COMPLETED)
+  taskNumber           Int?
+  wordCount            Int
+  uniqueWords          Int
+  repeatedWords        Json
+  grammarScore         Float
+  vocabularyScore      Float
+  taskAchievementScore Float
+  coherenceScore       Float
+  overallBand          Float
+  cefrLevel            String
+  grammarErrors        Json
+  spellingErrors       Json
+  punctuationErrors    Json
+  strengths            Json
+  weakAreas            Json
+  recommendations      Json
+  evaluationData       Json
+  algorithmVersion     String
+
+  submission WritingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([submissionId, reportKey])
+  @@index([submissionId, scope])
 }
 
 model WritingEssay {
