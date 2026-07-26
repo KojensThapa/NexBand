@@ -17,13 +17,32 @@ export function SpeakingFeedbackReport({ report, header }: SpeakingFeedbackRepor
     testTitle: report.taskTitle,
     overallScore: report.overallScore,
     cefrLevel: report.cefrLevel,
-    status: "Completed",
+    status: report.status ?? "Completed",
     aiSummary: report.aiSummary,
   };
 
   return (
     <div className="space-y-6">
       <ReportHeader {...headerMeta} skillLabel="Speaking Report" />
+
+      {report.question || report.transcript ? (
+        <ReportCard title="Question and Transcript">
+          <div className="space-y-4 text-sm leading-relaxed text-slate-700">
+            {report.question ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Question</p>
+                <p className="mt-1 whitespace-pre-wrap font-medium text-slate-900">{report.question}</p>
+              </div>
+            ) : null}
+            {report.transcript ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Deepgram Transcript</p>
+                <p className="mt-1 whitespace-pre-wrap">{report.transcript}</p>
+              </div>
+            ) : null}
+          </div>
+        </ReportCard>
+      ) : null}
 
       <ReportCard title="Score Overview">
         <ScoreStatGrid
@@ -73,13 +92,39 @@ export function SpeakingFeedbackReport({ report, header }: SpeakingFeedbackRepor
               label: "Words Per Minute",
               value: String(report.recordingStats.wordsPerMinute),
             },
+            ...(report.speakingPace
+              ? [{ label: "Speaking Pace", value: report.speakingPace.replace("_", " ") }]
+              : []),
+            ...(report.speechToTextConfidence === undefined
+              ? []
+              : [{ label: "STT Confidence", value: `${Math.round(report.speechToTextConfidence * 100)}%` }]),
           ]}
         />
       </ReportCard>
 
+      {report.responseRelevance ? (
+        <ReportCard title="Response Relevance" variant={report.responseRelevance.relevance === "LOW" ? "warning" : "default"}>
+          <div className="space-y-3 text-sm text-slate-700">
+            <p>
+              <span className="font-semibold text-slate-900">{report.responseRelevance.relevance}</span>
+              {" · "}{report.responseRelevance.answeredQuestion ? "The question was answered." : "The answer did not fully address the question."}
+            </p>
+            <p className="leading-relaxed">{report.responseRelevance.reason}</p>
+            {report.responseRelevance.missingPoints.length > 0 ? (
+              <div>
+                <p className="font-medium text-slate-900">Missing points</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {report.responseRelevance.missingPoints.map((point) => <li key={point}>{point}</li>)}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </ReportCard>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <ReportCard title="Filler Word Analysis">
-          <ul className="space-y-2">
+          {report.fillerWords.length === 0 ? <p className="text-sm text-slate-500">No filler words were detected.</p> : <ul className="space-y-2">
             {report.fillerWords.map((entry) => (
               <li
                 key={entry.word}
@@ -91,11 +136,11 @@ export function SpeakingFeedbackReport({ report, header }: SpeakingFeedbackRepor
                 </span>
               </li>
             ))}
-          </ul>
+          </ul>}
         </ReportCard>
 
         <ReportCard title="Mispronounced Words">
-          <ul className="space-y-2">
+          {report.mispronouncedWords.length === 0 ? <p className="text-sm text-slate-500">No clear pronunciation issues were flagged.</p> : <ul className="space-y-2">
             {report.mispronouncedWords.map((entry) => (
               <li
                 key={entry.word}
@@ -106,9 +151,33 @@ export function SpeakingFeedbackReport({ report, header }: SpeakingFeedbackRepor
                 <span className="text-emerald-700">{entry.suggestion}</span>
               </li>
             ))}
-          </ul>
+          </ul>}
         </ReportCard>
       </div>
+
+      {(report.grammarErrors?.length || report.grammarSuggestions?.length) ? (
+        <ReportCard title="Grammar Feedback">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div>
+              <p className="text-sm font-medium text-slate-900">Grammar errors</p>
+              <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                {(report.grammarErrors ?? []).map((error, index) => (
+                  <li key={`${error.message}-${index}`} className="rounded-lg bg-rose-50 px-3 py-2">
+                    <span className="font-medium">{error.message}</span>
+                    {error.suggestion ? <span> — {error.suggestion}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-900">Suggestions</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                {(report.grammarSuggestions ?? []).map((suggestion) => <li key={suggestion}>{suggestion}</li>)}
+              </ul>
+            </div>
+          </div>
+        </ReportCard>
+      ) : null}
 
       <div className="grid gap-6 sm:grid-cols-2">
         <StrengthsList title="Strengths" items={report.strengths} variant="strength" />
@@ -136,6 +205,13 @@ export function SpeakingFeedbackReport({ report, header }: SpeakingFeedbackRepor
           ))}
         </ul>
       </ReportCard>
+
+      {report.algorithmVersion ? (
+        <p className="text-center text-xs text-slate-400">
+          Deterministic scoring algorithm: {report.algorithmVersion}
+          {report.pronunciationSupported === false ? " · Audio pronunciation feedback was unavailable for this recording." : ""}
+        </p>
+      ) : null}
     </div>
   );
 }

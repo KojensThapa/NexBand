@@ -7,6 +7,7 @@ import {
 
 import { prisma } from "../../../config/prisma";
 import type { SpeakingEvaluationResult } from "../algorithm/types";
+import type { ResponseRelevanceAnalysis } from "../algorithm/types";
 import type { CreateSpeakingSubmissionInput } from "../speaking.schemas";
 
 export interface StartedSpeakingSubmission {
@@ -24,10 +25,12 @@ export interface RecordingProviderEvaluation {
   grammarErrors: unknown;
   grammarSuggestions: string[];
   mispronouncedWords: unknown;
+  responseRelevance: ResponseRelevanceAnalysis;
   speechToTextConfidence?: number;
 }
 
 export interface CompletedSpeakingSubmission {
+  status: "COMPLETED" | "INCOMPLETE";
   recordingEvaluations: RecordingProviderEvaluation[];
   partReports: SpeakingEvaluationResult[];
   mockReport?: SpeakingEvaluationResult;
@@ -44,11 +47,17 @@ function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
+function toSubmissionStatus(status: SpeakingEvaluationResult["status"]): SpeakingSubmissionStatus {
+  return status === "INCOMPLETE"
+    ? SpeakingSubmissionStatus.INCOMPLETE
+    : SpeakingSubmissionStatus.COMPLETED;
+}
+
 function reportData(report: SpeakingEvaluationResult, scope: SpeakingReportScope) {
   return {
     reportKey: report.partNumber === "mock" ? "mock" : `part-${report.partNumber}`,
     scope,
-    status: SpeakingSubmissionStatus.COMPLETED,
+    status: toSubmissionStatus(report.status),
     partNumber: typeof report.partNumber === "number" ? report.partNumber : null,
     transcript: report.transcript,
     durationSeconds: report.duration,
@@ -57,6 +66,7 @@ function reportData(report: SpeakingEvaluationResult, scope: SpeakingReportScope
     vocabularyScore: report.vocabularyScore,
     grammarScore: report.grammarScore,
     pronunciationScore: report.pronunciationScore,
+    responseRelevanceScore: report.responseRelevanceScore,
     overallBand: report.overallBand,
     cefrLevel: report.cefrLevel,
     fillerWords: toJson(report.fillerWords),
@@ -64,6 +74,10 @@ function reportData(report: SpeakingEvaluationResult, scope: SpeakingReportScope
     strengths: toJson(report.strengths),
     weakAreas: toJson(report.weakAreas),
     recommendations: toJson(report.recommendations),
+    responseRelevance: toJson(report.responseRelevance),
+    ...(report.speechToTextConfidence === undefined
+      ? {}
+      : { speechToTextConfidence: report.speechToTextConfidence }),
     evaluationData: toJson(report),
     algorithmVersion: report.algorithmVersion,
   };
@@ -72,6 +86,48 @@ function reportData(report: SpeakingEvaluationResult, scope: SpeakingReportScope
 /** Prisma implementation; all provider calls remain in the service layer. */
 export class SpeakingEvaluationRepository implements SpeakingEvaluationRepositoryPort {
   async startSubmission(userId: string, input: CreateSpeakingSubmissionInput): Promise<StartedSpeakingSubmission> {
+    const recordings = input.parts.flatMap((part) =>
+      part.recordings.map((recording) => ({
+        responseKey: recording.responseKey,
+        partNumber: part.partNumber,
+        ...(recording.audioUrl ? { audioUrl: recording.audioUrl } : {}),
+        ...(recording.audioStorageKey ? { audioStorageKey: recording.audioStorageKey } : {}),
+        ...(recording.mimeType ? { mimeType: recording.mimeType } : {}),
+        ...(recording.transcript ? { transcript: recording.transcript } : {}),
+        durationSeconds: recording.durationSeconds,
+      }))
+    );
+
+    // An attempt keeps one linked submission. A provider outage should be
+    // retryable without forcing learners to record every answer again.
+    if (input.attemptId) {
+      const existing = await prisma.speakingSubmission.findUnique({
+        where: { attemptId: input.attemptId },
+        select: { id: true, status: true },
+      });
+      if (existing?.status === SpeakingSubmissionStatus.FAILED) {
+        return prisma.$transaction(async (tx) => {
+          await tx.speakingReport.deleteMany({ where: { submissionId: existing.id } });
+          await tx.speakingEvaluation.deleteMany({ where: { submissionId: existing.id } });
+          await tx.speakingRecording.deleteMany({ where: { submissionId: existing.id } });
+          return tx.speakingSubmission.update({
+            where: { id: existing.id },
+            data: {
+              ...(input.testId ? { testId: input.testId } : {}),
+              mode: input.mode === "mock" ? SpeakingSubmissionMode.MOCK : SpeakingSubmissionMode.PART,
+              status: SpeakingSubmissionStatus.PROCESSING,
+              errorMessage: null,
+              recordings: { create: recordings },
+            },
+            select: {
+              id: true,
+              recordings: { select: { id: true, responseKey: true, partNumber: true } },
+            },
+          });
+        });
+      }
+    }
+
     return prisma.speakingSubmission.create({
       data: {
         userId,
@@ -80,17 +136,7 @@ export class SpeakingEvaluationRepository implements SpeakingEvaluationRepositor
         mode: input.mode === "mock" ? SpeakingSubmissionMode.MOCK : SpeakingSubmissionMode.PART,
         status: SpeakingSubmissionStatus.PROCESSING,
         recordings: {
-          create: input.parts.flatMap((part) =>
-            part.recordings.map((recording) => ({
-              responseKey: recording.responseKey,
-              partNumber: part.partNumber,
-              ...(recording.audioUrl ? { audioUrl: recording.audioUrl } : {}),
-              ...(recording.audioStorageKey ? { audioStorageKey: recording.audioStorageKey } : {}),
-              ...(recording.mimeType ? { mimeType: recording.mimeType } : {}),
-              ...(recording.transcript ? { transcript: recording.transcript } : {}),
-              durationSeconds: recording.durationSeconds,
-            }))
-          ),
+          create: recordings,
         },
       },
       select: {
@@ -104,7 +150,7 @@ export class SpeakingEvaluationRepository implements SpeakingEvaluationRepositor
     return prisma.speakingSubmission.update({
       where: { id: submissionId },
       data: {
-        status: SpeakingSubmissionStatus.COMPLETED,
+        status: toSubmissionStatus(result.status),
         evaluations: {
           create: result.recordingEvaluations.map((evaluation) => ({
             recordingId: evaluation.recordingId,
@@ -116,9 +162,12 @@ export class SpeakingEvaluationRepository implements SpeakingEvaluationRepositor
             grammarErrors: toJson(evaluation.grammarErrors),
             grammarSuggestions: toJson(evaluation.grammarSuggestions),
             mispronouncedWords: toJson(evaluation.mispronouncedWords),
-            ...(evaluation.speechToTextConfidence === undefined
-              ? {}
-              : { providerData: toJson({ speechToTextConfidence: evaluation.speechToTextConfidence }) }),
+            providerData: toJson({
+              responseRelevance: evaluation.responseRelevance,
+              ...(evaluation.speechToTextConfidence === undefined
+                ? {}
+                : { speechToTextConfidence: evaluation.speechToTextConfidence }),
+            }),
           })),
         },
         reports: {
@@ -152,4 +201,3 @@ export class SpeakingEvaluationRepository implements SpeakingEvaluationRepositor
     });
   }
 }
-

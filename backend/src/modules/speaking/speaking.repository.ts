@@ -241,14 +241,15 @@ export class SpeakingRepository {
     userId: string,
     attemptId: string,
     recordings: SpeakingRecordings,
-    evaluation: SpeakingEvaluationData
+    evaluation: SpeakingEvaluationData,
+    status: SpeakingAttemptStatus
   ) {
     return prisma.$transaction(async (tx) => {
       const updated = await tx.speakingAttempt.updateMany({
         where: { id: attemptId, userId, status: SpeakingAttemptStatus.IN_PROGRESS },
         data: {
           recordings: recordings as Prisma.InputJsonValue,
-          status: SpeakingAttemptStatus.SUBMITTED,
+          status,
           submittedAt: new Date(),
         },
       });

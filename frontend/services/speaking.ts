@@ -27,14 +27,86 @@ export type SpeakingLearnerTask =
 export interface SpeakingRecordingInput {
   audioUrl?: string;
   audioStorageKey?: string;
+  mimeType?: string;
   durationSeconds: number;
   transcript?: string;
+}
+
+export interface SpeakingQuestionMetadata {
+  questionIds?: string[];
+  topic?: string;
+  prompt?: string;
+  expectedDurationSeconds?: number;
+  questionCount?: number;
+}
+
+export interface SpeakingEvaluationRecording extends SpeakingRecordingInput {
+  responseKey: string;
+  questionMetadata: SpeakingQuestionMetadata;
+}
+
+export interface SpeakingEvaluationSubmissionInput {
+  mode: "part" | "mock";
+  testId?: string;
+  attemptId?: string;
+  parts: Array<{
+    partNumber: 1 | 2 | 3;
+    questionMetadata: SpeakingQuestionMetadata;
+    recordings: SpeakingEvaluationRecording[];
+  }>;
+}
+
+export interface SpeakingEvaluationReport {
+  status: "COMPLETED" | "INCOMPLETE";
+  partNumber: 1 | 2 | 3 | "mock";
+  transcript: string;
+  question: string;
+  duration: number;
+  wordsPerMinute: number;
+  fluencyScore: number;
+  vocabularyScore: number;
+  grammarScore: number;
+  pronunciationScore: number;
+  responseRelevanceScore: number;
+  overallBand: number;
+  cefrLevel: string;
+  fillerWords: { fillerWords: Array<{ word: string; count: number }>; count: number; penalty: number };
+  mispronouncedWords: Array<{ word: string; suggestedPronunciation?: string; confidence?: number }>;
+  strengths: string[];
+  weakAreas: string[];
+  recommendations: string[];
+  fluency: { speakingPace: "TOO_SLOW" | "NORMAL" | "TOO_FAST" };
+  grammar: {
+    score: number;
+    errors: Array<{ message: string; category?: string; suggestion?: string }>;
+    suggestions: string[];
+  };
+  pronunciation: { confidenceScore: number; supported: boolean };
+  responseRelevance: {
+    score: number;
+    answeredQuestion: boolean;
+    relevance: "HIGH" | "MEDIUM" | "LOW";
+    reason: string;
+    missingPoints: string[];
+  };
+  speechToTextConfidence?: number;
+  algorithmVersion: string;
+}
+
+export interface SpeakingEvaluationSubmission {
+  id: string;
+  status: "COMPLETED" | "INCOMPLETE" | "FAILED" | "PROCESSING" | "PENDING";
+  reports: Array<{
+    scope: "PART" | "MOCK";
+    partNumber: number | null;
+    evaluationData: SpeakingEvaluationReport;
+  }>;
 }
 
 export interface SpeakingAttempt {
   id: string;
   testId: string;
-  status: "IN_PROGRESS" | "SUBMITTED";
+  status: "IN_PROGRESS" | "SUBMITTED" | "INCOMPLETE";
   recordings: Record<string, SpeakingRecordingInput>;
   startedAt: string;
   submittedAt: string | null;
@@ -117,6 +189,15 @@ export async function submitSpeakingAttempt(
     method: "POST",
     body: JSON.stringify({ recordings }),
   });
+  return response.data;
+}
+
+/** Calls the provider-backed endpoint without changing the legacy attempt APIs. */
+export async function submitSpeakingEvaluation(input: SpeakingEvaluationSubmissionInput) {
+  const response = await apiFetch<ApiEnvelope<SpeakingEvaluationSubmission>>(
+    "/api/speaking/submissions",
+    { method: "POST", body: JSON.stringify(input) }
+  );
   return response.data;
 }
 

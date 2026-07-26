@@ -62,6 +62,7 @@ enum SpeakingCategory {
 enum SpeakingAttemptStatus {
   IN_PROGRESS
   SUBMITTED
+  INCOMPLETE
 }
 
 enum SpeakingEvaluationMode {
@@ -78,6 +79,7 @@ enum SpeakingSubmissionStatus {
   PENDING
   PROCESSING
   COMPLETED
+  INCOMPLETE
   FAILED
 }
 
@@ -328,6 +330,7 @@ model SpeakingReport {
   vocabularyScore      Float
   grammarScore         Float
   pronunciationScore   Float
+  responseRelevanceScore Float @default(6)
   overallBand          Float
   cefrLevel            String
   fillerWords          Json
@@ -335,6 +338,8 @@ model SpeakingReport {
   strengths            Json
   weakAreas            Json
   recommendations      Json
+  responseRelevance   Json?
+  speechToTextConfidence Float?
   evaluationData       Json
   algorithmVersion     String
 

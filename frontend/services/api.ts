@@ -30,14 +30,22 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const token = getApiToken();
   const isFormData = typeof FormData !== "undefined" && options?.body instanceof FormData;
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      ...(options?.body != null && !isFormData ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        ...(options?.body != null && !isFormData ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options?.headers,
+      },
+    });
+  } catch {
+    throw new ApiRequestError(
+      "Cannot reach the test service. Check that the backend is running and try again.",
+      0
+    );
+  }
 
   if (!res.ok) {
     const payload = (await res.json().catch(() => null)) as { message?: string } | null;

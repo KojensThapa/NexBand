@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  createSpeakingSubmissionSchema,
   createSpeakingTestSchema,
   speakingRecordingsSchema,
   publishedSpeakingTestsQuerySchema,
@@ -76,4 +77,27 @@ test("accepts valid speaking recordings with audioUrl or audioStorageKey", () =>
     },
   });
   assert.equal(missingAudio.success, false);
+});
+
+test("accepts an incomplete mock submission so it can be saved with an incomplete status", () => {
+  const result = createSpeakingSubmissionSchema.safeParse({
+    mode: "mock",
+    parts: [
+      {
+        partNumber: 1,
+        questionMetadata: { questionCount: 2 },
+        recordings: [
+          {
+            responseKey: "p1-q1",
+            audioUrl: "https://example.com/p1-q1.webm",
+            durationSeconds: 30,
+          },
+        ],
+      },
+      { partNumber: 2, questionMetadata: { questionCount: 1 }, recordings: [] },
+      { partNumber: 3, questionMetadata: { questionCount: 1 }, recordings: [] },
+    ],
+  });
+
+  assert.equal(result.success, true);
 });

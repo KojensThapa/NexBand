@@ -1,10 +1,18 @@
-import type { FillerWordAnalysis, FluencyMetrics, GrammarAnalysis, PronunciationAnalysis, VocabularyMetrics } from "./types";
+import type {
+  FillerWordAnalysis,
+  FluencyMetrics,
+  GrammarAnalysis,
+  PronunciationAnalysis,
+  ResponseRelevanceAnalysis,
+  VocabularyMetrics,
+} from "./types";
 
 export interface FeedbackInput {
   fluency: FluencyMetrics;
   vocabulary: VocabularyMetrics;
   grammar: GrammarAnalysis;
   pronunciation: PronunciationAnalysis;
+  responseRelevance: ResponseRelevanceAnalysis;
   fillerWords: FillerWordAnalysis;
 }
 
@@ -22,6 +30,7 @@ export function generateFeedback(input: FeedbackInput): SpeakingFeedback {
   if (input.vocabulary.score >= 6.5) strengths.push("Good vocabulary range.");
   if (input.grammar.score >= 6.5) strengths.push("Good grammatical accuracy.");
   if (input.pronunciation.score >= 6.5) strengths.push("Clear pronunciation.");
+  if (input.responseRelevance.score >= 7) strengths.push("Response addresses the question directly.");
 
   if (input.fluency.speakingPace === "TOO_SLOW") weakAreas.push("Speaking pace is too slow.");
   if (input.fluency.speakingPace === "TOO_FAST") weakAreas.push("Speaking pace is too fast.");
@@ -31,7 +40,9 @@ export function generateFeedback(input: FeedbackInput): SpeakingFeedback {
   }
   if (input.grammar.errors.length > 0 || input.grammar.score < 5.5) weakAreas.push("Grammar mistakes affect accuracy.");
   if (input.pronunciation.score < 5.5) weakAreas.push("Pronunciation needs more clarity.");
+  if (input.responseRelevance.score <= 5 || !input.responseRelevance.answeredQuestion) {
+    weakAreas.push("Response does not fully address the examiner's question.");
+  }
 
   return { strengths, weakAreas };
 }
-

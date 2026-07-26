@@ -256,7 +256,10 @@ export class SpeakingUserService {
   async submitAttempt(userId: string, attemptId: string, submittedRecordings?: SpeakingRecordings) {
     const attempt = await this.speakingRepository.findAttemptWithContent(userId, attemptId);
     if (!attempt) throw new SpeakingUserServiceError("Speaking attempt not found.", 404);
-    if (attempt.status === SpeakingAttemptStatus.SUBMITTED) {
+    if (
+      attempt.status === SpeakingAttemptStatus.SUBMITTED ||
+      attempt.status === SpeakingAttemptStatus.INCOMPLETE
+    ) {
       if (!attempt.result) {
         throw new SpeakingUserServiceError("Speaking result is still being finalized.", 409);
       }
@@ -275,7 +278,10 @@ export class SpeakingUserService {
       userId,
       attemptId,
       recordings,
-      evaluation
+      evaluation,
+      evaluation.completionPercentage === 100
+        ? SpeakingAttemptStatus.SUBMITTED
+        : SpeakingAttemptStatus.INCOMPLETE
     );
     if (!completed.attempt || !completed.result) {
       throw new SpeakingUserServiceError("Speaking attempt could not be submitted.", 409);

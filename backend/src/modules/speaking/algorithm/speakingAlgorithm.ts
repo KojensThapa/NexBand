@@ -1,10 +1,10 @@
 import type { SpeakingRecordings } from "../speaking.schemas";
-import { calculateOverallBand, cefrFromIeltsBand } from "./bandCalculator";
+import { calculateOverallBandWithRelevance, cefrFromIeltsBand } from "./bandCalculator";
 import { analyzeFillerWords } from "./fillerWordAnalyzer";
 import { generateFeedback } from "./feedbackGenerator";
 import { calculateFluency } from "./fluencyCalculator";
 import { generateRecommendations } from "./recommendationEngine";
-import type { SpeakingEvaluationInput, SpeakingEvaluationResult } from "./types";
+import type { ResponseRelevanceAnalysis, SpeakingEvaluationInput, SpeakingEvaluationResult } from "./types";
 import { calculateVocabulary } from "./vocabularyCalculator";
 
 function toBandScore(score: number): number {
@@ -12,6 +12,30 @@ function toBandScore(score: number): number {
   // Some vendors expose accuracy as 0–100. Normalise it once at the boundary.
   const bandScore = score > 9 ? (score / 100) * 9 : score;
   return Math.max(0, Math.min(9, Number(bandScore.toFixed(2))));
+}
+
+function normaliseRelevance(input: SpeakingEvaluationInput): ResponseRelevanceAnalysis {
+  const analysis = input.responseRelevanceAnalysis;
+  if (!analysis) {
+    // Legacy callers did not provide a question. A neutral value prevents an
+    // invented relevance penalty while keeping the deterministic API stable.
+    return {
+      score: 6,
+      answeredQuestion: true,
+      relevance: "MEDIUM",
+      reason: "Response relevance was not supplied for this evaluation.",
+      missingPoints: [],
+    };
+  }
+
+  const score = toBandScore(analysis.score);
+  return {
+    ...analysis,
+    score,
+    relevance: score <= 3 ? "LOW" : score >= 7 ? "HIGH" : "MEDIUM",
+    reason: analysis.reason.trim() || "Response relevance was assessed from the question and transcript.",
+    missingPoints: [...new Set(analysis.missingPoints.map((point) => point.trim()).filter(Boolean))],
+  };
 }
 
 /**
@@ -31,13 +55,21 @@ export function evaluateSpeaking(input: SpeakingEvaluationInput): SpeakingEvalua
     score: toBandScore(input.pronunciationAnalysis.score),
     confidenceScore: Math.max(0, Math.min(1, input.pronunciationAnalysis.confidenceScore)),
   };
-  const feedbackInput = { fluency: { ...fluency, score: fluencyScore }, vocabulary, grammar, pronunciation, fillerWords };
-  const overallBand = calculateOverallBand({
+  const responseRelevance = normaliseRelevance(input);
+  const feedbackInput = {
+    fluency: { ...fluency, score: fluencyScore },
+    vocabulary,
+    grammar,
+    pronunciation,
+    responseRelevance,
+    fillerWords,
+  };
+  const overallBand = fluency.totalWords === 0 ? 0 : calculateOverallBandWithRelevance({
     fluencyScore,
     vocabularyScore: vocabulary.score,
     grammarScore: grammar.score,
     pronunciationScore: pronunciation.score,
-  });
+  }, responseRelevance);
   const feedback = generateFeedback(feedbackInput);
   const strengths = [...feedback.strengths];
   const weakAreas = [...feedback.weakAreas];
@@ -52,17 +84,29 @@ export function evaluateSpeaking(input: SpeakingEvaluationInput): SpeakingEvalua
   if (input.questionMetadata.topic && vocabulary.score < 6) {
     recommendations.push(`Build a topic word bank for ${input.questionMetadata.topic} before your next attempt.`);
   }
+  if (responseRelevance.score <= 5 || !responseRelevance.answeredQuestion) {
+    weakAreas.push(responseRelevance.reason);
+    if (responseRelevance.missingPoints.length > 0) {
+      recommendations.push(`Cover the missing point: ${responseRelevance.missingPoints[0]}`);
+    }
+  }
+  if (fluency.totalWords === 0) {
+    weakAreas.push("No usable speech was detected in the recording.");
+    recommendations.push("Record a clear spoken answer before submitting again.");
+  }
 
   return {
     status: "COMPLETED",
     partNumber: input.partNumber,
     transcript,
+    question: input.questionMetadata.prompt ?? input.questionMetadata.topic ?? "",
     duration: input.durationSeconds,
     wordsPerMinute: fluency.wordsPerMinute,
     fluencyScore,
     vocabularyScore: vocabulary.score,
     grammarScore: grammar.score,
     pronunciationScore: pronunciation.score,
+    responseRelevanceScore: responseRelevance.score,
     overallBand,
     cefrLevel: cefrFromIeltsBand(overallBand),
     fillerWords,
@@ -74,7 +118,11 @@ export function evaluateSpeaking(input: SpeakingEvaluationInput): SpeakingEvalua
     vocabulary,
     grammar,
     pronunciation,
-    algorithmVersion: "speaking-v1",
+    responseRelevance,
+    ...(input.speechToTextConfidence === undefined
+      ? {}
+      : { speechToTextConfidence: Math.max(0, Math.min(1, input.speechToTextConfidence)) }),
+    algorithmVersion: "speaking-v2",
   };
 }
 

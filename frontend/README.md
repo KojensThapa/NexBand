@@ -16,6 +16,14 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## API connection
+
+By default the frontend proxies `/backend-api/*` to `http://127.0.0.1:5000`, so
+audio recording uploads work when the site is opened from another device on the
+same network. Restart the frontend after changing this configuration. For a
+separately deployed API, set `NEXT_PUBLIC_API_URL` to its public origin; or set
+the server-only `BACKEND_API_URL` to change the proxy destination.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

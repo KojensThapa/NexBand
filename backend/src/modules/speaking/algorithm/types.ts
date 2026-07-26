@@ -44,6 +44,15 @@ export interface PronunciationAnalysis {
   supported: boolean;
 }
 
+/** AI assessment of whether a response addresses the examiner's prompt. */
+export interface ResponseRelevanceAnalysis {
+  score: number;
+  answeredQuestion: boolean;
+  relevance: "HIGH" | "MEDIUM" | "LOW";
+  reason: string;
+  missingPoints: string[];
+}
+
 export interface FillerWordCount {
   word: string;
   count: number;
@@ -94,21 +103,26 @@ export interface SpeakingEvaluationInput {
   durationSeconds: number;
   grammarAnalysis: GrammarAnalysis;
   pronunciationAnalysis: PronunciationAnalysis;
+  /** Optional for backwards-compatible callers that have no question prompt. */
+  responseRelevanceAnalysis?: ResponseRelevanceAnalysis;
+  speechToTextConfidence?: number;
   partNumber: SpeakingPartNumber;
   questionMetadata: QuestionMetadata;
   vocabularyDataset?: VocabularyDataset;
 }
 
 export interface SpeakingEvaluationResult {
-  status: "COMPLETED";
+  status: "COMPLETED" | "INCOMPLETE";
   partNumber: SpeakingPartNumber;
   transcript: string;
+  question: string;
   duration: number;
   wordsPerMinute: number;
   fluencyScore: number;
   vocabularyScore: number;
   grammarScore: number;
   pronunciationScore: number;
+  responseRelevanceScore: number;
   overallBand: number;
   cefrLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
   fillerWords: FillerWordAnalysis;
@@ -120,7 +134,9 @@ export interface SpeakingEvaluationResult {
   vocabulary: VocabularyMetrics;
   grammar: GrammarAnalysis;
   pronunciation: PronunciationAnalysis;
-  algorithmVersion: "speaking-v1";
+  responseRelevance: ResponseRelevanceAnalysis;
+  speechToTextConfidence?: number;
+  algorithmVersion: "speaking-v2";
 }
 
 export interface BandCriteria {
@@ -129,4 +145,3 @@ export interface BandCriteria {
   grammarScore: number;
   pronunciationScore: number;
 }
-

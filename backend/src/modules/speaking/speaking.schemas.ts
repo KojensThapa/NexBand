@@ -73,7 +73,7 @@ const questionMetadataSchema = z.object({
   topic: z.string().trim().max(500).optional(),
   prompt: z.string().trim().max(10_000).optional(),
   expectedDurationSeconds: z.number().int().min(1).max(10_800).optional(),
-  questionCount: z.number().int().min(1).max(30).optional(),
+  questionCount: z.number().int().min(0).max(30).optional(),
 });
 
 const speakingEvaluationRecordingSchema = z
@@ -95,7 +95,7 @@ const speakingEvaluationRecordingSchema = z
 const speakingEvaluationPartSchema = z.object({
   partNumber: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   questionMetadata: questionMetadataSchema.default({}),
-  recordings: z.array(speakingEvaluationRecordingSchema).min(1).max(30),
+  recordings: z.array(speakingEvaluationRecordingSchema).max(30),
 });
 
 /**
@@ -117,6 +117,13 @@ export const createSpeakingSubmissionSchema = z
     }
     if (submission.mode === "part" && submission.parts.length !== 1) {
       ctx.addIssue({ code: "custom", path: ["parts"], message: "A part submission must contain exactly one part." });
+    }
+    if (submission.mode === "part" && submission.parts[0]?.recordings.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["parts", 0, "recordings"],
+        message: "Record at least one answer before submitting a speaking part.",
+      });
     }
     if (
       submission.mode === "mock" &&

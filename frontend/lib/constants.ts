@@ -1,7 +1,13 @@
 export const API_BASE_URL =
-  // Keep the browser client aligned with backend/.env and src/server.ts.
-  // Set NEXT_PUBLIC_API_URL when the API is deployed elsewhere.
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+  // A same-origin rewrite works from another device on the local network and
+  // avoids browser CORS failures. Set NEXT_PUBLIC_API_URL for a separate API.
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "/backend-api";
+
+/** Turns an API-relative uploaded-file path into a browser-playable URL. */
+export function resolveApiUrl(url: string): string {
+  if (/^(?:blob:|data:|https?:\/\/)/i.test(url)) return url;
+  return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
+}
 
 export const EXAM_TYPES = ["ielts", "toefl", "gre", "german", "french"] as const;
 

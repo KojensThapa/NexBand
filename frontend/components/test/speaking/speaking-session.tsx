@@ -23,8 +23,10 @@ import { saveReport } from "@/lib/reports/storage";
 import {
   saveSpeakingRecordings,
   startSpeakingAttempt,
+  submitSpeakingEvaluation,
   submitSpeakingAttempt,
-  type SpeakingResult,
+  type SpeakingEvaluationReport,
+  type SpeakingEvaluationSubmissionInput,
 } from "@/services/speaking";
 import { uploadAudioFile } from "@/services/uploads";
 import { cn } from "@/lib/utils";
@@ -53,46 +55,54 @@ function formatDuration(totalSeconds: number): string {
   return `${minutes}m ${seconds}s`;
 }
 
-function bandToCefr(band: number): string {
-  if (band >= 8) return "C1+";
-  if (band >= 6.5) return "B2";
-  if (band >= 5) return "B1";
-  if (band >= 3.5) return "A2";
-  return "A1";
-}
-
-function createBackendSpeakingDetail(
+function createAiSpeakingDetail(
   taskTitle: string,
-  result: SpeakingResult
+  result: SpeakingEvaluationReport,
+  recordingCount: number,
+  totalQuestions: number
 ): SpeakingFeedbackDetail {
-  const completionScore = Number(((result.completionPercentage / 100) * 9).toFixed(2));
-
   return {
     taskTitle,
-    overallScore: result.estimatedBandScore,
-    cefrLevel: bandToCefr(result.estimatedBandScore),
-    recordingCount: result.recordingCount,
-    totalQuestions: result.totalQuestions,
+    status: result.status === "INCOMPLETE" ? "Incomplete" : "Completed",
+    overallScore: result.overallBand,
+    cefrLevel: result.cefrLevel,
+    recordingCount,
+    totalQuestions,
     criteria: [
+      { id: "fluency", label: "Fluency", score: result.fluencyScore, color: "bg-blue-500" },
+      { id: "vocabulary", label: "Vocabulary", score: result.vocabularyScore, color: "bg-violet-500" },
+      { id: "grammar", label: "Grammar", score: result.grammarScore, color: "bg-amber-500" },
+      { id: "pronunciation", label: "Pronunciation", score: result.pronunciationScore, color: "bg-rose-500" },
       {
-        id: "completion",
-        label: "Response Completion",
-        score: completionScore,
-        color: "bg-violet-500",
+        id: "response-relevance",
+        label: "Response Relevance",
+        score: result.responseRelevanceScore,
+        color: "bg-emerald-500",
+        summary: result.responseRelevance.reason,
       },
     ],
     recordingStats: {
-      duration: formatDuration(result.totalDurationSeconds),
-      wordsPerMinute: 0,
+      duration: formatDuration(result.duration),
+      wordsPerMinute: result.wordsPerMinute,
     },
-    fillerWords: [],
-    mispronouncedWords: [],
-    strengths: result.feedback?.strengths ?? [],
-    improvements: result.feedback?.improvements ?? [],
-    aiSummary:
-      result.feedback?.summary ??
-      `You completed ${result.recordingCount} of ${result.totalQuestions} prompts, with an estimated Band ${result.estimatedBandScore.toFixed(1)}.`,
-    practiceRecommendations: result.feedback?.improvements ?? [],
+    fillerWords: result.fillerWords.fillerWords,
+    mispronouncedWords: result.mispronouncedWords.map((word) => ({
+      word: word.word,
+      suggestion: word.suggestedPronunciation ?? "Practise word stress and vowel sounds.",
+    })),
+    strengths: result.strengths,
+    improvements: result.weakAreas,
+    aiSummary: `Your deterministic IELTS speaking band is ${result.overallBand.toFixed(1)}. ${result.responseRelevance.reason}`,
+    practiceRecommendations: result.recommendations,
+    transcript: result.transcript,
+    question: result.question,
+    speakingPace: result.fluency.speakingPace,
+    responseRelevance: result.responseRelevance,
+    grammarErrors: result.grammar.errors,
+    grammarSuggestions: result.grammar.suggestions,
+    speechToTextConfidence: result.speechToTextConfidence,
+    pronunciationSupported: result.pronunciation.supported,
+    algorithmVersion: result.algorithmVersion,
   };
 }
 
@@ -112,6 +122,25 @@ function getVisibleParts(mode: SpeakingBoardMode): SpeakingPartNumber[] {
   return [1, 2, 3];
 }
 
+function getRequiredRecordingKeys(
+  mode: SpeakingBoardMode,
+  part1?: SpeakingPart1Task["part1"],
+  part2?: SpeakingPart2Task["part2"],
+  part3?: SpeakingPart3Task["part3"]
+): string[] {
+  const keys: string[] = [];
+  if ((mode === "mock" || mode === "part-1") && part1) {
+    keys.push(...part1.questions.map((question) => question.id));
+  }
+  if ((mode === "mock" || mode === "part-2") && part2) {
+    keys.push("part2-main", ...part2.cueCard.followUpQuestions.map((question) => question.id));
+  }
+  if ((mode === "mock" || mode === "part-3") && part3) {
+    keys.push(...part3.questions.map((question) => question.id));
+  }
+  return keys;
+}
+
 function getSessionTitle(
   mode: SpeakingBoardMode,
   mockTest?: SpeakingMockTest,
@@ -124,6 +153,126 @@ function getSessionTitle(
   if (part2Task) return part2Task.title;
   if (part3Task) return part3Task.title;
   return "Speaking Practice";
+}
+
+function buildSpeakingEvaluationSubmission(
+  mode: SpeakingBoardMode,
+  testId: string,
+  attemptId: string,
+  recordings: Record<string, SpeakingRecording>,
+  part1?: SpeakingPart1Task["part1"],
+  part2?: SpeakingPart2Task["part2"],
+  part3?: SpeakingPart3Task["part3"]
+): SpeakingEvaluationSubmissionInput {
+  const parts: SpeakingEvaluationSubmissionInput["parts"] = [];
+  const includePart1 = mode === "mock" || mode === "part-1";
+  const includePart2 = mode === "mock" || mode === "part-2";
+  const includePart3 = mode === "mock" || mode === "part-3";
+
+  if (includePart1 && part1) {
+    const expectedDuration = Math.max(1, Math.round((part1.durationMinutes * 60) / Math.max(1, part1.questions.length)));
+    const partRecordings = part1.questions.flatMap((question) => {
+      const recording = recordings[question.id];
+      return recording
+        ? [{
+            responseKey: question.id,
+            ...recording,
+            questionMetadata: {
+              questionIds: [question.id],
+              prompt: question.text,
+              expectedDurationSeconds: expectedDuration,
+              questionCount: 1,
+            },
+          }]
+        : [];
+    });
+    parts.push({
+      partNumber: 1,
+      questionMetadata: {
+        questionIds: part1.questions.map((question) => question.id),
+        questionCount: part1.questions.length,
+      },
+      recordings: partRecordings,
+    });
+  }
+
+  if (includePart2 && part2) {
+    const part2Prompt = [part2.cueCard.prompt, ...part2.cueCard.bulletPoints.map((point) => `- ${point}`)]
+      .filter(Boolean)
+      .join("\n");
+    const partRecordings = [] as SpeakingEvaluationSubmissionInput["parts"][number]["recordings"];
+    const mainRecording = recordings["part2-main"];
+    if (mainRecording) {
+      partRecordings.push({
+        responseKey: "part2-main",
+        ...mainRecording,
+        questionMetadata: {
+          questionIds: ["part2-main"],
+          topic: part2.cueCard.topic,
+          prompt: part2Prompt,
+          expectedDurationSeconds: part2.speakMinutes * 60,
+          questionCount: 1,
+        },
+      });
+    }
+    for (const question of part2.cueCard.followUpQuestions) {
+      const recording = recordings[question.id];
+      if (recording) {
+        partRecordings.push({
+          responseKey: question.id,
+          ...recording,
+          questionMetadata: {
+            questionIds: [question.id],
+            topic: part2.cueCard.topic,
+            prompt: question.text,
+            expectedDurationSeconds: 30,
+            questionCount: 1,
+          },
+        });
+      }
+    }
+    parts.push({
+      partNumber: 2,
+      questionMetadata: {
+        topic: part2.cueCard.topic,
+        prompt: part2Prompt,
+        questionIds: ["part2-main", ...part2.cueCard.followUpQuestions.map((question) => question.id)],
+        questionCount: 1 + part2.cueCard.followUpQuestions.length,
+      },
+      recordings: partRecordings,
+    });
+  }
+
+  if (includePart3 && part3) {
+    const expectedDuration = Math.max(1, Math.round((part3.durationMinutes * 60) / Math.max(1, part3.questions.length)));
+    const partRecordings = part3.questions.flatMap((question) => {
+      const recording = recordings[question.id];
+      return recording
+        ? [{
+            responseKey: question.id,
+            ...recording,
+            questionMetadata: {
+              questionIds: [question.id],
+              topic: part3.topic,
+              prompt: question.text,
+              expectedDurationSeconds: expectedDuration,
+              questionCount: 1,
+            },
+          }]
+        : [];
+    });
+    parts.push({
+      partNumber: 3,
+      questionMetadata: {
+        topic: part3.topic,
+        questionIds: part3.questions.map((question) => question.id),
+        questionCount: part3.questions.length,
+      },
+      recordings: partRecordings,
+    });
+  }
+
+  return { mode: mode === "mock" ? "mock" : "part", testId, attemptId, parts };
 }
 
 export function SpeakingSession({
@@ -203,27 +352,21 @@ export function SpeakingSession({
   const sessionTitle = getSessionTitle(mode, mockTest, part1Task, part2Task, part3Task);
 
   const recordingCount = Object.keys(recordings).length;
+  const requiredRecordingKeys = useMemo(
+    () => getRequiredRecordingKeys(mode, part1, part2, part3),
+    [mode, part1, part2, part3]
+  );
+  const isSubmissionComplete = useMemo(
+    () =>
+      requiredRecordingKeys.length > 0 &&
+      requiredRecordingKeys.every((recordingKey) => Boolean(recordings[recordingKey])),
+    [requiredRecordingKeys, recordings]
+  );
 
   const canSubmit = useMemo(() => {
     if (isUploadingRecording) return false;
-    if (recordingCount === 0) return false;
-    if (mode === "part-1" && part1) {
-      return part1.questions.some((q) => recordings[q.id]);
-    }
-    if (mode === "part-2" && part2) {
-      return Boolean(recordings["part2-main"]);
-    }
-    if (mode === "part-3" && part3) {
-      return part3.questions.some((q) => recordings[q.id]);
-    }
-    if (mockTest) {
-      const hasPart1 = mockTest.part1.questions.some((q) => recordings[q.id]);
-      const hasPart2 = Boolean(recordings["part2-main"]);
-      const hasPart3 = mockTest.part3.questions.some((q) => recordings[q.id]);
-      return hasPart1 && hasPart2 && hasPart3;
-    }
-    return recordingCount > 0;
-  }, [recordingCount, mode, part1, part2, part3, mockTest, recordings, isUploadingRecording]);
+    return requiredRecordingKeys.some((recordingKey) => Boolean(recordings[recordingKey]));
+  }, [requiredRecordingKeys, recordings, isUploadingRecording]);
 
   useEffect(() => {
     if (!backendTestId) return;
@@ -279,11 +422,11 @@ export function SpeakingSession({
 
       setIsUploadingRecording(true);
       void blobUrlToFile(value.audioUrl, `${key}.webm`)
-        .then((file) => uploadAudioFile(file))
-        .then((audioUrl) => {
+        .then(async (file) => ({ audioUrl: await uploadAudioFile(file), mimeType: file.type || undefined }))
+        .then(({ audioUrl, mimeType }) => {
           setRecordings((prev) => ({
             ...prev,
-            [key]: { audioUrl, durationSeconds: value.durationSeconds },
+            [key]: { audioUrl, durationSeconds: value.durationSeconds, mimeType },
           }));
           setAttemptError(null);
         })
@@ -314,14 +457,34 @@ export function SpeakingSession({
         }
 
         try {
-          const { result } = await submitSpeakingAttempt(attemptId, recordings);
-          const detail = createBackendSpeakingDetail(sessionTitle, result);
+          const evaluationInput = buildSpeakingEvaluationSubmission(
+            mode,
+            backendTestId!,
+            attemptId,
+            recordings,
+            part1,
+            part2,
+            part3
+          );
+          const evaluation = await submitSpeakingEvaluation(evaluationInput);
+          const evaluationReport = evaluationInput.mode === "mock"
+            ? evaluation.reports.find((report) => report.scope === "MOCK")?.evaluationData
+            : evaluation.reports.find((report) => report.scope === "PART")?.evaluationData;
+          if (!evaluationReport) {
+            throw new Error("The speaking report was saved without an evaluation result.");
+          }
+
+          // Preserve the existing attempt workflow for history/resume support.
+          await submitSpeakingAttempt(attemptId, recordings);
+          const totalQuestions = requiredRecordingKeys.length;
+          const detail = createAiSpeakingDetail(sessionTitle, evaluationReport, recordingCount, totalQuestions);
           const report = createSavedReport(
             "speaking",
             sessionTitle,
-            `${result.recordingCount} recordings submitted`,
+            `${recordingCount} recordings analysed`,
             detail.overallScore,
-            detail
+            detail,
+            evaluationReport.status === "INCOMPLETE" ? "Incomplete" : "Completed"
           );
           saveReport(report);
           router.push(`/report/${report.id}`);
@@ -338,11 +501,7 @@ export function SpeakingSession({
       const detail = await analyzeSpeakingSubmission({
         taskTitle: sessionTitle,
         recordingCount,
-        totalQuestions:
-          (part1?.questions.length ?? 0) +
-          1 +
-          (part2?.cueCard.followUpQuestions.length ?? 0) +
-          (part3?.questions.length ?? 0),
+        totalQuestions: requiredRecordingKeys.length,
       });
 
       const report = createSavedReport(
@@ -350,7 +509,8 @@ export function SpeakingSession({
         sessionTitle,
         `${recordingCount} recordings submitted for AI analysis`,
         detail.overallScore,
-        detail
+        detail,
+        isSubmissionComplete ? "Completed" : "Incomplete"
       );
 
       saveReport(report);
@@ -368,6 +528,10 @@ export function SpeakingSession({
     isBackendTest,
     attemptId,
     recordings,
+    mode,
+    backendTestId,
+    requiredRecordingKeys,
+    isSubmissionComplete,
   ]);
 
   const part1Question = part1?.questions[part1QuestionIndex];

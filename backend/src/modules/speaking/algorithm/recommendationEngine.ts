@@ -17,6 +17,9 @@ export function generateRecommendations(input: FeedbackInput, partNumber: Speaki
   if (input.pronunciation.score < 6) {
     recommendations.push("Shadow short model answers and focus on stress in multi-syllable words.");
   }
+  if (input.responseRelevance.score <= 5 || !input.responseRelevance.answeredQuestion) {
+    recommendations.push("Answer the examiner's exact question first, then add a reason or example that supports it.");
+  }
   if (partNumber === 3) recommendations.push("Expand Part 3 answers with a reason, an example, and a contrasting idea.");
   if (partNumber === 2) recommendations.push("Structure the long turn with an opening, two or three details, and a concise closing.");
 
@@ -24,4 +27,3 @@ export function generateRecommendations(input: FeedbackInput, partNumber: Speaki
     ? recommendations
     : ["Keep practising with varied topics to maintain your current speaking performance."];
 }
-

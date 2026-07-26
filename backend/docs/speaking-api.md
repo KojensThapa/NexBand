@@ -65,8 +65,10 @@ URL or `audioStorageKey`.
 ## Evaluation
 
 The existing `POST /attempts/:attemptId/submit` workflow remains a
-`basic-v1` completion estimate for recorder compatibility. It calculates only
-recording coverage and duration; it is not an IELTS language-quality score.
+`basic-v1` completion estimate for recorder compatibility. The learner session
+also posts the same uploaded recordings to `/submissions` first, then displays
+that persisted `speaking-v2` IELTS report without changing either existing
+attempt endpoint.
 
 ## Provider-backed speaking reports
 
@@ -103,26 +105,37 @@ speech-to-text provider receives the audio URL/key.
 }
 ```
 
-The service calls only these provider ports: speech-to-text, grammar analysis,
-and pronunciation analysis. The pure
+The service calls these provider ports: speech-to-text, grammar analysis,
+pronunciation analysis, and response relevance. The pure
 [`speakingAlgorithm.ts`](../src/modules/speaking/algorithm/speakingAlgorithm.ts)
-then calculates fluency, vocabulary, filler penalties, overall half-band,
-CEFR, strengths, weak areas, and rule-based recommendations. It never calls
-an API, database, Fastify, or an AI SDK.
+then calculates fluency, vocabulary, filler penalties, the four core IELTS
+criteria, a relevance penalty on the final half-band, CEFR, strengths, weak
+areas, and rule-based recommendations. It never calls an API, database,
+Fastify, or an AI SDK. Low relevance reduces the final band but never erases
+the individual language scores; Band 0 is reserved for no usable speech.
 
-Configure generic JSON provider adapters with these optional server variables:
+Primary production configuration uses:
 
-- `SPEAKING_STT_ENDPOINT` and `SPEAKING_STT_API_KEY`
-- `SPEAKING_GRAMMAR_ENDPOINT` and `SPEAKING_GRAMMAR_API_KEY`
-- `SPEAKING_PRONUNCIATION_ENDPOINT` and `SPEAKING_PRONUNCIATION_API_KEY`
+- `DEEPGRAM_API_KEY` (and optional `DEEPGRAM_MODEL`) for transcription
+- `GEMINI_API_KEY` (and optional `GEMINI_MODEL`) for grammar, audio-assisted
+  pronunciation feedback, and response relevance
+- optional `SPEAKING_INTERNAL_API_URL` to load app-owned `/uploads/audio/*`
+  recordings from the API process
 
-The adapters forward their request contract as JSON. They expect respectively
-`{ transcript, confidence? }`, `{ score, errors, suggestions }`, and
-`{ score, confidenceScore, mispronouncedWords, supported }` responses. Scores
-should be IELTS-band equivalents from 0 to 9. Without a configured provider,
-the API fails clearly rather than fabricating grammar or pronunciation data.
+Deepgram returns the transcript and confidence. Gemini returns structured
+`{ score, errors, suggestions }`,
+`{ score, confidenceScore, mispronouncedWords, supported }`, and
+`{ score, answeredQuestion, relevance, reason, missingPoints }` data. Gemini
+failures use documented neutral analysis values, so a temporary guidance outage
+does not prevent the deterministic report or invent a relevance penalty.
+
+Generic JSON adapters remain available for custom deployments through
+`SPEAKING_STT_ENDPOINT`, `SPEAKING_GRAMMAR_ENDPOINT`, and
+`SPEAKING_PRONUNCIATION_ENDPOINT` with their corresponding API-key variables.
 
 Migration `20260724090000_add_ai_speaking_evaluations` adds
 `SpeakingSubmission`, `SpeakingRecording`, `SpeakingEvaluation`, and
 `SpeakingReport`. Each part gets its own report; a mock submission also stores
-a combined `mock` report.
+a combined `mock` report. Migration
+`20260726090000_add_speaking_response_relevance` adds queryable relevance and
+speech-to-text confidence fields while retaining the complete report JSON.

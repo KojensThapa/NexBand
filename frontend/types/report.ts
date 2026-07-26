@@ -110,6 +110,7 @@ export interface ListeningFeedbackDetail {
 
 export interface SpeakingFeedbackDetail {
   taskTitle: string;
+  status?: "Completed" | "Incomplete";
   overallScore: number;
   cefrLevel: string;
   recordingCount: number;
@@ -125,6 +126,21 @@ export interface SpeakingFeedbackDetail {
   improvements: string[];
   aiSummary: string;
   practiceRecommendations: string[];
+  transcript?: string;
+  question?: string;
+  speakingPace?: "TOO_SLOW" | "NORMAL" | "TOO_FAST";
+  responseRelevance?: {
+    score: number;
+    answeredQuestion: boolean;
+    relevance: "HIGH" | "MEDIUM" | "LOW";
+    reason: string;
+    missingPoints: string[];
+  };
+  grammarErrors?: Array<{ message: string; category?: string; suggestion?: string }>;
+  grammarSuggestions?: string[];
+  speechToTextConfidence?: number;
+  pronunciationSupported?: boolean;
+  algorithmVersion?: string;
 }
 
 export type ReportDetail =

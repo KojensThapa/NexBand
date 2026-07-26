@@ -1,4 +1,5 @@
 import type { GrammarAnalysis } from "../algorithm/types";
+import { GeminiJsonClient } from "./geminiJson.provider";
 import { SpeakingProviderError } from "./speechToText.provider";
 
 export interface GrammarAnalysisRequest {
@@ -14,6 +15,59 @@ export interface GrammarProvider {
 export class UnconfiguredGrammarProvider implements GrammarProvider {
   async analyze(): Promise<GrammarAnalysis> {
     throw new SpeakingProviderError("Grammar analysis is not configured.");
+  }
+}
+
+const grammarResponseSchema = {
+  type: "OBJECT",
+  properties: {
+    score: { type: "NUMBER", description: "IELTS grammar band from 0 to 9" },
+    errors: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          message: { type: "STRING" },
+          category: { type: "STRING" },
+          suggestion: { type: "STRING" },
+        },
+        required: ["message"],
+      },
+    },
+    suggestions: { type: "ARRAY", items: { type: "STRING" } },
+  },
+  required: ["score", "errors", "suggestions"],
+} as const;
+
+function validGrammarAnalysis(value: unknown): value is GrammarAnalysis {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      typeof (value as GrammarAnalysis).score === "number" &&
+      Array.isArray((value as GrammarAnalysis).errors) &&
+      Array.isArray((value as GrammarAnalysis).suggestions)
+  );
+}
+
+/** Gemini returns language-analysis evidence; the deterministic scorer uses it. */
+export class GeminiGrammarProvider implements GrammarProvider {
+  constructor(private readonly client: GeminiJsonClient) {}
+
+  async analyze(input: GrammarAnalysisRequest): Promise<GrammarAnalysis> {
+    const result = await this.client.generate<unknown>(
+      [
+        "Act as an IELTS grammar analyst. Assess only grammatical range and accuracy; do not calculate an overall IELTS score.",
+        "Return an IELTS-equivalent grammar score from 0 to 9, concise learner-facing errors, and practical suggestions.",
+        `Transcript:\n${input.transcript}`,
+      ].join("\n\n"),
+      grammarResponseSchema
+    );
+    if (!validGrammarAnalysis(result)) throw new SpeakingProviderError("Gemini returned an incomplete grammar analysis.");
+    return {
+      score: result.score,
+      errors: result.errors.slice(0, 20),
+      suggestions: result.suggestions.filter((suggestion): suggestion is string => typeof suggestion === "string").slice(0, 10),
+    };
   }
 }
 
@@ -50,4 +104,3 @@ export class HttpGrammarProvider implements GrammarProvider {
     return { score: result.score, errors: result.errors, suggestions: result.suggestions };
   }
 }
-

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { createHash } from "node:crypto";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -38,8 +39,16 @@ export async function buildApp() {
   });
 
   await app.register(rateLimit, {
-    max: 100,
+    // Audio recording, autosave, and report submission create several API
+    // requests in one session. Rate-limit each signed-in session separately
+    // instead of making every learner on one network share a 100-request cap.
+    max: 600,
     timeWindow: "1 minute",
+    keyGenerator: (request) => {
+      const authorization = request.headers.authorization;
+      if (!authorization) return request.ip;
+      return createHash("sha256").update(authorization).digest("hex");
+    },
   });
 
   await app.register(jwtPlugin);

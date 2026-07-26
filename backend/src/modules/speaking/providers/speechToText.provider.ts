@@ -46,6 +46,80 @@ export class TranscriptFallbackSpeechToTextProvider implements SpeechToTextProvi
   }
 }
 
+export interface DeepgramSpeechToTextProviderOptions {
+  apiKey?: string;
+  model?: string;
+  endpoint?: string;
+  localUploadAudioResolver?: import("./audioSource.provider").LocalUploadAudioResolver;
+  fetchImplementation?: typeof fetch;
+}
+
+type DeepgramResponse = {
+  results?: {
+    channels?: Array<{
+      alternatives?: Array<{ transcript?: string; confidence?: number }>;
+    }>;
+  };
+};
+
+/** Direct Deepgram adapter for uploaded audio and durable HTTPS recording URLs. */
+export class DeepgramSpeechToTextProvider implements SpeechToTextProvider {
+  private readonly fetchImplementation: typeof fetch;
+
+  constructor(private readonly options: DeepgramSpeechToTextProviderOptions) {
+    this.fetchImplementation = options.fetchImplementation ?? fetch;
+  }
+
+  async transcribe(input: SpeechToTextRequest): Promise<SpeechToTextResult> {
+    if (!this.options.apiKey) {
+      throw new SpeakingProviderError("Speech-to-text is not configured. Set DEEPGRAM_API_KEY.");
+    }
+
+    const endpoint = new URL(this.options.endpoint ?? "https://api.deepgram.com/v1/listen");
+    endpoint.searchParams.set("model", this.options.model ?? "nova-3");
+    endpoint.searchParams.set("smart_format", "true");
+    if (input.language) endpoint.searchParams.set("language", input.language);
+
+    let body: BodyInit;
+    let contentType: string;
+    if (input.audio.audioUrl?.startsWith("/uploads/audio/")) {
+      if (!this.options.localUploadAudioResolver) {
+        throw new SpeakingProviderError("Uploaded audio cannot be resolved for transcription.", 500);
+      }
+      const audio = await this.options.localUploadAudioResolver(input.audio);
+      body = Buffer.from(audio.bytes) as unknown as BodyInit;
+      contentType = audio.mimeType;
+    } else if (input.audio.audioUrl && /^https:\/\//i.test(input.audio.audioUrl)) {
+      body = JSON.stringify({ url: input.audio.audioUrl });
+      contentType = "application/json";
+    } else {
+      throw new SpeakingProviderError("A server-accessible audio URL is required for transcription.", 422);
+    }
+
+    const response = await this.fetchImplementation(endpoint, {
+      method: "POST",
+      headers: {
+        authorization: `Token ${this.options.apiKey}`,
+        "content-type": contentType,
+      },
+      body,
+    });
+    if (!response.ok) throw new SpeakingProviderError("Deepgram transcription request failed.");
+
+    const result = (await response.json()) as DeepgramResponse;
+    const alternative = result.results?.channels?.[0]?.alternatives?.[0];
+    const transcript = alternative?.transcript?.trim();
+    if (!alternative || !transcript) {
+      throw new SpeakingProviderError("Deepgram could not detect usable speech in this recording.", 422);
+    }
+
+    return {
+      transcript,
+      ...(typeof alternative.confidence === "number" ? { confidence: alternative.confidence } : {}),
+    };
+  }
+}
+
 export interface HttpSpeechToTextProviderOptions {
   endpoint: string;
   apiKey?: string;
@@ -82,4 +156,3 @@ export class HttpSpeechToTextProvider implements SpeechToTextProvider {
     };
   }
 }
-

@@ -79,4 +79,5 @@ export interface SpeakingPart3Task {
 export interface SpeakingRecording {
   audioUrl: string;
   durationSeconds: number;
+  mimeType?: string;
 }

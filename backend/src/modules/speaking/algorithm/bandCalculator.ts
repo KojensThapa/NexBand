@@ -1,4 +1,4 @@
-import type { BandCriteria } from "./types";
+import type { BandCriteria, ResponseRelevanceAnalysis } from "./types";
 
 function clampBand(score: number): number {
   return Math.max(0, Math.min(9, score));
@@ -19,6 +19,25 @@ export function calculateOverallBand(criteria: BandCriteria): number {
   return roundToHalfBand(average);
 }
 
+/**
+ * Relevance is a score modifier, not a replacement for the four IELTS
+ * criteria. A fluent but off-topic answer therefore retains its criterion
+ * evidence, while its final band is still reduced substantially.
+ */
+export function calculateOverallBandWithRelevance(
+  criteria: BandCriteria,
+  responseRelevance: ResponseRelevanceAnalysis
+): number {
+  const baseBand = calculateOverallBand(criteria);
+  const relevanceScore = clampBand(responseRelevance.score);
+  const penalty =
+    relevanceScore <= 1 ? 3 : relevanceScore <= 3 ? 2 : relevanceScore <= 5 ? 1 : relevanceScore <= 6 ? 0.5 : 0;
+
+  // Band 0 is reserved for no usable attempt. An answer with speech but low
+  // relevance is still evidence of English ability, so retain a minimum band.
+  return roundToHalfBand(Math.max(1, baseBand - penalty));
+}
+
 export function cefrFromIeltsBand(overallBand: number): "A1" | "A2" | "B1" | "B2" | "C1" | "C2" {
   if (overallBand >= 8.5) return "C2";
   if (overallBand >= 7) return "C1";
@@ -27,4 +46,3 @@ export function cefrFromIeltsBand(overallBand: number): "A1" | "A2" | "B1" | "B2
   if (overallBand >= 3) return "A2";
   return "A1";
 }
-

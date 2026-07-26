@@ -1,7 +1,8 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react"; // ⬅ CHANGED: added useRef back for the pending-callback
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { resolveApiUrl } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface SpeakingRecorderProps {
@@ -69,6 +70,12 @@ export const SpeakingRecorder = forwardRef<SpeakingRecorderHandle, SpeakingRecor
     // ⬇ ADDED: holds a "go ahead and advance now" callback while we wait
     // for the async recording-stop to actually finish and save.
     const pendingAdvanceRef = useRef<(() => void) | null>(null);
+    // A parent re-render creates a new onChange callback. Remember the blob
+    // that was already delivered so that a completed recording is uploaded once.
+    const deliveredAudioUrlRef = useRef<string | null>(null);
+    const previewAudioRef = useRef<HTMLAudioElement>(null);
+    const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+    const [previewError, setPreviewError] = useState<string | null>(null);
 
     useImperativeHandle(ref, () => ({
       stopIfRecording: (onSettled) => {
@@ -89,7 +96,12 @@ export const SpeakingRecorder = forwardRef<SpeakingRecorderHandle, SpeakingRecor
     }, [recordingKey, clear]);
 
     useEffect(() => {
-      if (audioUrl && !isRecording) {
+      if (
+        audioUrl &&
+        !isRecording &&
+        deliveredAudioUrlRef.current !== audioUrl
+      ) {
+        deliveredAudioUrlRef.current = audioUrl;
         onChange({ audioUrl, durationSeconds });
 
         // ⬇ ADDED: the recording for THIS question is now safely saved —
@@ -103,8 +115,16 @@ export const SpeakingRecorder = forwardRef<SpeakingRecorderHandle, SpeakingRecor
       }
     }, [audioUrl, durationSeconds, isRecording, onChange]);
 
-    const hasRecording = Boolean(value?.audioUrl);
-    const displayUrl = value?.audioUrl ?? audioUrl;
+    const displayUrl = value?.audioUrl
+      ? resolveApiUrl(value.audioUrl)
+      : audioUrl;
+    const hasRecording = Boolean(displayUrl);
+
+    useEffect(() => {
+      previewAudioRef.current?.pause();
+      setIsPreviewPlaying(false);
+      setPreviewError(null);
+    }, [displayUrl]);
 
     const handleToggle = () => {
       if (disabled) return;
@@ -119,8 +139,27 @@ export const SpeakingRecorder = forwardRef<SpeakingRecorderHandle, SpeakingRecor
 
     const handleReRecord = () => {
       if (disabled) return;
+      previewAudioRef.current?.pause();
       clear();
       onChange(null);
+    };
+
+    const handlePreviewToggle = async () => {
+      const preview = previewAudioRef.current;
+      if (!preview) return;
+
+      if (preview.paused) {
+        try {
+          await preview.play();
+          setIsPreviewPlaying(true);
+          setPreviewError(null);
+        } catch {
+          setPreviewError("This recording could not be played. Please record it again.");
+        }
+      } else {
+        preview.pause();
+        setIsPreviewPlaying(false);
+      }
     };
 
     return (
@@ -160,7 +199,7 @@ export const SpeakingRecorder = forwardRef<SpeakingRecorderHandle, SpeakingRecor
             : isRecording
               ? "Recording… tap to stop"
               : hasRecording
-                ? `Recorded · ${value?.durationSeconds ?? 0}s · tap mic to re-record`
+                ? `Recorded · ${value?.durationSeconds ?? durationSeconds}s · tap mic to re-record`
                 : "Tap mic to start"}
         </p>
 
@@ -168,9 +207,24 @@ export const SpeakingRecorder = forwardRef<SpeakingRecorderHandle, SpeakingRecor
 
         {displayUrl && !isRecording ? (
           <div className="mt-4 w-full max-w-sm space-y-2">
-            <audio className="w-full" controls src={displayUrl}>
-              <track kind="captions" />
-            </audio>
+            <audio
+              ref={previewAudioRef}
+              className="sr-only"
+              src={displayUrl}
+              onEnded={() => setIsPreviewPlaying(false)}
+              onError={() => {
+                setIsPreviewPlaying(false);
+                setPreviewError("This recording could not be played. Please record it again.");
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => void handlePreviewToggle()}
+              className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+            >
+              {isPreviewPlaying ? "Pause recording" : "Play recording"}
+            </button>
+            {previewError ? <p className="text-xs text-rose-600">{previewError}</p> : null}
             {hasRecording ? (
               <button
                 type="button"
