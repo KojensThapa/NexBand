@@ -1,1 +1,11 @@
-sample_id,question_id,band_score,transcript,notes
+question_id,sample_level,sample_answer
+SP001,Band9,"My full name is Nayan Thapa, but most people call me Nayan."
+SP002,Band9,"I come from Nepal, a beautiful country known for the Himalayas."
+SP003,Band9,"I am currently a university student studying Information Technology."
+SP004,Band8,"In my free time I enjoy reading books and playing football with my friends."
+SP005,Band8,"My favorite food is momo because it is delicious and very popular in Nepal."
+SP006,Band8,"One memorable trip I took was to Pokhara. I enjoyed the beautiful scenery and peaceful environment."
+SP007,Band8,"The person who inspired me the most is my father because he always encouraged me to work hard."
+SP008,Band8,"My favorite place is Lumbini because it is peaceful and has historical importance."
+SP009,Band9,"Education has changed significantly because technology has transformed how students learn."
+SP010,Band9,"Technology has made communication much faster through smartphones and social media."

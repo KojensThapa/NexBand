@@ -1,1 +1,9 @@
-mistake_id,category,mistake,correction,explanation
+mistake_id,category,mistake_name,description,recommendation,severity
+SM001,Grammar,Tense Errors,"Incorrect verb tense usage.","Review present, past and future tenses.",high
+SM002,Grammar,Subject Verb Agreement,"Incorrect agreement between subject and verb.","Practice basic grammar structures.",medium
+SM003,Vocabulary,Limited Vocabulary,"Repeated simple words.","Learn topic-specific vocabulary.",medium
+SM004,Pronunciation,Unclear Pronunciation,"Words are difficult to understand.","Practice pronunciation with native recordings.",high
+SM005,Fluency,Frequent Hesitation,"Too many pauses while speaking.","Practice speaking continuously.",medium
+SM006,Coherence,Poor Organization,"Ideas are not logically connected.","Use linking words such as however, therefore, and because.",medium
+SM007,Task Response,Off Topic,"The answer is not relevant to the question.","Answer exactly what the examiner asks.",high
+SM008,Filler Words,Too Many Fillers,"Excessive use of 'um', 'uh', and 'like'.","Practice reducing filler words.",low

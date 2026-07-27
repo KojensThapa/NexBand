@@ -1,1 +1,15 @@
-response,reason
+response,reason,severity
+"",Empty response,critical
+"...",No meaningful speech,critical
+"test",Testing response,low
+"hello hello hello",Repeated meaningless phrase,medium
+"asdf",Random keyboard text,critical
+"qwerty",Random keyboard text,critical
+"abc abc abc",Repeated meaningless words,medium
+"123456",Numbers only,critical
+"........",Only punctuation,critical
+"????",Only punctuation,critical
+"i don't know",No meaningful answer,low
+"no idea",No meaningful answer,low
+"skip",Question skipped,low
+"next question",Question skipped,low

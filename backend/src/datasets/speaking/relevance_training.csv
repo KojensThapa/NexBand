@@ -1,1 +1,21 @@
-question,response,label,reason
+training_id,question_id,response_text,label,reason
+RT001,SP001,"My name is Nayan Thapa.",Relevant,"Directly answers the question."
+RT002,SP001,"People usually call me Nayan.",Relevant,"Provides the requested name."
+RT003,SP001,"I like playing football every weekend.",Not Relevant,"Does not answer the name question."
+RT004,SP001,"My favorite food is momo.",Not Relevant,"Completely different topic."
+
+RT005,SP002,"I am from Kathmandu, Nepal.",Relevant,"Answers the location question."
+RT006,SP002,"I come from Pokhara.",Relevant,"Correct hometown response."
+RT007,SP002,"Technology is changing education.",Not Relevant,"Unrelated topic."
+
+RT008,SP003,"I am a university student studying Computer Science.",Relevant,"Answers study/work question."
+RT009,SP003,"I work as a software developer.",Relevant,"Answers study/work question."
+RT010,SP003,"My favorite movie is Interstellar.",Not Relevant,"Off-topic."
+
+RT011,SP004,"I enjoy reading books and playing football.",Relevant,"Answers free-time activities."
+RT012,SP004,"In my free time I usually travel with friends.",Relevant,"Relevant hobby."
+RT013,SP004,"Nepal has many mountains.",Not Relevant,"Unrelated."
+
+RT014,SP005,"My favorite food is pizza because it is delicious.",Relevant,"Answers food question."
+RT015,SP005,"I like eating momo with my family.",Relevant,"Relevant."
+RT016,SP005,"I usually wake up at six o'clock.",Not Relevant,"Does not answer."

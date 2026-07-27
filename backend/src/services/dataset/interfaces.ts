@@ -143,23 +143,56 @@ export type TranscriptKeywordRow = QuestionKeywordRow;
 export interface SpeakingQuestionRow {
   question_id: string;
   part: string;
+  question_type: string;
   topic: string;
-  question_text: string;
+  question: string;
+  difficulty: string;
+  time_limit_seconds: string;
 }
 
 export type SpeakingKeywordRow = QuestionKeywordRow;
 
 export interface SpeakingSampleRow {
-  sample_id: string;
   question_id: string;
-  band_score: string;
-  transcript: string;
-  notes: string;
+  sample_level: string;
+  sample_answer: string;
 }
 
-export type SpeakingFeedbackRow = CriterionFeedbackRow;
-export type SpeakingCommonMistakeRow = CommonMistakeRow;
-export type SpeakingInvalidResponseRow = InvalidResponseRow;
+/** Speaking's overall-band feedback is keyed by score range (0-9 band scale), like reading_feedback.csv/listening_feedback.csv, but with its own column names. */
+export interface SpeakingFeedbackRow {
+  score_min: string;
+  score_max: string;
+  performance_level: string;
+  overall_feedback: string;
+  strengths: string;
+  weaknesses: string;
+  recommendations: string;
+}
+
+/** Unlike Reading/Listening's question-type-keyed mistakes, Speaking's are keyed by score category (Grammar, Vocabulary, Pronunciation, Fluency, Coherence, Task Response, Filler Words). */
+export interface SpeakingCommonMistakeRow {
+  mistake_id: string;
+  category: string;
+  mistake_name: string;
+  description: string;
+  recommendation: string;
+  severity: string;
+}
+
+export interface SpeakingInvalidResponseRow {
+  response: string;
+  reason: string;
+  severity: string;
+}
+
+/** Labeled example responses (Relevant/Not Relevant) per question, used to corroborate the dataset-based relevance analysis. */
+export interface RelevanceTrainingRow {
+  training_id: string;
+  question_id: string;
+  response_text: string;
+  label: string;
+  reason: string;
+}
 
 // ---------------------------------------------------------------------------
 // Writing

@@ -54,9 +54,9 @@ export class TopicAnalyzer implements TopicProfileProvider {
       .map((row) => this.toKeywordEntry(row.keyword, row.weight));
     const samples = sampleRows
       .filter((row) => row.question_id === id)
-      .map((row) => this.toSampleEntry(row.transcript, row.band_score));
+      .map((row) => this.toSpeakingSampleEntry(row.sample_answer, row.sample_level));
 
-    return this.buildProfile(question !== undefined, question?.question_text ?? "", explicitKeywords, samples);
+    return this.buildProfile(question !== undefined, question?.question ?? "", explicitKeywords, samples);
   }
 
   private async getWritingProfile(id: string): Promise<TopicProfile> {
@@ -119,5 +119,13 @@ export class TopicAnalyzer implements TopicProfileProvider {
     const tokens = this.normalizer.tokenize(rawText);
     const bandScore = Number(rawBandScore);
     return { tokens, bandScore: Number.isFinite(bandScore) ? bandScore : undefined };
+  }
+
+  /** speaking_samples.csv reports its band as a label like "Band9" rather than a bare number. */
+  private toSpeakingSampleEntry(rawText: string, rawSampleLevel: string): SampleEntry {
+    const tokens = this.normalizer.tokenize(rawText);
+    const match = /(\d+(?:\.\d+)?)/.exec(rawSampleLevel);
+    const bandScore = match ? Number(match[1]) : undefined;
+    return { tokens, bandScore: bandScore !== undefined && Number.isFinite(bandScore) ? bandScore : undefined };
   }
 }

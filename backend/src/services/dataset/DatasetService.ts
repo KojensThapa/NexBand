@@ -18,6 +18,7 @@ import type {
   ReadingFeedbackRow,
   ReadingQuestionRow,
   RecommendationTemplateRow,
+  RelevanceTrainingRow,
   ScoreCommentRow,
   SpeakingCommonMistakeRow,
   SpeakingFeedbackRow,
@@ -131,6 +132,10 @@ export class DatasetService {
 
   getSpeakingInvalidResponses(options?: LoadOptions): Promise<SpeakingInvalidResponseRow[]> {
     return this.loadDataset<SpeakingInvalidResponseRow>("speaking", "invalid_responses.csv", options);
+  }
+
+  getRelevanceTraining(options?: LoadOptions): Promise<RelevanceTrainingRow[]> {
+    return this.loadDataset<RelevanceTrainingRow>("speaking", "relevance_training.csv", options);
   }
 
   // ---------------------------------------------------------------------

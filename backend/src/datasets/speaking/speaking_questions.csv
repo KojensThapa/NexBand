@@ -1,1 +1,11 @@
-question_id,part,topic,question_text
+question_id,part,question_type,topic,question,difficulty,time_limit_seconds
+SP001,1,Introduction,Personal,"What is your full name?",Easy,30
+SP002,1,Introduction,Personal,"Where are you from?",Easy,30
+SP003,1,Introduction,Study,"Are you a student or do you work?",Easy,30
+SP004,1,Introduction,Hobbies,"What do you do in your free time?",Easy,30
+SP005,1,Introduction,Food,"What is your favorite food?",Easy,30
+SP006,2,Cue Card,Travel,"Describe a memorable trip you have taken.",Medium,120
+SP007,2,Cue Card,Person,"Describe a person who inspired you.",Medium,120
+SP008,2,Cue Card,Place,"Describe your favorite place.",Medium,120
+SP009,3,Discussion,Education,"Do you think education is changing?",Hard,90
+SP010,3,Discussion,Technology,"How has technology changed communication?",Hard,90

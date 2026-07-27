@@ -1,3 +1,4 @@
+import { SpeakingFeedbackService } from "../../../services/speaking/SpeakingFeedbackService";
 import { evaluateSpeaking } from "../algorithm/speakingAlgorithm";
 import type {
   GrammarAnalysis,
@@ -291,7 +292,8 @@ function toProviderPersistence(recording: ProcessedRecording): RecordingProvider
 export class SpeakingService {
   constructor(
     private readonly repository: SpeakingEvaluationRepositoryPort = new SpeakingEvaluationRepository(),
-    private readonly providers: SpeakingProviders = createSpeakingProvidersFromEnvironment()
+    private readonly providers: SpeakingProviders = createSpeakingProvidersFromEnvironment(),
+    private readonly speakingFeedbackService: SpeakingFeedbackService = new SpeakingFeedbackService()
   ) {}
 
   async submit(userId: string, input: CreateSpeakingSubmissionInput) {
@@ -441,7 +443,7 @@ export class SpeakingService {
     try {
       const submission = await this.repository.findSubmissionForUser(userId, submissionId);
       if (!submission) throw new SpeakingServiceError("Speaking submission not found.", 404);
-      return submission;
+      return await this.enrichSubmissionReports(submission);
     } catch (error) {
       if (isDatabaseConnectionError(error)) {
         throw new SpeakingServiceError(
@@ -451,5 +453,47 @@ export class SpeakingService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Enriches each persisted report's `evaluationData` (the full
+   * SpeakingEvaluationResult JSON blob) with dataset-driven feedback before
+   * it reaches the caller. This only touches the read path — the reports
+   * were already persisted by `submit()`, exactly as evaluateSpeaking()
+   * produced them; nothing about scoring, persistence, or orchestration
+   * changes. Any shape this repository port returns that isn't recognizably
+   * a reports array (e.g. `null`, or a fake used in a test) is returned
+   * unchanged.
+   */
+  private async enrichSubmissionReports(submission: unknown): Promise<unknown> {
+    if (!submission || typeof submission !== "object" || !("reports" in submission)) {
+      return submission;
+    }
+
+    const reports = (submission as { reports: unknown }).reports;
+    if (!Array.isArray(reports)) return submission;
+
+    const enrichedReports = await Promise.all(
+      reports.map(async (report) => {
+        if (!report || typeof report !== "object" || !("evaluationData" in report)) return report;
+
+        const evaluationData = (report as { evaluationData: unknown }).evaluationData;
+        if (!this.isSpeakingEvaluationResult(evaluationData)) return report;
+
+        return { ...report, evaluationData: await this.speakingFeedbackService.enrich(evaluationData) };
+      })
+    );
+
+    return { ...submission, reports: enrichedReports };
+  }
+
+  private isSpeakingEvaluationResult(value: unknown): value is SpeakingEvaluationResult {
+    return (
+      !!value &&
+      typeof value === "object" &&
+      "transcript" in value &&
+      "overallBand" in value &&
+      "algorithmVersion" in value
+    );
   }
 }

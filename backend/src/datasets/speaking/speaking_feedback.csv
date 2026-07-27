@@ -1,1 +1,7 @@
-criterion,score_min,score_max,feedback
+score_min,score_max,performance_level,overall_feedback,strengths,weaknesses,recommendations
+8.5,9.0,Excellent,"Excellent speaking performance with natural fluency.","Excellent pronunciation;Strong vocabulary;Excellent fluency","Minor grammar issues","Continue practicing with native-level materials."
+7.5,8.0,Very Good,"Very good speaking ability.","Good pronunciation;Clear ideas","Some hesitation","Practice speaking under time pressure."
+6.5,7.0,Good,"Good communication skills.","Clear communication;Adequate vocabulary","Grammar inconsistencies","Improve grammar accuracy and expand vocabulary."
+5.5,6.0,Satisfactory,"Average speaking performance.","Can communicate ideas","Limited vocabulary;Frequent hesitation","Practice speaking daily and improve vocabulary."
+4.5,5.0,Needs Improvement,"Speaking ability needs improvement.","Basic communication","Poor fluency;Grammar errors","Practice simple conversations regularly."
+0.0,4.0,Poor,"Very limited speaking ability.","Very basic responses","Poor pronunciation;Very limited vocabulary","Develop basic spoken English before IELTS practice."

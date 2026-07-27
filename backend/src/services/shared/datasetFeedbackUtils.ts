@@ -72,6 +72,25 @@ export function splitAcceptableAnswers(value: string): string[] {
     .filter((part) => part.length > 0);
 }
 
+function formatMistakeRow(row: { mistake_name: string; description: string; recommendation: string }): string {
+  return `${row.mistake_name}: ${row.description} (Fix: ${row.recommendation})`;
+}
+
+/**
+ * Generic version of the mistake-matching logic: given any row shape that
+ * has mistake_name/description/recommendation plus some "key" column
+ * (question_type for Reading/Listening, category for Speaking), returns the
+ * rows whose normalized key is in `weakLabels`. `resolveCommonMistakes`
+ * below is just this with `getKey` fixed to `row.question_type`.
+ */
+export function resolveMistakesByKey<T extends { mistake_name: string; description: string; recommendation: string }>(
+  rows: readonly T[],
+  weakLabels: ReadonlySet<string>,
+  getKey: (row: T) => string
+): string[] {
+  return rows.filter((row) => weakLabels.has(normalizeLabel(getKey(row)))).map(formatMistakeRow);
+}
+
 /** Common mistakes for whichever question types the learner performed poorly on, matched by normalized question_type. */
 export function resolveCommonMistakes(
   rows: readonly QuestionTypeMistakeRow[],
@@ -81,9 +100,7 @@ export function resolveCommonMistakes(
     weakPerformances.flatMap((performance) => [normalizeLabel(performance.type), normalizeLabel(performance.label)])
   );
 
-  return rows
-    .filter((row) => weakLabels.has(normalizeLabel(row.question_type)))
-    .map((row) => `${row.mistake_name}: ${row.description} (Fix: ${row.recommendation})`);
+  return resolveMistakesByKey(rows, weakLabels, (row) => row.question_type);
 }
 
 /**
