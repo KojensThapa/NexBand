@@ -1,5 +1,6 @@
 import { Prisma, ReadingAttemptStatus } from "@prisma/client";
 
+import { ReadingFeedbackService } from "../../services/reading/ReadingFeedbackService";
 import {
   evaluateReadingTest,
   type ReadingQuestionType,
@@ -11,6 +12,8 @@ import type {
   ReadingAnswers,
   UpdateReadingMockTestInput,
 } from "./reading.schemas";
+
+const readingFeedbackService = new ReadingFeedbackService();
 
 export class ReadingServiceError extends Error {
   constructor(
@@ -91,8 +94,14 @@ type EvaluationPassage = {
   }>;
 };
 
-/** Adapts persisted Reading data to the pure evaluation algorithm's input. */
-function evaluateAttempt(passages: readonly EvaluationPassage[], answers: ReadingAnswers) {
+/**
+ * Adapts persisted Reading data to the pure evaluation algorithm's input,
+ * then hands the algorithm's (unmodified) scoring result to
+ * ReadingFeedbackService to enrich it with dataset-driven feedback before
+ * it is persisted. The algorithm itself never sees ReadingFeedbackService,
+ * DatasetService, or FeedbackEngine — it only calculates.
+ */
+async function evaluateAttempt(passages: readonly EvaluationPassage[], answers: ReadingAnswers) {
   const questions = passages.flatMap((passage) =>
     passage.questions.map((question) => ({
       id: question.id,
@@ -102,6 +111,7 @@ function evaluateAttempt(passages: readonly EvaluationPassage[], answers: Readin
     }))
   );
   const report = evaluateReadingTest({ questions, answers });
+  const enrichedReport = await readingFeedbackService.enrich(report);
   const bandScore = report.overallBand ?? report.estimatedBand ?? 0;
 
   return {
@@ -112,7 +122,7 @@ function evaluateAttempt(passages: readonly EvaluationPassage[], answers: Readin
     percentage: report.attemptAccuracy ?? 0,
     bandScore,
     algorithmVersion: "reading-evaluator-v1",
-    report: report as unknown as Prisma.InputJsonValue,
+    report: enrichedReport as unknown as Prisma.InputJsonValue,
   };
 }
 
@@ -402,7 +412,7 @@ export class ReadingService {
     };
     this.validateAnswers(new Set(questions.map((question) => question.id)), answers);
 
-    const score = evaluateAttempt(attempt.mockTest.passages, answers);
+    const score = await evaluateAttempt(attempt.mockTest.passages, answers);
     const completed = await this.readingRepository.completeAttempt(
       userId,
       attemptId,

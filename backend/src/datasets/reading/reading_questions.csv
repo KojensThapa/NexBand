@@ -1,0 +1,21 @@
+question_id,passage_id,question_number,question_type,difficulty,explanation_type,mistake_category
+RQ001,P001,1,True/False/Not Given,Easy,True/False/Not Given,True/False/Not Given
+RQ002,P001,2,True/False/Not Given,Easy,True/False/Not Given,True/False/Not Given
+RQ003,P001,3,Matching Headings,Medium,Matching Headings,Matching Headings
+RQ004,P001,4,Matching Headings,Medium,Matching Headings,Matching Headings
+RQ005,P001,5,Multiple Choice,Medium,Multiple Choice,Multiple Choice
+RQ006,P001,6,Sentence Completion,Medium,Sentence Completion,Sentence Completion
+RQ007,P001,7,Summary Completion,Hard,Summary Completion,Summary Completion
+RQ008,P001,8,Short Answer Questions,Medium,Short Answer Questions,Short Answer Questions
+RQ009,P001,9,Matching Information,Hard,Matching Information,Matching Information
+RQ010,P001,10,Table Completion,Medium,Table Completion,Table Completion
+RQ011,P002,11,Flow-chart Completion,Hard,Flow-chart Completion,Flow-chart Completion
+RQ012,P002,12,Diagram Label Completion,Hard,Diagram Label Completion,Diagram Label Completion
+RQ013,P002,13,Matching Features,Hard,Matching Features,Matching Features
+RQ014,P002,14,Matching Sentence Endings,Medium,Matching Sentence Endings,Matching Sentence Endings
+RQ015,P002,15,Multiple Choice,Easy,Multiple Choice,Multiple Choice
+RQ016,P002,16,Sentence Completion,Medium,Sentence Completion,Sentence Completion
+RQ017,P002,17,True/False/Not Given,Medium,True/False/Not Given,True/False/Not Given
+RQ018,P002,18,Matching Headings,Hard,Matching Headings,Matching Headings
+RQ019,P002,19,Summary Completion,Medium,Summary Completion,Summary Completion
+RQ020,P002,20,Short Answer Questions,Easy,Short Answer Questions,Short Answer Questions

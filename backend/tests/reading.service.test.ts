@@ -153,6 +153,13 @@ test("submitting an attempt merges final answers, saves one result, and rejects 
   assert.equal(persisted.score.percentage, 100);
   assert.equal(persisted.score.bandScore, 1.5);
   assert.equal(persisted.score.algorithmVersion, "reading-evaluator-v1");
+  // The persisted report is the algorithm's untouched score/band/performance
+  // data, enriched by ReadingFeedbackService: strengths/weakAreas/
+  // recommendations come from the reading_feedback.csv row matching 2
+  // correct answers out of 40 (feedback_templates is unpopulated, so
+  // FeedbackEngine itself contributes nothing here), plus the new
+  // overallFeedback/performanceLevel/commonMistakes/questionTypeExplanations/
+  // feedbackSummary fields.
   assert.deepEqual(persisted.score.report, {
     status: "Completed",
     totalQuestions: 2,
@@ -203,13 +210,14 @@ test("submitting an attempt merges final answers, saves one result, and rejects 
         status: "Attempted",
       },
     ],
-    strengths: [
-      "Good performance in Section 1",
-      "Strong Yes / No / Not Given skills",
-      "Excellent reading comprehension",
-    ],
-    weakAreas: [],
-    recommendations: [],
+    strengths: ["Shows basic awareness of English words."],
+    weakAreas: ["Unable to understand most passage content."],
+    recommendations: ["Start with beginner English reading materials and gradually increase difficulty."],
+    overallFeedback: "Your current reading ability is very limited and significant improvement is needed.",
+    performanceLevel: "Very Poor",
+    commonMistakes: [],
+    questionTypeExplanations: [],
+    feedbackSummary: "",
   });
 
   await assert.rejects(
