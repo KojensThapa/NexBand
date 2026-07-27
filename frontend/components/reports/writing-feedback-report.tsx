@@ -1,6 +1,5 @@
 "use client";
 
-import { CollapsibleSection } from "@/components/reports/shared/collapsible-section";
 import { ReportCard } from "@/components/reports/shared/report-card";
 import { ReportHeader } from "@/components/reports/shared/report-header";
 import { ScoreProgressBar } from "@/components/reports/shared/score-progress-bar";
@@ -117,6 +116,69 @@ export function WritingFeedbackReport({ report, header }: WritingFeedbackReportP
         </ReportCard>
       </div>
 
+      {report.questionRelevance ? (
+        <ReportCard title="Question Relevance">
+          <div className="space-y-3 text-sm text-slate-700">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Question Answered</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {report.questionRelevance.answeredQuestion ? "Yes" : "No"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">All Parts Covered</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {report.questionRelevance.coveredAllParts ? "Yes" : "No"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Topic Relevance</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {Math.round(report.questionRelevance.relevanceScore * 100)}%
+                </p>
+              </div>
+            </div>
+
+            {report.questionRelevance.offTopic ? (
+              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 font-medium text-rose-700">
+                This response does not address the question, so the Task Response score has been capped.
+              </p>
+            ) : null}
+
+            {report.questionRelevance.missingPoints.length > 0 ? (
+              <p>
+                <span className="font-medium">Missing points: </span>
+                {report.questionRelevance.missingPoints.join(", ")}
+              </p>
+            ) : null}
+          </div>
+        </ReportCard>
+      ) : null}
+
+      <ReportCard title="Detected Language Issues">
+        {report.errors.length === 0 ? (
+          <p className="text-sm text-slate-600">No individual grammar, spelling, or punctuation issues were detected.</p>
+        ) : (
+          <ul className="space-y-3">
+            {report.errors.map((error) => (
+              <li key={`${error.category}-${error.id}`} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
+                    {error.category}
+                  </span>
+                  <p className="text-sm font-medium text-slate-900">{error.title}</p>
+                </div>
+                <p className="mt-2 text-sm text-slate-700">{error.explanation}</p>
+                {error.corrected ? (
+                  <p className="mt-1 text-sm text-emerald-700">Suggested correction: {error.corrected}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </ReportCard>
+
       <div className="grid gap-6 sm:grid-cols-2">
         <StrengthsList title="Strengths" items={report.strengths} variant="strength" />
         <StrengthsList
@@ -143,37 +205,6 @@ export function WritingFeedbackReport({ report, header }: WritingFeedbackReportP
           ))}
         </ul>
       </ReportCard>
-
-      {report.errors.length > 0 ? (
-        <ReportCard title="Key Errors">
-          <div className="space-y-4">
-            {report.errors.map((error) => (
-              <article
-                key={error.id}
-                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
-              >
-                <p className="text-sm font-semibold text-slate-900">
-                  #{error.id} {error.title}
-                  <span className="ml-2 text-xs font-normal text-slate-500">
-                    ({error.category})
-                  </span>
-                </p>
-                <p className="mt-2 text-sm text-rose-600 line-through">{error.original}</p>
-                <p className="mt-1 text-sm text-emerald-700">{error.corrected}</p>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  {error.explanation}
-                </p>
-              </article>
-            ))}
-          </div>
-        </ReportCard>
-      ) : null}
-
-      <CollapsibleSection title="Corrected Essay">
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-          {report.correctedEssay}
-        </p>
-      </CollapsibleSection>
     </div>
   );
 }

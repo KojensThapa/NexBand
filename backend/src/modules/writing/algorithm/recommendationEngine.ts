@@ -8,6 +8,15 @@ export function generateRecommendations(input: WritingFeedbackInput, weakAreas: 
   }
   if (weakAreas.includes("Weak overview.")) recommendations.push("Improve the overview sentence by summarising the main trends.");
   if (weakAreas.includes("Missing conclusion.")) recommendations.push("Add a concise conclusion that clearly answers the question.");
+  if (weakAreas.includes("Essay does not address the question.")) {
+    recommendations.push("Plan your response around the exact question and its key terms before writing.");
+  }
+  if (weakAreas.includes("Question is not answered clearly.")) {
+    recommendations.push("State a direct position and answer every instruction in the question.");
+  }
+  if (weakAreas.includes("One or more required discussion points are missing.")) {
+    recommendations.push("Use a brief checklist to cover every required discussion point before writing the conclusion.");
+  }
   if (weakAreas.includes("Repeated vocabulary.")) {
     recommendations.push("Use more academic vocabulary and reduce repeated words.");
   }
@@ -21,4 +30,3 @@ export function generateRecommendations(input: WritingFeedbackInput, weakAreas: 
     ? recommendations
     : ["Maintain your structure and practise writing about a wider range of IELTS topics."];
 }
-

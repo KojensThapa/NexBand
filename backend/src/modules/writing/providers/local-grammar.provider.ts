@@ -26,6 +26,24 @@ const COMMON_MISSPELLINGS: Record<string, string> = {
   publically: "publicly",
   reccommend: "recommend",
   tommorow: "tomorrow",
+  grammer: "grammar",
+  punction: "punctuation",
+  alot: "a lot",
+  adress: "address",
+  apparantly: "apparently",
+  calender: "calendar",
+  comming: "coming",
+  developement: "development",
+  embarass: "embarrass",
+  familier: "familiar",
+  finaly: "finally",
+  foriegn: "foreign",
+  governer: "governor",
+  happend: "happened",
+  immediatly: "immediately",
+  maintainance: "maintenance",
+  succesful: "successful",
+  thier: "their",
 };
 
 function splitSentences(essay: string): string[] {
@@ -72,6 +90,37 @@ function findDoubleSpacing(essay: string): WritingIssue[] {
   }));
 }
 
+function findSpaceBeforePunctuation(essay: string): WritingIssue[] {
+  const matches = essay.match(/\s+[,!?:;]/g) ?? [];
+  return matches.slice(0, 5).map((match) => ({
+    message: `Remove the space before "${match.trim()}".`,
+    category: "punctuation",
+    suggestion: match.trim(),
+  }));
+}
+
+function findRepeatedPunctuation(essay: string): WritingIssue[] {
+  const matches = essay.match(/([!?;:,])\1+/g) ?? [];
+  return matches.slice(0, 5).map((match) => ({
+    message: `Repeated punctuation "${match}" makes the sentence less formal.`,
+    category: "punctuation",
+    suggestion: match[0] ?? "",
+  }));
+}
+
+function findMissingTerminalPunctuation(essay: string): WritingIssue[] {
+  return essay
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length >= 10 && /[A-Za-z0-9]$/.test(paragraph))
+    .slice(0, 5)
+    .map(() => ({
+      message: "This paragraph appears to end without terminal punctuation.",
+      category: "punctuation",
+      suggestion: "Add a full stop.",
+    }));
+}
+
 function findMisspellings(essay: string): WritingIssue[] {
   const words = essay.match(/[A-Za-z']+/g) ?? [];
   const issues: WritingIssue[] = [];
@@ -94,9 +143,8 @@ function findMisspellings(essay: string): WritingIssue[] {
 }
 
 /**
- * Deterministic, offline grammar heuristic used when no external grammar
- * provider (SPEAKING/WRITING_GRAMMAR_ENDPOINT) is configured. Mirrors the
- * shape of a real provider so the algorithm layer is unaffected.
+ * Deterministic, offline grammar heuristic used whenever Gemini is unavailable.
+ * It mirrors the provider contract so the algorithm layer is unaffected.
  */
 export class LocalGrammarProvider implements GrammarProvider {
   async analyze(input: GrammarProviderRequest): Promise<GrammarResult> {
@@ -109,7 +157,12 @@ export class LocalGrammarProvider implements GrammarProvider {
       ...findRepeatedWords(essay),
     ].slice(0, 20);
     const spellingErrors = findMisspellings(essay).slice(0, 20);
-    const punctuationErrors = findDoubleSpacing(essay).slice(0, 10);
+    const punctuationErrors = [
+      ...findDoubleSpacing(essay),
+      ...findSpaceBeforePunctuation(essay),
+      ...findRepeatedPunctuation(essay),
+      ...findMissingTerminalPunctuation(essay),
+    ].slice(0, 10);
 
     const totalIssues = grammarErrors.length + spellingErrors.length + punctuationErrors.length;
     const wordCount = essay ? essay.split(/\s+/).length : 0;

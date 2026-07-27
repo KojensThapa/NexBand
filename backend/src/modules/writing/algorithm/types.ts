@@ -3,6 +3,7 @@
 export type WritingTaskNumber = 1 | 2;
 export type WritingReportStatus = "Completed" | "Incomplete";
 export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export type WritingProviderUsed = "Gemini" | "Local Fallback";
 
 export interface WritingIssue {
   message: string;
@@ -12,7 +13,7 @@ export interface WritingIssue {
   endOffset?: number;
 }
 
-/** Data supplied by the Grammar Provider. Scores may be 0–9 or 0–100. */
+/** Data supplied by the grammar provider. Scores use the IELTS 0-9 scale. */
 export interface GrammarResult {
   score: number;
   grammarErrors: WritingIssue[];
@@ -21,15 +22,23 @@ export interface GrammarResult {
   suggestions: string[];
 }
 
-/** Data supplied by the Essay Analysis Provider. All scores may be 0–9 or 0–100. */
+/** Data supplied by the essay-analysis provider. Scores can be 0-9 or 0-100. */
 export interface EssayAnalysis {
   taskAchievementScore?: number;
   coherenceScore?: number;
   vocabularyScore?: number;
   estimatedBand?: number;
   summary?: string;
-  /** A ratio from 0–1 or a percentage from 0–100. */
+  /** A ratio from 0-1 or a percentage from 0-100. */
   keywordCoverage?: number;
+  answeredQuestion?: boolean;
+  coveredAllParts?: boolean;
+  offTopic?: boolean;
+  relevanceScore?: number;
+  missingPoints?: string[];
+  strengths?: string[];
+  weakAreas?: string[];
+  recommendations?: string[];
 }
 
 export interface WritingQuestionMetadata {
@@ -79,9 +88,15 @@ export interface TaskAchievementMetrics {
   examplesPresent?: boolean;
   conclusionPresent?: boolean;
   keywordCoverage: number;
+  answeredQuestion: boolean;
+  coveredAllParts: boolean;
+  offTopic: boolean;
+  relevanceScore: number;
+  missingPoints: string[];
 }
 
 export interface CoherenceMetrics {
+  sentenceCount: number;
   paragraphCount: number;
   averageParagraphLength: number;
   transitionWordCount: number;
@@ -99,11 +114,16 @@ export interface WritingEvaluationInput {
   /** A mock report supplies both tasks; one task yields Incomplete. */
   completedTaskNumbers?: readonly WritingTaskNumber[];
   vocabularyDataset?: WritingVocabularyDataset;
+  providerUsed?: WritingProviderUsed;
+  evaluationTimeMs?: number;
+  evaluatedAt?: string;
 }
 
 export interface WritingEvaluationResult {
   status: WritingReportStatus;
   taskNumber: WritingTaskNumber;
+  question: string;
+  studentEssay: string;
   wordCount: number;
   uniqueWords: number;
   repeatedWords: RepeatedWord[];
@@ -124,7 +144,17 @@ export interface WritingEvaluationResult {
   taskAchievement: TaskAchievementMetrics;
   coherence: CoherenceMetrics;
   grammarSuggestions: string[];
+  questionRelevance: {
+    answeredQuestion: boolean;
+    coveredAllParts: boolean;
+    offTopic: boolean;
+    relevanceScore: number;
+    missingPoints: string[];
+  };
   essaySummary?: string;
+  providerUsed: WritingProviderUsed;
+  evaluationTimeMs: number;
+  evaluatedAt?: string;
   algorithmVersion: "writing-v1";
 }
 
@@ -147,5 +177,7 @@ export interface WritingMockReport {
   strengths: string[];
   weakAreas: string[];
   recommendations: string[];
+  providerUsed: WritingProviderUsed;
+  evaluationTimeMs: number;
   algorithmVersion: "writing-v1";
 }

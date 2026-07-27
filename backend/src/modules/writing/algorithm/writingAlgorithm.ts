@@ -42,10 +42,13 @@ export function evaluateWriting(input: WritingEvaluationInput): WritingEvaluatio
   };
   const feedback = generateFeedback(feedbackInput);
   const completedTasks = new Set(input.completedTaskNumbers ?? [input.taskNumber]);
+  const recommendations = generateRecommendations(feedbackInput, feedback.weakAreas);
 
   return {
     status: completedTasks.has(1) && completedTasks.has(2) ? "Completed" : "Incomplete",
     taskNumber: input.taskNumber,
+    question: input.questionMetadata.prompt ?? "",
+    studentEssay: essay,
     wordCount: wordCountMetrics.wordCount,
     uniqueWords: vocabulary.uniqueWords,
     repeatedWords: vocabulary.repeatedWords,
@@ -58,16 +61,25 @@ export function evaluateWriting(input: WritingEvaluationInput): WritingEvaluatio
     grammarScore,
     overallBand,
     cefrLevel: calculateCefrLevel(overallBand),
-    strengths: feedback.strengths,
-    weakAreas: feedback.weakAreas,
-    recommendations: generateRecommendations(feedbackInput, feedback.weakAreas),
+    strengths: [...new Set([...feedback.strengths, ...(input.essayAnalysis.strengths ?? [])])],
+    weakAreas: [...new Set([...feedback.weakAreas, ...(input.essayAnalysis.weakAreas ?? [])])],
+    recommendations: [...new Set([...recommendations, ...(input.essayAnalysis.recommendations ?? [])])],
     wordCountMetrics,
     vocabulary,
     taskAchievement,
     coherence,
     grammarSuggestions: input.grammarResult.suggestions,
+    questionRelevance: {
+      answeredQuestion: taskAchievement.answeredQuestion,
+      coveredAllParts: taskAchievement.coveredAllParts,
+      offTopic: taskAchievement.offTopic,
+      relevanceScore: taskAchievement.relevanceScore,
+      missingPoints: taskAchievement.missingPoints,
+    },
     ...(input.essayAnalysis.summary ? { essaySummary: input.essayAnalysis.summary } : {}),
+    providerUsed: input.providerUsed ?? "Local Fallback",
+    evaluationTimeMs: Math.max(0, input.evaluationTimeMs ?? 0),
+    ...(input.evaluatedAt ? { evaluatedAt: input.evaluatedAt } : {}),
     algorithmVersion: "writing-v1",
   };
 }
-

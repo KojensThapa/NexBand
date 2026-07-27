@@ -200,7 +200,7 @@ const writingEvaluationTaskSchema = z.object({
   questionMetadata: writingQuestionMetadataSchema.default({}),
 });
 
-/** Provider-backed Writing evaluation. A task can be submitted independently or as a full mock. */
+/** Provider-backed Writing evaluation. Mock tests may be submitted early. */
 export const createWritingSubmissionSchema = z
   .object({
     mode: z.enum(["task", "mock"]),
@@ -216,12 +216,9 @@ export const createWritingSubmissionSchema = z
     if (submission.mode === "task" && submission.tasks.length !== 1) {
       context.addIssue({ code: "custom", path: ["tasks"], message: "An individual submission needs exactly one task." });
     }
-    if (
-      submission.mode === "mock" &&
-      (submission.tasks.length !== 2 || !numbers.includes(1) || !numbers.includes(2))
-    ) {
-      context.addIssue({ code: "custom", path: ["tasks"], message: "A mock submission must contain Task 1 and Task 2." });
-    }
+    // A learner may submit a mock test after attempting only Task 1 or Task 2.
+    // Its evaluation status is then Incomplete; taskNumber's union guarantees
+    // that every submitted entry is still a valid IELTS Writing task.
   });
 
 export const writingSubmissionParamsSchema = z.object({

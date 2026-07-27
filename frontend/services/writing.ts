@@ -112,6 +112,16 @@ export interface WritingEvaluationResultData {
   wordCountMetrics: { wordCount: number; minimumWordCount: number; isBelowMinimum: boolean; wordCountPenalty: number };
   grammarSuggestions: string[];
   essaySummary?: string;
+  questionRelevance?: {
+    answeredQuestion: boolean;
+    coveredAllParts: boolean;
+    offTopic: boolean;
+    relevanceScore: number;
+    missingPoints: string[];
+  };
+  providerUsed?: "Gemini" | "Local Fallback";
+  evaluationTimeMs?: number;
+  evaluatedAt?: string;
   algorithmVersion: string;
 }
 

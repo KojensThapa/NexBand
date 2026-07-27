@@ -38,6 +38,7 @@ function createBackendWritingDetail(
 
   if (!report) {
     return {
+      status: "Incomplete",
       taskTitle: task.title,
       taskPrompt: task.prompt,
       responseText,
@@ -89,6 +90,7 @@ function createBackendWritingDetail(
   ];
 
   return {
+    status: report.evaluationData?.status ?? "Incomplete",
     taskTitle: task.title,
     taskPrompt: task.prompt,
     responseText,
@@ -139,6 +141,7 @@ function createBackendWritingDetail(
       `${taskReport ? "Task" : "Mock test"} evaluation complete. Overall Band ${report.overallBand.toFixed(1)} (${report.cefrLevel}).`,
     suggestedImprovements: report.recommendations,
     correctedEssay: responseText,
+    questionRelevance: report.evaluationData?.questionRelevance,
   };
 }
 
@@ -303,7 +306,10 @@ export function WritingSession({
         });
 
         const submission = await createWritingSubmission({
-          mode: submissionTasks.length === 2 ? "mock" : "task",
+          // Keep the original test mode. A mock with only one attempted task
+          // must be evaluated and reported as Incomplete, never converted into
+          // an unrelated standalone task submission.
+          mode: mode === "mock" ? "mock" : "task",
           testId: backendTestId,
           attemptId,
           tasks: submissionTasks,
@@ -319,7 +325,8 @@ export function WritingSession({
               : activeTask.title,
           activeText.slice(0, 80) + (activeText.length > 80 ? "…" : ""),
           detail.overallScore,
-          detail
+          detail,
+          mode === "mock" ? detail.status ?? "Incomplete" : "Completed"
         );
         saveReport(report);
         router.push(`/report/${report.id}`);
@@ -342,6 +349,8 @@ export function WritingSession({
       responseText: activeText,
       wordCount,
     });
+    const localSubmissionStatus =
+      mode === "mock" && draftEssays.length < visibleTasks.length ? "Incomplete" : "Completed";
 
     const report = createSavedReport(
       "writing",
@@ -352,7 +361,8 @@ export function WritingSession({
           : activeTask.title,
       activeText.slice(0, 80) + (activeText.length > 80 ? "…" : ""),
       detail.overallScore,
-      detail
+      detail,
+      localSubmissionStatus
     );
 
     saveReport(report);

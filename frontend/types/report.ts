@@ -52,6 +52,7 @@ export interface QuestionTypePerformanceEntry {
 }
 
 export interface WritingFeedbackDetail {
+  status?: "Completed" | "Incomplete";
   taskTitle: string;
   taskPrompt: string;
   responseText: string;
@@ -75,6 +76,13 @@ export interface WritingFeedbackDetail {
   aiSummary: string;
   suggestedImprovements: string[];
   correctedEssay: string;
+  questionRelevance?: {
+    answeredQuestion: boolean;
+    coveredAllParts: boolean;
+    offTopic: boolean;
+    relevanceScore: number;
+    missingPoints: string[];
+  };
 }
 
 export interface ReadingFeedbackDetail {

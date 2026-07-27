@@ -4,15 +4,16 @@ import type {
   RepeatedWord,
   WritingEvaluationResult,
   WritingMockReport,
+  WritingProviderUsed,
 } from "../algorithm/types";
-import { HttpEssayAnalysisProvider } from "../providers/essay.provider";
-import { HttpGrammarProvider } from "../providers/grammar.provider";
+import { GeminiWritingProvider } from "../providers/gemini-writing.provider";
 import { LocalEssayAnalysisProvider } from "../providers/local-essay.provider";
 import { LocalGrammarProvider } from "../providers/local-grammar.provider";
 import {
   WritingProviderError,
   type EssayAnalysisProvider,
   type GrammarProvider,
+  type WritingAnalysisProvider,
 } from "../providers/provider.interface";
 import {
   WritingEvaluationRepository,
@@ -22,6 +23,7 @@ import {
 import type { CreateWritingSubmissionInput } from "../writing.schemas";
 
 export interface WritingProviders {
+  gemini?: WritingAnalysisProvider;
   grammar: GrammarProvider;
   essayAnalysis: EssayAnalysisProvider;
 }
@@ -37,18 +39,11 @@ export function createWritingProvidersFromEnvironment(
   environment: NodeJS.ProcessEnv = process.env
 ): WritingProviders {
   return {
-    grammar: environment.WRITING_GRAMMAR_ENDPOINT
-      ? new HttpGrammarProvider({
-          endpoint: environment.WRITING_GRAMMAR_ENDPOINT,
-          apiKey: environment.WRITING_GRAMMAR_API_KEY,
-        })
-      : new LocalGrammarProvider(),
-    essayAnalysis: environment.WRITING_ESSAY_ENDPOINT
-      ? new HttpEssayAnalysisProvider({
-          endpoint: environment.WRITING_ESSAY_ENDPOINT,
-          apiKey: environment.WRITING_ESSAY_API_KEY,
-        })
-      : new LocalEssayAnalysisProvider(),
+    ...(environment.GEMINI_API_KEY
+      ? { gemini: new GeminiWritingProvider({ apiKey: environment.GEMINI_API_KEY }) }
+      : {}),
+    grammar: new LocalGrammarProvider(),
+    essayAnalysis: new LocalEssayAnalysisProvider(),
   };
 }
 
@@ -77,7 +72,9 @@ function buildMockReport(taskReports: WritingEvaluationResult[]): WritingMockRep
   const overallBand = calculateMockOverallBand(reports);
 
   return {
-    status: reports.length === 2 ? "Completed" : "Incomplete",
+    status: reports.length === 2 && reports.every((report) => report.status === "Completed")
+      ? "Completed"
+      : "Incomplete",
     taskNumber: "mock",
     taskReports: reports,
     wordCount: reports.reduce((total, report) => total + report.wordCount, 0),
@@ -95,6 +92,8 @@ function buildMockReport(taskReports: WritingEvaluationResult[]): WritingMockRep
     strengths,
     weakAreas,
     recommendations,
+    providerUsed: reports.every((report) => report.providerUsed === "Gemini") ? "Gemini" : "Local Fallback",
+    evaluationTimeMs: reports.reduce((total, report) => total + report.evaluationTimeMs, 0),
     algorithmVersion: "writing-v1",
   };
 }
@@ -106,26 +105,52 @@ export class WritingEvaluationService {
     private readonly providers: WritingProviders = createWritingProvidersFromEnvironment()
   ) {}
 
+  private async analyzeTask(
+    task: CreateWritingSubmissionInput["tasks"][number],
+    submissionId: string
+  ): Promise<{
+    grammarResult: Awaited<ReturnType<GrammarProvider["analyze"]>>;
+    essayAnalysis: Awaited<ReturnType<EssayAnalysisProvider["analyze"]>>;
+    providerUsed: WritingProviderUsed;
+  }> {
+    const providerInput = {
+      essay: task.essay,
+      taskNumber: task.taskNumber,
+      questionMetadata: task.questionMetadata,
+      correlationId: submissionId,
+    };
+
+    if (this.providers.gemini) {
+      try {
+        const result = await this.providers.gemini.analyze(providerInput);
+        return { ...result, providerUsed: "Gemini" };
+      } catch {
+        // Provider errors (timeouts, transport failures, malformed JSON, and
+        // incomplete Gemini responses) intentionally fall through to local analysis.
+      }
+    }
+
+    const [grammarResult, essayAnalysis] = await Promise.all([
+      this.providers.grammar.analyze(providerInput),
+      this.providers.essayAnalysis.analyze(providerInput),
+    ]);
+    return { grammarResult, essayAnalysis, providerUsed: "Local Fallback" };
+  }
+
   async submit(userId: string, input: CreateWritingSubmissionInput) {
     const submission = await this.repository.startSubmission(userId, input);
-    const completedTaskNumbers = input.tasks.map((task) => task.taskNumber);
+    // Presence in the request does not mean the learner attempted the task.
+    // A mock is complete only when both Task 1 and Task 2 contain an essay.
+    const completedTaskNumbers = input.tasks
+      .filter((task) => task.essay.trim().length > 0)
+      .map((task) => task.taskNumber);
 
     try {
       const taskEvaluations = await Promise.all(
         input.tasks.map(async (task): Promise<WritingTaskProviderData> => {
-          const [grammarResult, essayAnalysis] = await Promise.all([
-            this.providers.grammar.analyze({
-              essay: task.essay,
-              taskNumber: task.taskNumber,
-              correlationId: submission.id,
-            }),
-            this.providers.essayAnalysis.analyze({
-              essay: task.essay,
-              taskNumber: task.taskNumber,
-              questionMetadata: task.questionMetadata,
-              correlationId: submission.id,
-            }),
-          ]);
+          const startedAt = Date.now();
+          const { grammarResult, essayAnalysis, providerUsed } = await this.analyzeTask(task, submission.id);
+          const evaluationTimeMs = Date.now() - startedAt;
           const report = evaluateWriting({
             essay: task.essay,
             taskNumber: task.taskNumber,
@@ -133,6 +158,9 @@ export class WritingEvaluationService {
             essayAnalysis,
             questionMetadata: task.questionMetadata,
             completedTaskNumbers,
+            providerUsed,
+            evaluationTimeMs,
+            evaluatedAt: new Date().toISOString(),
           });
           return {
             ...(task.taskId ? { taskId: task.taskId } : {}),
@@ -140,6 +168,8 @@ export class WritingEvaluationService {
             essay: task.essay,
             grammarResult,
             essayAnalysis,
+            providerUsed,
+            evaluationTimeMs,
             report,
           };
         })
@@ -161,4 +191,3 @@ export class WritingEvaluationService {
     return submission;
   }
 }
-

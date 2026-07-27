@@ -43,9 +43,11 @@ export function calculateCoherence(
   const sentenceFactor = averageSentenceLength >= 10 && averageSentenceLength <= 30 ? 1 : averageSentenceLength >= 6 ? 0.65 : 0.3;
   const localScore = 3.5 + paragraphFactor * 2.2 + transitionFactor * 1.7 + sentenceFactor * 1.6;
   const providerScore = toBand(essayAnalysis.coherenceScore);
-  const score = providerScore === undefined ? localScore : localScore * 0.45 + providerScore * 0.55;
+  // Required weighting: 70% Gemini coherence analysis, 30% local structure metrics.
+  const score = providerScore === undefined ? localScore : localScore * 0.3 + providerScore * 0.7;
 
   return {
+    sentenceCount: sentences,
     paragraphCount: paragraphs.length,
     averageParagraphLength: paragraphs.length === 0 ? 0 : Number((words / paragraphs.length).toFixed(2)),
     transitionWordCount,
@@ -54,4 +56,3 @@ export function calculateCoherence(
     score: Number(Math.max(0, Math.min(9, score)).toFixed(2)),
   };
 }
-

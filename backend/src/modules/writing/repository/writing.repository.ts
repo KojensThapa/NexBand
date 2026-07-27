@@ -10,6 +10,7 @@ import type {
   GrammarResult,
   WritingEvaluationResult,
   WritingMockReport,
+  WritingProviderUsed,
 } from "../algorithm/types";
 import type { CreateWritingSubmissionInput } from "../writing.schemas";
 
@@ -23,6 +24,8 @@ export interface WritingTaskProviderData {
   essay: string;
   grammarResult: GrammarResult;
   essayAnalysis: unknown;
+  providerUsed: WritingProviderUsed;
+  evaluationTimeMs: number;
   report: WritingEvaluationResult;
 }
 
@@ -130,7 +133,11 @@ export class WritingEvaluationRepository implements WritingEvaluationRepositoryP
             spellingErrors: toJson(evaluation.grammarResult.spellingErrors),
             punctuationErrors: toJson(evaluation.grammarResult.punctuationErrors),
             grammarSuggestions: toJson(evaluation.grammarResult.suggestions),
-            providerData: toJson({ essayAnalysis: evaluation.essayAnalysis }),
+            providerData: toJson({
+              essayAnalysis: evaluation.essayAnalysis,
+              providerUsed: evaluation.providerUsed,
+              evaluationTimeMs: evaluation.evaluationTimeMs,
+            }),
           })),
         },
         reports: {
@@ -141,6 +148,7 @@ export class WritingEvaluationRepository implements WritingEvaluationRepositoryP
         },
       },
       include: {
+        user: { select: { id: true, fullName: true } },
         evaluations: { orderBy: { taskNumber: "asc" } },
         reports: { orderBy: [{ scope: "asc" }, { taskNumber: "asc" }] },
       },
@@ -158,10 +166,10 @@ export class WritingEvaluationRepository implements WritingEvaluationRepositoryP
     return prisma.writingSubmission.findFirst({
       where: { id: submissionId, userId },
       include: {
+        user: { select: { id: true, fullName: true } },
         evaluations: { orderBy: { taskNumber: "asc" } },
         reports: { orderBy: [{ scope: "asc" }, { taskNumber: "asc" }] },
       },
     });
   }
 }
-

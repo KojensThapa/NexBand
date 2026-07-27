@@ -46,6 +46,9 @@ export function generateFeedback(input: WritingFeedbackInput): WritingFeedback {
   }
   if (input.taskNumber === 1 && !input.taskAchievement.overviewPresent) weakAreas.push("Weak overview.");
   if (input.taskNumber === 2 && !input.taskAchievement.conclusionPresent) weakAreas.push("Missing conclusion.");
+  if (input.taskAchievement.offTopic) weakAreas.push("Essay does not address the question.");
+  else if (!input.taskAchievement.answeredQuestion) weakAreas.push("Question is not answered clearly.");
+  if (!input.taskAchievement.coveredAllParts) weakAreas.push("One or more required discussion points are missing.");
   if (input.grammar.grammarErrors.length + input.grammar.spellingErrors.length + input.grammar.punctuationErrors.length >= 4 || input.grammarScore < 5.5) {
     weakAreas.push("Grammar mistakes affect accuracy.");
   }
@@ -55,4 +58,3 @@ export function generateFeedback(input: WritingFeedbackInput): WritingFeedback {
 
   return { strengths: [...new Set(strengths)], weakAreas: [...new Set(weakAreas)] };
 }
-

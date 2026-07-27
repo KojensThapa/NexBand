@@ -33,3 +33,12 @@ export interface EssayAnalysisProvider {
   analyze(input: EssayProviderRequest): Promise<EssayAnalysis>;
 }
 
+/** A single provider call that supplies both grammar and essay analysis. */
+export interface CombinedWritingAnalysis {
+  grammarResult: GrammarResult;
+  essayAnalysis: EssayAnalysis;
+}
+
+export interface WritingAnalysisProvider {
+  analyze(input: EssayProviderRequest): Promise<CombinedWritingAnalysis>;
+}

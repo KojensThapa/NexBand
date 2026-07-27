@@ -26,9 +26,10 @@ export function calculateVocabulary(
   const analysis = analyzeVocabulary(essay, dataset);
   const localScore = localVocabularyScore(analysis);
   const providerScore = toBandScore(essayAnalysis.vocabularyScore);
+  // Required weighting: 70% Gemini lexical analysis, 30% local lexical metrics.
   const score = providerScore === undefined
     ? localScore
-    : localScore * 0.45 + providerScore * 0.55;
+    : localScore * 0.3 + providerScore * 0.7;
 
   return {
     uniqueWords: analysis.uniqueWords,
@@ -39,4 +40,3 @@ export function calculateVocabulary(
     score: Number(Math.max(0, Math.min(9, score)).toFixed(2)),
   };
 }
-
