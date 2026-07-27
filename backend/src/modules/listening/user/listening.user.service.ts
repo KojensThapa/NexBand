@@ -1,5 +1,6 @@
 import { ListeningAttemptStatus, Prisma } from "@prisma/client";
 
+import { ListeningFeedbackService } from "../../../services/listening/ListeningFeedbackService";
 import {
   calculateBasicListeningScore,
   evaluateListeningTest,
@@ -9,6 +10,8 @@ import {
 } from "../algorithm/listeningAlgorithm";
 import { ListeningUserRepository } from "./listening.user.repository";
 import { toListeningQuestionTypeInput, type ListeningAnswers } from "../listening.schemas";
+
+const listeningFeedbackService = new ListeningFeedbackService();
 
 type LearnerListeningTestSource = {
   id: string;
@@ -225,12 +228,13 @@ export class ListeningUserService {
         }))
     );
     const report = evaluateListeningTest({ questions: evaluationQuestions, answers });
+    const enrichedReport = await listeningFeedbackService.enrich(report);
 
     const completed = await this.listeningRepository.completeAttempt(
       userId,
       attemptId,
       answers,
-      { ...score, report: report as unknown as Prisma.InputJsonValue }
+      { ...score, report: enrichedReport as unknown as Prisma.InputJsonValue }
     );
 
     if (!completed.attempt || !completed.result) {

@@ -9,6 +9,7 @@ import type {
   GrammarRuleRow,
   ListeningAnswerRow,
   ListeningCommonMistakeRow,
+  ListeningExplanationRow,
   ListeningFeedbackRow,
   ListeningQuestionRow,
   ReadingAnswerRow,
@@ -98,6 +99,10 @@ export class DatasetService {
 
   getListeningCommonMistakes(options?: LoadOptions): Promise<ListeningCommonMistakeRow[]> {
     return this.loadDataset<ListeningCommonMistakeRow>("listening", "common_mistakes.csv", options);
+  }
+
+  getListeningExplanations(options?: LoadOptions): Promise<ListeningExplanationRow[]> {
+    return this.loadDataset<ListeningExplanationRow>("listening", "listening_explanations.csv", options);
   }
 
   // ---------------------------------------------------------------------

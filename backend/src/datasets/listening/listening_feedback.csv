@@ -1,1 +1,8 @@
-question_type,score_min,score_max,feedback
+score_min,score_max,performance_level,overall_feedback,strengths,weaknesses,recommendations
+35,40,Excellent,"Outstanding listening performance with excellent understanding of spoken English.","Excellent understanding of conversations;Strong keyword recognition;Very accurate answers","Minor mistakes only","Continue practicing with authentic IELTS listening tests."
+30,34,Very Good,"Very good listening skills with only a few mistakes.","Good understanding of different accents;Strong listening accuracy","Occasional errors in difficult sections","Practice note-taking and prediction skills."
+24,29,Good,"Good listening performance but improvement is still possible.","Able to understand most conversations","Missed some important details","Focus on identifying keywords and distractors."
+18,23,Satisfactory,"Average listening performance.","Basic listening comprehension","Difficulty following long conversations","Practice listening to longer recordings and improve concentration."
+12,17,Needs Improvement,"Listening ability needs improvement.","Can identify some basic information","Misses important details and keywords","Improve vocabulary and practice listening daily."
+6,11,Poor,"Weak listening performance.","Recognizes limited information","Difficulty understanding conversations","Practice basic listening exercises before attempting IELTS recordings."
+0,5,Very Poor,"Very limited listening ability.","Very few correct answers","Unable to identify important information","Develop basic English listening skills before attempting full IELTS practice tests."

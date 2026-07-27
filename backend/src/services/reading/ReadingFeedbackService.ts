@@ -8,12 +8,15 @@ import type {
 } from "../dataset";
 import { feedbackEngine as defaultFeedbackEngine } from "../feedback";
 import type { EvaluationInput, FeedbackResult } from "../feedback";
+import {
+  findRowInScoreRange,
+  resolveCommonMistakes,
+  resolveQuestionTypeExplanations,
+  splitList,
+  type QuestionTypeExplanationResult,
+} from "../shared/datasetFeedbackUtils";
 
-import type {
-  QuestionTypePerformance,
-  ReadingEvaluationResult,
-  ReadingQuestionType,
-} from "../../modules/reading/algorithm/readingAlgorithm";
+import type { ReadingEvaluationResult, ReadingQuestionType } from "../../modules/reading/algorithm/readingAlgorithm";
 
 /**
  * A question type is treated as "low-performing" at the same 60% accuracy
@@ -47,12 +50,7 @@ export interface ReadingFeedbackGenerator {
   generateFeedback(input: EvaluationInput): Promise<FeedbackResult>;
 }
 
-export interface QuestionTypeExplanation {
-  type: ReadingQuestionType;
-  label: string;
-  explanations: string[];
-  acceptedAnswers?: string[];
-}
+export type QuestionTypeExplanation = QuestionTypeExplanationResult<ReadingQuestionType>;
 
 /**
  * `ReadingEvaluationResult` (the algorithm's output) with its generated
@@ -67,36 +65,6 @@ export interface EnhancedReadingEvaluationResult extends ReadingEvaluationResult
   commonMistakes: string[];
   questionTypeExplanations: QuestionTypeExplanation[];
   feedbackSummary: string;
-}
-
-function normalizeLabel(value: string): string {
-  return value.trim().toLowerCase().replace(/[\s/_-]+/g, " ");
-}
-
-function parseScoreBound(value: string): number | undefined {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-function isWithinRange(score: number, minText: string, maxText: string): boolean {
-  const min = parseScoreBound(minText);
-  const max = parseScoreBound(maxText);
-  return min !== undefined && max !== undefined && score >= min && score <= max;
-}
-
-/** reading_feedback.csv's strengths/weaknesses/recommendations columns are semicolon-separated lists in a single cell. */
-function splitList(value: string): string[] {
-  return value
-    .split(";")
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
-}
-
-function splitAcceptableAnswers(value: string): string[] {
-  return value
-    .split(/[;,|]/)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
 }
 
 /**
@@ -121,9 +89,12 @@ function splitAcceptableAnswers(value: string): string[] {
  *
  * This class never scores anything and never re-evaluates an answer — it
  * only reads the algorithm's already-computed result and dataset content.
- * Both collaborators are constructor-injected (defaulting to the shared
- * singletons), so a caller can substitute fakes in tests without touching
- * this class.
+ * The question-type mistake/explanation/answer matching logic is shared
+ * with ListeningFeedbackService via `services/shared/datasetFeedbackUtils`
+ * (see that module for why: both datasets turned out to use the exact same
+ * column layout). Both collaborators here are constructor-injected
+ * (defaulting to the shared singletons), so a caller can substitute fakes
+ * in tests without touching this class.
  */
 export class ReadingFeedbackService {
   constructor(
@@ -146,7 +117,15 @@ export class ReadingFeedbackService {
     );
 
     const feedback = await this.feedbackGenerator.generateFeedback(this.buildEvaluationInput(result));
-    const overallFeedbackRow = this.findOverallFeedbackRow(feedbackRows, result.correctAnswers);
+
+    // reading_feedback.csv is keyed by the learner's raw correct-answer
+    // count out of 40, mirroring the algorithm's own band tables.
+    const overallFeedbackRow = findRowInScoreRange(
+      feedbackRows,
+      result.correctAnswers,
+      (row) => row.min_score,
+      (row) => row.max_score
+    );
 
     return {
       ...result,
@@ -155,8 +134,8 @@ export class ReadingFeedbackService {
       recommendations: [...feedback.recommendations, ...splitList(overallFeedbackRow?.recommendations ?? "")],
       overallFeedback: overallFeedbackRow?.feedback ?? "",
       performanceLevel: overallFeedbackRow?.performance_level ?? NOT_ASSESSED_PERFORMANCE_LEVEL,
-      commonMistakes: this.resolveCommonMistakes(commonMistakeRows, weakPerformances),
-      questionTypeExplanations: this.resolveQuestionTypeExplanations(
+      commonMistakes: resolveCommonMistakes(commonMistakeRows, weakPerformances),
+      questionTypeExplanations: resolveQuestionTypeExplanations(
         weakPerformances,
         questionRows,
         explanationRows,
@@ -183,63 +162,5 @@ export class ReadingFeedbackService {
     }
 
     return input;
-  }
-
-  /** reading_feedback.csv is keyed by the learner's raw correct-answer count out of 40, mirroring the algorithm's own band tables. */
-  private findOverallFeedbackRow(rows: ReadingFeedbackRow[], correctAnswers: number): ReadingFeedbackRow | undefined {
-    return rows.find((row) => isWithinRange(correctAnswers, row.min_score, row.max_score));
-  }
-
-  private resolveCommonMistakes(
-    rows: ReadingCommonMistakeRow[],
-    weakPerformances: readonly QuestionTypePerformance[]
-  ): string[] {
-    const weakLabels = new Set(
-      weakPerformances.flatMap((performance) => [normalizeLabel(performance.type), normalizeLabel(performance.label)])
-    );
-
-    return rows
-      .filter((row) => weakLabels.has(normalizeLabel(row.question_type)))
-      .map((row) => `${row.mistake_name}: ${row.description} (Fix: ${row.recommendation})`);
-  }
-
-  private resolveQuestionTypeExplanations(
-    weakPerformances: readonly QuestionTypePerformance[],
-    questionRows: ReadingQuestionRow[],
-    explanationRows: ReadingExplanationRow[],
-    answerRows: ReadingAnswerRow[]
-  ): QuestionTypeExplanation[] {
-    const weakLabelsByType = new Map(
-      weakPerformances.map((performance) => [performance.type, normalizeLabel(performance.label)] as const)
-    );
-
-    return weakPerformances.map((performance) => {
-      const normalizedType = normalizeLabel(performance.type);
-      const normalizedLabel = weakLabelsByType.get(performance.type) ?? normalizedType;
-
-      const explanations = explanationRows
-        .filter((row) => {
-          const normalizedRowType = normalizeLabel(row.question_type);
-          return normalizedRowType === normalizedType || normalizedRowType === normalizedLabel;
-        })
-        .map((row) => `${row.title}: ${row.description} Tip: ${row.common_tip}`);
-
-      const questionIds = new Set(
-        questionRows
-          .filter((row) => normalizeLabel(row.question_type) === normalizedType)
-          .map((row) => row.question_id)
-      );
-
-      const acceptedAnswers = answerRows
-        .filter((row) => questionIds.has(row.question_id))
-        .flatMap((row) => splitAcceptableAnswers(row.acceptable_answers));
-
-      return {
-        type: performance.type,
-        label: performance.label,
-        explanations,
-        ...(acceptedAnswers.length > 0 ? { acceptedAnswers } : {}),
-      };
-    });
   }
 }

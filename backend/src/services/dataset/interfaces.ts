@@ -18,19 +18,6 @@ export interface CommonMistakeRow {
   explanation: string;
 }
 
-export interface AnswerRow {
-  question_id: string;
-  correct_answer: string;
-  accepted_answers: string;
-}
-
-export interface QuestionTypeFeedbackRow {
-  question_type: string;
-  score_min: string;
-  score_max: string;
-  feedback: string;
-}
-
 export interface CriterionFeedbackRow {
   criterion: string;
   score_min: string;
@@ -49,17 +36,45 @@ export interface InvalidResponseRow {
   reason: string;
 }
 
+/**
+ * Reading and Listening both populated their per-question-type mistake,
+ * explanation, and answer-metadata files with this exact same column
+ * layout, so these three shapes (unlike the generic ones above, which were
+ * each designed once and only later populated) are shared because they
+ * are provably identical in the real data, not merely similar.
+ */
+export interface QuestionTypeMistakeRow {
+  mistake_id: string;
+  question_type: string;
+  mistake_name: string;
+  description: string;
+  recommendation: string;
+  severity: string;
+}
+
+export interface QuestionTypeExplanationRow {
+  question_type: string;
+  title: string;
+  description: string;
+  skill_tested: string;
+  common_tip: string;
+}
+
+export interface QuestionAnswerMetadataRow {
+  question_id: string;
+  correct_answer: string;
+  acceptable_answers: string;
+  answer_type: string;
+  keywords: string;
+  explanation: string;
+}
+
 // ---------------------------------------------------------------------------
 // Reading
 //
-// Unlike the other categories, these five files have been populated with
-// real content and their columns differ from the shared shapes above —
-// notably reading_feedback.csv is keyed by an overall raw-score range
-// (with its own strengths/weaknesses/recommendations lists) rather than by
-// question_type + score range, and reading_common_mistakes.csv /
-// reading_explanations.csv are keyed directly by question_type rather than
-// by a generic "category" or by question_id. These interfaces intentionally
-// do not alias the shared shapes above.
+// reading_feedback.csv is keyed by an overall raw-score range (with its own
+// strengths/weaknesses/recommendations lists) rather than by question_type
+// + score range, so it keeps its own distinct shape below.
 // ---------------------------------------------------------------------------
 
 export interface ReadingQuestionRow {
@@ -72,14 +87,9 @@ export interface ReadingQuestionRow {
   mistake_category: string;
 }
 
-export interface ReadingAnswerRow {
-  question_id: string;
-  correct_answer: string;
-  acceptable_answers: string;
-  answer_type: string;
-  keywords: string;
-  explanation: string;
-}
+export type ReadingAnswerRow = QuestionAnswerMetadataRow;
+export type ReadingExplanationRow = QuestionTypeExplanationRow;
+export type ReadingCommonMistakeRow = QuestionTypeMistakeRow;
 
 export interface ReadingFeedbackRow {
   min_score: string;
@@ -92,40 +102,39 @@ export interface ReadingFeedbackRow {
   recommendations: string;
 }
 
-export interface ReadingExplanationRow {
-  question_type: string;
-  title: string;
-  description: string;
-  skill_tested: string;
-  common_tip: string;
-}
-
-export interface ReadingCommonMistakeRow {
-  mistake_id: string;
-  question_type: string;
-  mistake_name: string;
-  description: string;
-  recommendation: string;
-  severity: string;
-}
-
 // ---------------------------------------------------------------------------
 // Listening
+//
+// listening_feedback.csv is keyed by the same kind of overall raw-score
+// range as reading_feedback.csv, but with its own column names and no
+// "band" column, so it also keeps its own distinct shape below.
 // ---------------------------------------------------------------------------
 
 export interface ListeningQuestionRow {
   question_id: string;
-  part: string;
+  section_id: string;
+  question_number: string;
   question_type: string;
-  question_text: string;
-  audio_reference: string;
-  options: string;
+  difficulty: string;
+  explanation_type: string;
+  mistake_category: string;
 }
 
-export type ListeningAnswerRow = AnswerRow;
-export type ListeningFeedbackRow = QuestionTypeFeedbackRow;
+export type ListeningAnswerRow = QuestionAnswerMetadataRow;
+export type ListeningExplanationRow = QuestionTypeExplanationRow;
+export type ListeningCommonMistakeRow = QuestionTypeMistakeRow;
+
+export interface ListeningFeedbackRow {
+  score_min: string;
+  score_max: string;
+  performance_level: string;
+  overall_feedback: string;
+  strengths: string;
+  weaknesses: string;
+  recommendations: string;
+}
+
 export type TranscriptKeywordRow = QuestionKeywordRow;
-export type ListeningCommonMistakeRow = CommonMistakeRow;
 
 // ---------------------------------------------------------------------------
 // Speaking

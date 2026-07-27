@@ -1,1 +1,13 @@
-mistake_id,category,mistake,correction,explanation
+mistake_id,question_type,mistake_name,description,recommendation,severity
+LM001,Multiple Choice,Distractor Confusion,"The user selected distractor options instead of the correct answer.","Listen carefully until the speaker finishes before choosing an answer.",high
+LM002,Form Completion,Spelling Errors,"Incorrect spelling caused loss of marks.","Practice common IELTS vocabulary and spelling.",medium
+LM003,Sentence Completion,Missing Keywords,"Important keywords were missed while listening.","Focus on content words rather than every spoken word.",high
+LM004,Table Completion,Incorrect Detail Matching,"The user matched information to the wrong table row.","Practice organizing information while listening.",medium
+LM005,Map Labelling,Direction Confusion,"Difficulty understanding directions and locations.","Practice listening to map and location descriptions.",medium
+LM006,Diagram Labelling,Object Identification,"Incorrect labels were selected.","Pay attention to descriptive words.",medium
+LM007,Note Completion,Incomplete Notes,"Important details were omitted.","Improve note-taking during audio playback.",medium
+LM008,Summary Completion,Paraphrase Recognition,"Unable to recognize paraphrased information.","Practice identifying synonyms and paraphrases.",high
+LM009,Matching Information,Incorrect Matching,"Difficulty matching speakers or opinions.","Listen for unique identifying details.",medium
+LM010,General Listening,Time Management,"Spent too much time thinking about previous answers.","Move on quickly after each question.",medium
+LM011,Numbers & Dates,Incorrect Numbers,"Numbers or dates were heard incorrectly.","Practice listening to numbers, dates, and prices.",high
+LM012,Names & Places,Proper Noun Errors,"Names or places were misunderstood.","Practice listening to names and spellings.",medium

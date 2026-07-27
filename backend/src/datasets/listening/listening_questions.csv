@@ -1,1 +1,11 @@
-question_id,part,question_type,question_text,audio_reference,options
+question_id,section_id,question_number,question_type,difficulty,explanation_type,mistake_category
+LQ001,S1,1,Form Completion,Easy,Form Completion,Form Completion
+LQ002,S1,2,Form Completion,Easy,Form Completion,Form Completion
+LQ003,S1,3,Multiple Choice,Medium,Multiple Choice,Multiple Choice
+LQ004,S2,11,Map Labelling,Medium,Map Labelling,Map Labelling
+LQ005,S2,12,Map Labelling,Medium,Map Labelling,Map Labelling
+LQ006,S3,21,Sentence Completion,Hard,Sentence Completion,Sentence Completion
+LQ007,S3,22,Summary Completion,Hard,Summary Completion,Summary Completion
+LQ008,S4,31,Matching Information,Hard,Matching Information,Matching Information
+LQ009,S4,32,Table Completion,Medium,Table Completion,Table Completion
+LQ010,S4,33,Note Completion,Medium,Note Completion,Note Completion

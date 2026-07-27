@@ -1,1 +1,11 @@
-question_id,correct_answer,accepted_answers
+question_id,correct_answer,acceptable_answers,answer_type,keywords,explanation
+LQ001,Library,library,SHORT_ANSWER,"library","The speaker clearly states the location is the library."
+LQ002,Monday,Mon;Monday,SHORT_ANSWER,"monday","The recording specifies Monday."
+LQ003,B,B,MCQ,"option b","Option B matches the recording."
+LQ004,C,C,MAP,"location c","Location C is correct."
+LQ005,Entrance,main entrance;entrance,SHORT_ANSWER,"entrance","The speaker identifies the entrance."
+LQ006,Pollution,pollution,SHORT_ANSWER,"pollution","Pollution completes the sentence correctly."
+LQ007,Environment,environment,SUMMARY,"environment","Environment is the correct summary word."
+LQ008,Speaker A,A,MATCHING,"speaker a","Speaker A expressed the opinion."
+LQ009,Temperature,temperature,TABLE,"temperature","Temperature fits the table."
+LQ010,Research,research,NOTES,"research","Research is the missing note."
