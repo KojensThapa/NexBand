@@ -1,0 +1,1169 @@
+question,response,label,reason
+What is your name?,My name is John.,relevant,Answers the question directly
+What is your name?,I am Sarah.,relevant,Direct introduction
+What is your name?,People usually call me David.,relevant,Correct response
+What is your name?,My full name is Nayan Thapa.,relevant,Answers correctly
+What is your name?,I like playing football.,irrelevant,Off-topic
+What is your name?,Nepal is a beautiful country.,irrelevant,Different topic
+
+Where do you live?,I live in Kathmandu.,relevant,Correct location
+Where do you live?,I live in Pokhara with my family.,relevant,Answers the question
+Where do you live?,Currently I live in Lalitpur.,relevant,Relevant answer
+Where do you live?,I stay in Bhaktapur.,relevant,Relevant response
+Where do you live?,My favorite subject is English.,irrelevant,Off-topic
+Where do you live?,I enjoy listening to music.,irrelevant,Not related
+
+What do you do in your free time?,I usually read books and watch movies.,relevant,Relevant hobby
+What do you do in your free time?,I like playing football with my friends.,relevant,Answers correctly
+What do you do in your free time?,I spend my free time learning programming.,relevant,Relevant activity
+What do you do in your free time?,I often travel around Nepal.,relevant,Relevant answer
+What do you do in your free time?,My father is a teacher.,irrelevant,Different topic
+What do you do in your free time?,Yesterday it was raining.,irrelevant,Does not answer
+
+Describe your hometown.,My hometown is Pokhara. It is famous for its lakes.,relevant,Relevant description
+Describe your hometown.,I come from Kathmandu where many temples are located.,relevant,Correct description
+Describe your hometown.,My hometown is peaceful and beautiful.,relevant,Relevant answer
+Describe your hometown.,It has clean streets and friendly people.,relevant,Continues description
+Describe your hometown?,I want to become an engineer.,irrelevant,Off-topic
+Describe your hometown?,Pizza is my favorite food.,irrelevant,Different topic
+
+What is your favorite food?,My favorite food is momo.,relevant,Answers correctly
+What is your favorite food?,I enjoy eating pizza.,relevant,Relevant answer
+What is your favorite food?,I like dal bhat because it is healthy.,relevant,Relevant explanation
+What is your favorite food?,I love pasta and noodles.,relevant,Correct response
+What is your favorite food?,I usually wake up at 6 AM.,irrelevant,Off-topic
+What is your favorite food?,Mount Everest is very high.,irrelevant,Different topic
+
+Why are you learning English?,I want to study abroad.,relevant,Correct reason
+Why are you learning English?,English helps me communicate internationally.,relevant,Relevant answer
+Why are you learning English?,I need English for my career.,relevant,Relevant explanation
+Why are you learning English?,I enjoy learning new languages.,relevant,Correct response
+Why are you learning English?,My favorite sport is cricket.,irrelevant,Off-topic
+Why are you learning English?,I have one younger brother.,irrelevant,Different topic
+
+Do you like traveling?,"Yes, I love traveling because I enjoy exploring new places.",relevant,Answers directly
+Do you like traveling?,"Yes, I travel whenever I have free time.",relevant,Relevant answer
+Do you like traveling?,I enjoy visiting mountains and lakes.,relevant,Relevant explanation
+Do you like traveling?,Traveling teaches me about different cultures.,relevant,Correct response
+Do you like traveling?,Bananas are healthy fruits.,irrelevant,Off-topic
+Do you like traveling?,I usually sleep eight hours.,irrelevant,Different topic
+
+What kind of music do you like?,I like pop music because it is relaxing.,relevant,Correct answer
+What kind of music do you like?,I enjoy listening to classical music.,relevant,Relevant response
+What kind of music do you like?,Rock music is my favorite.,relevant,Answers correctly
+What kind of music do you like?,I mostly listen to Nepali songs.,relevant,Relevant answer
+What kind of music do you like?,I have two sisters.,irrelevant,Off-topic
+What kind of music do you like?,My school starts at eight.,irrelevant,Different topic
+
+What is your favorite season?,My favorite season is spring because the weather is pleasant.,relevant,Correct explanation
+What is your favorite season?,I enjoy winter because I like cold weather.,relevant,Relevant answer
+What is your favorite season?,Summer is my favorite season.,relevant,Answers correctly
+What is your favorite season?,I prefer autumn because it is beautiful.,relevant,Relevant response
+What is your favorite season?,Computers are very useful.,irrelevant,Off-topic
+What is your favorite season?,My uncle lives in Australia.,irrelevant,Different topic
+
+Describe your best friend.,My best friend is honest and helpful.,relevant,Relevant description
+Describe your best friend.,He always supports me during difficult times.,relevant,Relevant answer
+Describe your best friend.,"She is kind, hardworking, and friendly.",relevant,Correct description
+Describe your best friend.,We enjoy studying together every weekend.,relevant,Relevant explanation
+Describe your best friend.,I want to buy a new phone.,irrelevant,Off-topic
+Describe your best friend.,The movie was very interesting.,irrelevant,Different topic
+
+What is your favorite book?,"My favorite book is ""The Alchemist"" because it inspires me.",relevant,Answers the question directly
+What is your favorite book?,"I love reading ""Muna Madan"" by Laxmi Prasad Devkota.",relevant,Correct book response
+What is your favorite book?,"I really enjoy fantasy books, especially the Harry Potter series.",relevant,Relevant answer
+What is your favorite book?,"My favorite is Saya by Subin Bhattarai, it's a great love story.",relevant,Relevant suggestion
+What is your favorite book?,I like to play chess with my friends.,irrelevant,Off-topic activity
+What is your favorite book?,The capital city of Nepal is Kathmandu.,irrelevant,Geographical fact unrelated
+
+What do you want to become in the future?,I want to become a software engineer.,relevant,Direct career goal
+What do you want to become in the future?,My dream is to be a doctor and help people.,relevant,Correct aspiration
+What do you want to become in the future?,I aspire to be a teacher and educate children.,relevant,Relevant response
+What do you want to become in the future?,I hope to become a successful businessman.,relevant,Relevant future plan
+What do you want to become in the future?,I love eating chocolate cake.,irrelevant,Food preference unrelated
+What do you want to become in the future?,The sun rises in the east.,irrelevant,Scientific fact irrelevant
+
+Describe your daily routine.,I wake up at 6 AM and go for a walk.,relevant,Starts describing routine
+Describe your daily routine.,I usually study for two hours in the evening.,relevant,Relevant daily activity
+Describe your daily routine.,"After breakfast, I go to college or work.",relevant,Continues routine description
+Describe your daily routine.,I have lunch at noon and rest for a while.,relevant,Relevant schedule detail
+Describe your daily routine.,My favorite color is blue.,irrelevant,Personal preference unrelated
+Describe your daily routine.,The weather is very hot today.,irrelevant,Irrelevant comment on weather
+
+What is your favorite sport?,My favorite sport is football because it is exciting.,relevant,Answers correctly
+What is your favorite sport?,I enjoy playing cricket with my friends.,relevant,Relevant sport
+What is your favorite sport?,I like basketball because it is fast-paced.,relevant,Correct response
+What is your favorite sport?,Tennis is a sport I love to watch and play.,relevant,Relevant answer
+What is your favorite sport?,My mother is a great cook.,irrelevant,Family fact unrelated
+What is your favorite sport?,I prefer reading books over anything else.,irrelevant,Hobby different from sports
+
+Why do you like your school/college?,I like my school because the teachers are supportive.,relevant,Correct reason
+Why do you like your school/college?,My college has a beautiful campus.,relevant,Relevant explanation
+Why do you like your school/college?,I have many good friends there.,relevant,Relevant reason
+Why do you like your school/college?,The library is excellent for studying.,relevant,Continues relevant reasons
+Why do you like your school/college?,I live in a small village.,irrelevant,Not related to the question
+Why do you like your school/college?,I am going to the market later.,irrelevant,Totally off-topic
+
+What do you usually eat for breakfast?,I usually eat bread and eggs for breakfast.,relevant,Direct answer
+What do you usually eat for breakfast?,I prefer oatmeal with fruits in the morning.,relevant,Relevant breakfast choice
+What do you usually eat for breakfast?,My breakfast is typically a bowl of cereal.,relevant,Correct response
+What do you usually eat for breakfast?,I like to eat dal bhat for breakfast sometimes.,relevant,Relevant answer
+What do you usually eat for breakfast?,I like to sleep for 8 hours every night.,irrelevant,"About sleep, not breakfast"
+What do you usually eat for breakfast?,Mountains are very beautiful.,irrelevant,Scenery description
+
+Where do you want to travel next?,I want to travel to London next year.,relevant,Direct destination
+Where do you want to travel next?,My dream is to visit Japan.,relevant,Relevant plan
+Where do you want to travel next?,I plan to explore the villages of Nepal.,relevant,Relevant answer
+Where do you want to travel next?,I would love to go to Paris and see the Eiffel Tower.,relevant,Correct response
+Where do you want to travel next?,My father works very hard.,irrelevant,Family context unrelated
+Where do you want to travel next?,I enjoy listening to the radio.,irrelevant,Irrelevant hobby
+
+How do you spend your weekends?,I spend my weekends relaxing at home.,relevant,Correct activity
+How do you spend your weekends?,I usually visit my relatives on weekends.,relevant,Relevant answer
+How do you spend your weekends?,I go to the park or do some shopping.,relevant,Relevant description
+How do you spend your weekends?,I like to watch movies and sleep late on weekends.,relevant,Relevant routine
+How do you spend your weekends?,My favorite subject is mathematics.,irrelevant,Favorite subject unrelated
+How do you spend your weekends?,The grass is green and the sky is blue.,irrelevant,Senseless statement
+
+Tell me about your family.,There are four members in my family.,relevant,Directly starts description
+Tell me about your family.,My father is a businessman and my mother is a teacher.,relevant,Relevant detail
+Tell me about your family.,I have one elder brother and a younger sister.,relevant,Correct family info
+Tell me about your family.,We love to go on trips together during holidays.,relevant,Relevant family activity
+Tell me about your family.,My favorite food is pizza.,irrelevant,Food preference unrelated
+Tell me about your family.,I bought a new car yesterday.,irrelevant,Irrelevant personal event
+
+What is your favorite subject and why?,My favorite subject is English because I love reading stories.,relevant,Answers why clearly
+What is your favorite subject and why?,I enjoy science because it is fascinating.,relevant,Correct subject and reason
+What is your favorite subject and why?,Mathematics is my favorite because it challenges me.,relevant,Relevant answer
+What is your favorite subject and why?,History is interesting to me because I like learning about the past.,relevant,Correct response
+What is your favorite subject and why?,My friend is very tall and strong.,irrelevant,Unrelated description
+What is your favorite subject and why?,I love traveling by train.,irrelevant,Irrelevant hobby
+
+What is your hometown like?,My hometown is a small peaceful village surrounded by hills.,relevant,Good description
+What is your hometown like?,It is a bustling city with lots of markets and traffic.,relevant,Relevant city description
+What is your hometown like?,My hometown has beautiful rivers and friendly people.,relevant,Correct hometown description
+What is your hometown like?,I like to eat pasta very much.,irrelevant,Food preference unrelated
+What is your hometown like?,The laptop is very expensive.,irrelevant,Product complaint unrelated
+What is your hometown like?,I went to the cinema yesterday.,irrelevant,Past activity unrelated
+
+Describe your house or apartment.,I live in a modern apartment with three bedrooms.,relevant,Good housing description
+Describe your house or apartment.,My house has a big garden and a small swimming pool.,relevant,Relevant house features
+Describe your house or apartment.,It is a traditional house made of wood and stone.,relevant,Correct housing description
+Describe your house or apartment.,My favorite color is red.,irrelevant,Color preference unrelated
+Describe your house or apartment.,I have a new bicycle.,irrelevant,Possession unrelated
+Describe your house or apartment.,The weather is very sunny today.,irrelevant,Weather comment unrelated
+
+What do you do in your free time?,I enjoy reading novels and writing poetry.,relevant,Good free time activity
+What do you do in your free time?,I play guitar and sing songs with my friends.,relevant,Relevant hobby
+What do you do in your free time?,I go for long walks in the park every evening.,relevant,Correct free time activity
+What do you do in your free time?,My father is a doctor.,irrelevant,Family occupation unrelated
+What do you do in your free time?,I need to buy groceries today.,irrelevant,Shopping plan unrelated
+What do you do in your free time?,The train arrives at 5 PM.,irrelevant,Schedule information unrelated
+
+Describe a festival celebrated in your country.,Dashain is the biggest festival where families reunite.,relevant,Good festival description
+Describe a festival celebrated in your country.,Tihar is celebrated with lights and colorful decorations.,relevant,Relevant festival detail
+Describe a festival celebrated in your country.,Holi is a festival of colors and joy.,relevant,Correct festival description
+Describe a festival celebrated in your country.,I have a new smartphone.,irrelevant,Possession unrelated
+Describe a festival celebrated in your country.,The mountain is very tall.,irrelevant,Geographical fact unrelated
+Describe a festival celebrated in your country.,I like to drink coffee every morning.,irrelevant,Beverage preference unrelated
+
+What is your favorite type of weather?,I love sunny weather because it makes me happy.,relevant,Good weather preference
+What is your favorite type of weather?,Rainy weather is my favorite as it feels refreshing.,relevant,Relevant weather description
+What is your favorite type of weather?,I enjoy cold snowy weather during winter.,relevant,Correct weather preference
+What is your favorite type of weather?,My mother is a teacher.,irrelevant,Family occupation unrelated
+What is your favorite type of weather?,I have two brothers and one sister.,irrelevant,Family detail unrelated
+What is your favorite type of weather?,The book is on the table.,irrelevant,Object location unrelated
+
+Describe a memorable trip you took.,I went to Pokhara and enjoyed boating on Phewa Lake.,relevant,Good trip description
+Describe a memorable trip you took.,My trip to Lumbini was peaceful and spiritual.,relevant,Relevant travel experience
+Describe a memorable trip you took.,I visited Chitwan and saw elephants and rhinos.,relevant,Correct trip description
+Describe a memorable trip you took.,My favorite food is noodles.,irrelevant,Food preference unrelated
+Describe a memorable trip you took.,I wake up at 7 AM every day.,irrelevant,Daily routine unrelated
+Describe a memorable trip you took.,The chair is very comfortable.,irrelevant,Object description unrelated
+
+What is your favorite type of movie?,I love action movies because they are thrilling.,relevant,Good movie preference
+What is your favorite type of movie?,Comedy movies are my favorite as they make me laugh.,relevant,Relevant movie genre
+What is your favorite type of movie?,I enjoy romantic movies with beautiful love stories.,relevant,Correct movie preference
+What is your favorite type of movie?,My garden has many flowers.,irrelevant,Garden description unrelated
+What is your favorite type of movie?,The shop is closed today.,irrelevant,Shop status unrelated
+What is your favorite type of movie?,I went to the gym this morning.,irrelevant,Exercise activity unrelated
+
+Describe a person you admire.,I admire my mother because she is very hardworking.,relevant,Good person description
+Describe a person you admire.,My teacher inspires me with his knowledge and kindness.,relevant,Relevant admiration description
+Describe a person you admire.,I admire my grandfather for his wisdom and stories.,relevant,Correct person description
+Describe a person you admire?,I bought a new car yesterday.,irrelevant,Purchase unrelated
+Describe a person you admire?,The sky is very blue today.,irrelevant,Weather description unrelated
+Describe a person you admire?,I have a pet dog named Tommy.,irrelevant,Pet description unrelated
+
+What is your favorite season and why?,Autumn is my favorite because the weather is pleasant.,relevant,Good season preference with reason
+What is your favorite season and why?,I love spring because flowers bloom everywhere.,relevant,Relevant season with reason
+What is your favorite season and why?,Winter is my favorite as I enjoy wearing warm clothes.,relevant,Correct season preference with reason
+What is your favorite season and why?,My school is very big.,irrelevant,School description unrelated
+What is your favorite season and why?,I like to eat rice every day.,irrelevant,Food habit unrelated
+What is your favorite season and why?,The city is very noisy.,irrelevant,City description unrelated
+
+Describe a skill you want to learn.,I want to learn how to play the piano.,relevant,Good skill description
+Describe a skill you want to learn.,I want to learn cooking because I love food.,relevant,Relevant skill to learn
+Describe a skill you want to learn.,I want to learn swimming for my fitness.,relevant,Correct skill description
+Describe a skill you want to learn.,My bedroom is very small.,irrelevant,Room description unrelated
+Describe a skill you want to learn.,I went shopping last weekend.,irrelevant,Shopping activity unrelated
+Describe a skill you want to learn.,The sun is very bright.,irrelevant,Nature description unrelated
+
+What is your favorite type of music?,I love folk music because it tells beautiful stories.,relevant,Good music preference
+What is your favorite type of music?,Pop music is my favorite for its catchy tunes.,relevant,Relevant music genre
+What is your favorite type of music?,I enjoy classical music as it is very peaceful.,relevant,Correct music preference
+What is your favorite type of music?,My house is near a river.,irrelevant,Location description unrelated
+What is your favorite type of music?,I drink tea every morning.,irrelevant,Beverage habit unrelated
+What is your favorite type of music?,The table is made of wood.,irrelevant,Object description unrelated
+
+Tell me about your daily routine.,I wake up at 6 AM and do some exercise.,relevant,Good routine description
+Tell me about your daily routine.,I usually have breakfast at 7:30 and then go to work.,relevant,Relevant daily activity
+Tell me about your daily routine.,In the evening I like to read books before sleeping.,relevant,Correct routine detail
+Tell me about your daily routine.,My sister lives in Australia.,irrelevant,Family location unrelated
+Tell me about your daily routine.,The coffee is very hot.,irrelevant,Beverage comment unrelated
+Tell me about your daily routine.,I have a blue car.,irrelevant,Possession description unrelated
+
+What do you like about your job or studies?,I enjoy meeting new people at my workplace.,relevant,Good job aspect
+What do you like about your job or studies?,I love learning new things in my studies.,relevant,Relevant study aspect
+What do you like about your job or studies?,My job allows me to travel to different places.,relevant,Correct job benefit
+What do you like about your job or studies?,My neighbor is very noisy.,irrelevant,Neighbor complaint unrelated
+What do you like about your job or studies?,The park is very beautiful.,irrelevant,Park description unrelated
+What do you like about your job or studies?,I want to buy a new phone.,irrelevant,Shopping desire unrelated
+
+Describe your best childhood memory.,I remember playing football with my friends every evening.,relevant,Good childhood memory
+Describe your best childhood memory.,My favorite memory is going to the zoo with my parents.,relevant,Relevant childhood experience
+Describe your best childhood memory.,I loved visiting my grandparents during summer holidays.,relevant,Correct childhood memory
+Describe your best childhood memory.,My laptop is very old.,irrelevant,Device description unrelated
+Describe your best childhood memory.,The bus is always late.,irrelevant,Transport complaint unrelated
+Describe your best childhood memory.,I like to eat apples.,irrelevant,Food preference unrelated
+
+What is your favorite place to visit?,I love going to the beach to relax and swim.,relevant,Good place description
+What is your favorite place to visit?,My favorite place is a peaceful temple in the hills.,relevant,Relevant place to visit
+What is your favorite place to visit?,I enjoy visiting museums to learn about history.,relevant,Correct place description
+What is your favorite place to visit?,My brother is a pilot.,irrelevant,Family occupation unrelated
+What is your favorite place to visit?,The food is very delicious.,irrelevant,Food comment unrelated
+What is your favorite place to visit?,I woke up late today.,irrelevant,Daily event unrelated
+
+Describe a traditional dish from your country.,Momo is a popular dish filled with meat or vegetables.,relevant,Good dish description
+Describe a traditional dish from your country.,Dal bhat is eaten daily with lentils and rice.,relevant,Relevant traditional food
+Describe a traditional dish from your country.,Sel roti is a sweet ring-shaped bread eaten during festivals.,relevant,Correct dish description
+Describe a traditional dish from your country.,My house has three rooms.,irrelevant,House description unrelated
+Describe a traditional dish from your country.,The river flows very fast.,irrelevant,Nature description unrelated
+Describe a traditional dish from your country.,I have a meeting at 2 PM.,irrelevant,Schedule unrelated
+
+What kind of books do you like to read?,I enjoy reading mystery and thriller novels.,relevant,Good book preference
+What kind of books do you like to read?,I love reading self-help books to improve myself.,relevant,Relevant book genre
+What kind of books do you like to read?,I prefer reading historical fiction and biographies.,relevant,Correct book preference
+What kind of books do you like to read?,My father is a businessman.,irrelevant,Family occupation unrelated
+What kind of books do you like to read?,The garden has many flowers.,irrelevant,Garden description unrelated
+What kind of books do you like to read?,I went to the market yesterday.,irrelevant,Shopping trip unrelated
+
+Describe your favorite teacher.,My favorite teacher is very patient and kind to everyone.,relevant,Good teacher description
+Describe your favorite teacher.,He explains difficult topics in a simple way.,relevant,Relevant teaching quality
+Describe your favorite teacher.,She always encourages us to do our best.,relevant,Correct teacher quality
+Describe your favorite teacher.,The car is very fast.,irrelevant,Car description unrelated
+Describe your favorite teacher.,I like to wear blue shirts.,irrelevant,Clothing preference unrelated
+Describe your favorite teacher.,The restaurant is very expensive.,irrelevant,Restaurant comment unrelated
+
+How do you usually relax after work or study?,I like to listen to music and take a nap.,relevant,Good relaxation method
+How do you usually relax after work or study?,I go for a walk in the park to clear my mind.,relevant,Relevant relaxation activity
+How do you usually relax after work or study?,I watch funny videos on my phone.,relevant,Correct relaxation method
+How do you usually relax after work or study?,My mother is a nurse.,irrelevant,Family occupation unrelated
+How do you usually relax after work or study?,The mountain is very high.,irrelevant,Nature description unrelated
+How do you usually relax after work or study?,I have a new watch.,irrelevant,Possession description unrelated
+
+Describe a famous person from your country.,A famous person is our former prime minister.,relevant,Good famous person description
+Describe a famous person from your country.,Tenzing Norgay was a famous mountaineer.,relevant,Relevant historical figure
+Describe a famous person from your country.,Our national poet is very famous for his writings.,relevant,Correct famous person
+Describe a famous person from your country.,My bedroom is very small.,irrelevant,Room description unrelated
+Describe a famous person from your country.,The tea is very sweet.,irrelevant,Beverage comment unrelated
+Describe a famous person from your country.,I take the bus to work.,irrelevant,Transport habit unrelated
+
+What is your favorite outdoor activity?,I love cycling in the countryside on weekends.,relevant,Good outdoor activity
+What is your favorite outdoor activity?,I enjoy hiking in the mountains with my friends.,relevant,Relevant outdoor activity
+What is your favorite outdoor activity?,I like playing cricket in the park.,relevant,Correct outdoor activity
+What is your favorite outdoor activity?,My sister is a doctor.,irrelevant,Family occupation unrelated
+What is your favorite outdoor activity?,The chair is very comfortable.,irrelevant,Object description unrelated
+What is your favorite outdoor activity?,I drink coffee every day.,irrelevant,Beverage habit unrelated
+
+Describe a piece of technology you use often.,I use my smartphone every day to communicate with friends.,relevant,Good technology description
+Describe a piece of technology you use often.,My laptop helps me study and do research.,relevant,Relevant technology use
+Describe a piece of technology you use often.,I use headphones to listen to music and take calls.,relevant,Correct technology description
+Describe a piece of technology you use often.,My friend lives in London.,irrelevant,Friend location unrelated
+Describe a piece of technology you use often.,The food is very spicy.,irrelevant,Food comment unrelated
+Describe a piece of technology you use often.,I visited my aunt yesterday.,irrelevant,Social visit unrelated
+
+What is your favorite color and why?,Blue is my favorite because it reminds me of the sky.,relevant,Good color preference with reason
+What is your favorite color and why?,I love red because it symbolizes energy and passion.,relevant,Relevant color preference
+What is your favorite color and why?,Green is my favorite as it represents nature and peace.,relevant,Correct color preference
+What is your favorite color and why?,My uncle is a farmer.,irrelevant,Family occupation unrelated
+What is your favorite color and why?,The train is very crowded.,irrelevant,Transport comment unrelated
+What is your favorite color and why?,I bought a new bag yesterday.,irrelevant,Shopping activity unrelated
+
+Describe a pet you have or would like to have.,I have a dog named Rocky who is very loyal.,relevant,Good pet description
+Describe a pet you have or would like to have.,I would like to have a cat because they are independent.,relevant,Relevant pet preference
+Describe a pet you have or would like to have.,I love rabbits because they are soft and cute.,relevant,Correct pet description
+Describe a pet you have or would like to have.,My school is far from home.,irrelevant,School location unrelated
+Describe a pet you have or would like to have.,The pizza is very tasty.,irrelevant,Food comment unrelated
+Describe a pet you have or would like to have.,I wake up at 5 AM daily.,irrelevant,Daily routine unrelated
+
+What do you like to cook or eat?,I love cooking pasta with fresh vegetables.,relevant,Good cooking preference
+What do you like to cook or eat?,I enjoy eating grilled fish and rice.,relevant,Relevant food preference
+What do you like to cook or eat?,I like making omelettes for breakfast.,relevant,Correct food description
+What do you like to cook or eat?,My brother plays football.,irrelevant,Sibling activity unrelated
+What do you like to cook or eat?,The room is very dark.,irrelevant,Room description unrelated
+What do you like to cook or eat?,I have a new bicycle.,irrelevant,Possession description unrelated
+
+Describe a place you want to visit in the future.,I want to visit Switzerland for its beautiful mountains.,relevant,Good future travel plan
+Describe a place you want to visit in the future.,I dream of visiting Egypt to see the pyramids.,relevant,Relevant travel destination
+Describe a place you want to visit in the future.,I would like to explore the forests of Brazil.,relevant,Correct travel plan
+Describe a place you want to visit in the future.,My mother is a teacher.,irrelevant,Family occupation unrelated
+Describe a place you want to visit in the future.,The water is very cold.,irrelevant,Nature description unrelated
+Describe a place you want to visit in the future.,I went to the park yesterday.,irrelevant,Past activity unrelated
+
+What is your favorite type of clothing?,I love wearing comfortable jeans and t-shirts.,relevant,Good clothing preference
+What is your favorite type of clothing?,I prefer traditional clothes like kurta during festivals.,relevant,Relevant clothing preference
+What is your favorite type of clothing?,I like dresses because they are elegant.,relevant,Correct clothing preference
+What is your favorite type of clothing?,My father is an engineer.,irrelevant,Family occupation unrelated
+What is your favorite type of clothing?,The sky is very cloudy today.,irrelevant,Weather description unrelated
+What is your favorite type of clothing?,I need to buy milk.,irrelevant,Shopping list unrelated
+
+Describe a sport you like to watch.,I love watching cricket matches with my family.,relevant,Good sport to watch
+Describe a sport you like to watch.,I enjoy watching football because it is very exciting.,relevant,Relevant sport preference
+Describe a sport you like to watch.,I like watching tennis during grand slams.,relevant,Correct sport description
+Describe a sport you like to watch.,My house is very old.,irrelevant,House description unrelated
+Describe a sport you like to watch.,The coffee is too strong.,irrelevant,Beverage comment unrelated
+Describe a sport you like to watch.,I walk to work every day.,irrelevant,Transport habit unrelated
+
+What do you like about your hometown?,I love the peaceful environment and fresh air.,relevant,Good hometown feature
+What do you like about your hometown?,I love the friendly people and community spirit.,relevant,Relevant hometown quality
+What do you like about your hometown?,The festivals celebrated there are very colorful.,relevant,Correct hometown feature
+What do you like about your hometown?,My sister loves painting.,irrelevant,Sibling hobby unrelated
+What do you like about your hometown?,The bus is very old.,irrelevant,Vehicle description unrelated
+What do you like about your hometown?,I eat rice every day.,irrelevant,Food habit unrelated
+
+Describe a childhood game you enjoyed.,I loved playing hide and seek with my cousins.,relevant,Good childhood game
+Describe a childhood game you enjoyed.,We used to play cricket in the street every evening.,relevant,Relevant childhood activity
+Describe a childhood game you enjoyed.,I enjoyed playing hopscotch with my friends.,relevant,Correct childhood game
+Describe a childhood game you enjoyed.,My phone is not working.,irrelevant,Device complaint unrelated
+Describe a childhood game you enjoyed.,The garden has many trees.,irrelevant,Garden description unrelated
+Describe a childhood game you enjoyed.,I drink tea in the morning.,irrelevant,Beverage habit unrelated
+
+What is your favorite animal?,I love elephants because they are so gentle and wise.,relevant,Good animal preference
+What is your favorite animal?,Dogs are my favorite because they are very loyal.,relevant,Relevant animal preference
+What is your favorite animal?,I like dolphins because they are intelligent.,relevant,Correct animal preference
+What is your favorite animal?,My cousin is a doctor.,irrelevant,Family occupation unrelated
+What is your favorite animal?,The book is very interesting.,irrelevant,Book comment unrelated
+What is your favorite animal?,I went to the cinema last night.,irrelevant,Past activity unrelated
+
+Describe a family tradition you have.,We celebrate Dashain by visiting all our relatives.,relevant,Good family tradition
+Describe a family tradition you have.,We gather for dinner every Sunday evening.,relevant,Relevant family custom
+Describe a family tradition you have.,We make special sweets during Tihar festival.,relevant,Correct family tradition
+Describe a family tradition you have.,My laptop is very fast.,irrelevant,Device description unrelated
+Describe a family tradition you have.,The river is very wide.,irrelevant,Nature description unrelated
+Describe a family tradition you have.,I like to sleep early.,irrelevant,Sleep habit unrelated
+
+What do you like about your best friend?,I like his honesty and sense of humor.,relevant,Good friend quality
+What do you like about your best friend?,She is always there for me when I need help.,relevant,Relevant friend quality
+What do you like about your best friend?,I appreciate his kindness and positive attitude.,relevant,Correct friend quality
+What do you like about your best friend?,My room is very messy.,irrelevant,Room description unrelated
+What do you like about your best friend?,The food is very salty.,irrelevant,Food comment unrelated
+What do you like about your best friend?,I have a new watch.,irrelevant,Possession description unrelated
+
+Describe a type of transport you like.,I like traveling by train because it is comfortable.,relevant,Good transport preference
+Describe a type of transport you like.,I prefer flying because it is fast and convenient.,relevant,Relevant transport mode
+Describe a type of transport you like.,I enjoy traveling by bus to see the scenery.,relevant,Correct transport preference
+Describe a type of transport you like.,My neighbor has a dog.,irrelevant,Neighbor description unrelated
+Describe a type of transport you like.,The soup is very hot.,irrelevant,Food comment unrelated
+Describe a type of transport you like.,I study in my room every evening.,irrelevant,Study habit unrelated
+
+What do you like about the place you live?,I like the peaceful atmosphere and green surroundings.,relevant,Good living place feature
+What do you like about the place you live?,I love the convenience of shops and markets nearby.,relevant,Relevant place feature
+What do you like about the place you live?,The neighbors are very friendly and helpful.,relevant,Correct place feature
+What do you like about the place you live?,My brother is a pilot.,irrelevant,Family occupation unrelated
+What do you like about the place you live?,The chair is broken.,irrelevant,Object description unrelated
+What do you like about the place you live?,I like to sing songs.,irrelevant,Hobby unrelated
+
+Describe a subject you found difficult.,I found mathematics challenging in school.,relevant,Good difficult subject
+Describe a subject you found difficult.,Physics was very hard for me to understand.,relevant,Relevant difficult subject
+Describe a subject you found difficult.,I struggled with chemistry formulas.,relevant,Correct difficult subject
+Describe a subject you found difficult.,My garden has many roses.,irrelevant,Garden description unrelated
+Describe a subject you found difficult.,The car is very expensive.,irrelevant,Vehicle comment unrelated
+Describe a subject you found difficult.,I drink water every hour.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of holiday?,I love beach holidays to relax and swim.,relevant,Good holiday preference
+What is your favorite type of holiday?,I prefer adventure holidays like trekking.,relevant,Relevant holiday type
+What is your favorite type of holiday?,I enjoy cultural holidays to learn about history.,relevant,Correct holiday preference
+What is your favorite type of holiday?,My aunt lives in America.,irrelevant,Family location unrelated
+What is your favorite type of holiday?,The tea is very sweet.,irrelevant,Beverage comment unrelated
+What is your favorite type of holiday?,I bought new shoes today.,irrelevant,Shopping activity unrelated
+
+Describe a hobby you want to start.,I want to start photography to capture beautiful moments.,relevant,Good hobby to start
+Describe a hobby you want to start.,I want to learn gardening to grow my own vegetables.,relevant,Relevant hobby idea
+Describe a hobby you want to start.,I want to start painting to express my creativity.,relevant,Correct hobby description
+Describe a hobby you want to start.,My father works in a bank.,irrelevant,Family occupation unrelated
+Describe a hobby you want to start.,The room is very bright.,irrelevant,Room description unrelated
+Describe a hobby you want to start.,I ate lunch at noon.,irrelevant,Meal time unrelated
+
+What do you like about your city?,I love the historical places and monuments.,relevant,Good city feature
+What do you like about your city?,The city has excellent restaurants and cafes.,relevant,Relevant city quality
+What do you like about your city?,I like the parks and green spaces for relaxation.,relevant,Correct city feature
+What do you like about your city?,My brother has a new bike.,irrelevant,Sibling possession unrelated
+What do you like about your city?,The weather is very cold today.,irrelevant,Weather comment unrelated
+What do you like about your city?,I went to school by bus.,irrelevant,Transport habit unrelated
+
+Describe a memorable event in your life.,My graduation day was very special and emotional.,relevant,Good memorable event
+Describe a memorable event in your life.,The day I got my first job was unforgettable.,relevant,Relevant life event
+Describe a memorable event in your life.,My wedding day was the happiest day of my life.,relevant,Correct memorable event
+Describe a memorable event in your life.,My phone battery is dead.,irrelevant,Device issue unrelated
+Describe a memorable event in your life.,The river flows into the sea.,irrelevant,Geographical fact unrelated
+Describe a memorable event in your life.,I like to eat apples.,irrelevant,Food preference unrelated
+
+What do you like to do on rainy days?,I love to read books while listening to rain sounds.,relevant,Good rainy day activity
+What do you like to do on rainy days?,I like to drink hot tea and watch movies.,relevant,Relevant rainy day activity
+What do you like to do on rainy days?,I enjoy sleeping in on rainy afternoons.,relevant,Correct rainy day activity
+What do you like to do on rainy days?,My mother is a nurse.,irrelevant,Family occupation unrelated
+What do you like to do on rainy days?,The table is made of wood.,irrelevant,Object description unrelated
+What do you like to do on rainy days?,I walk my dog every morning.,irrelevant,Daily routine unrelated
+
+Describe a festival from another country.,I love Christmas for its festive decorations and gifts.,relevant,Good foreign festival
+Describe a festival from another country.,Diwali is a beautiful festival of lights from India.,relevant,Relevant foreign festival
+Describe a festival from another country.,Thanksgiving is about family gatherings and food.,relevant,Correct foreign festival
+Describe a festival from another country.,My car is very old.,irrelevant,Vehicle description unrelated
+Describe a festival from another country.,The garden needs watering.,irrelevant,Garden task unrelated
+Describe a festival from another country.,I have a meeting at work.,irrelevant,Work schedule unrelated
+
+What is your favorite drink?,I love drinking tea because it relaxes me.,relevant,Good drink preference
+What is your favorite drink?,Coffee is my favorite for its rich flavor.,relevant,Relevant drink preference
+What is your favorite drink?,I enjoy fresh fruit juice every morning.,relevant,Correct drink preference
+What is your favorite drink?,My sister is a teacher.,irrelevant,Family occupation unrelated
+What is your favorite drink?,The window is open.,irrelevant,Room description unrelated
+What is your favorite drink?,I visited my grandmother yesterday.,irrelevant,Social visit unrelated
+
+What is your favorite time of day?,I love mornings because everything feels fresh and new.,relevant,Good time preference
+What is your favorite time of day?,Evenings are my favorite for relaxation after work.,relevant,Relevant time preference
+What is your favorite time of day?,I enjoy nights because it is peaceful and quiet.,relevant,Correct time preference
+What is your favorite time of day?,My cousin is a lawyer.,irrelevant,Family occupation unrelated
+What is your favorite time of day?,The door is locked.,irrelevant,Object description unrelated
+What is your favorite time of day?,I eat bread every morning.,irrelevant,Food habit unrelated
+
+Describe a skill you have learned.,I have learned to cook traditional dishes from my mother.,relevant,Good skill description
+Describe a skill you have learned.,I learned to play the guitar during lockdown.,relevant,Relevant skill learned
+Describe a skill you have learned.,I have learned basic coding and web development.,relevant,Correct skill description
+Describe a skill you have learned.,My neighbor has a cat.,irrelevant,Neighbor description unrelated
+Describe a skill you have learned.,The road is very bumpy.,irrelevant,Road description unrelated
+Describe a skill you have learned.,I drink milk every night.,irrelevant,Beverage habit unrelated
+
+What do you like about your neighborhood?,I love the peaceful environment and friendly neighbors.,relevant,Good neighborhood feature
+What do you like about your neighborhood?,The parks and playgrounds are well maintained.,relevant,Relevant neighborhood quality
+What do you like about your neighborhood?,There are many small shops within walking distance.,relevant,Correct neighborhood feature
+What do you like about your neighborhood?,My brother likes to swim.,irrelevant,Sibling hobby unrelated
+What do you like about your neighborhood?,The pen is blue.,irrelevant,Object description unrelated
+What do you like about your neighborhood?,I go to bed at 10 PM.,irrelevant,Sleep habit unrelated
+
+Describe a movie you watched recently.,I watched a comedy film and laughed throughout.,relevant,Good movie description
+Describe a movie you watched recently.,I saw an action movie with great visual effects.,relevant,Relevant movie experience
+Describe a movie you watched recently.,I watched a documentary about wildlife in Nepal.,relevant,Correct movie description
+Describe a movie you watched recently.,My aunt is a doctor.,irrelevant,Family occupation unrelated
+Describe a movie you watched recently.,The tree is very tall.,irrelevant,Nature description unrelated
+Describe a movie you watched recently.,I bought a new phone.,irrelevant,Purchase unrelated
+
+What is your favorite type of cuisine?,I love Italian food especially pizza and pasta.,relevant,Good cuisine preference
+What is your favorite type of cuisine?,I enjoy Chinese food for its bold flavors.,relevant,Relevant cuisine preference
+What is your favorite type of cuisine?,Nepali cuisine is my favorite with its rich spices.,relevant,Correct cuisine preference
+What is your favorite type of cuisine?,My father is a pilot.,irrelevant,Family occupation unrelated
+What is your favorite type of cuisine?,The floor is very clean.,irrelevant,Room description unrelated
+What is your favorite type of cuisine?,I walk to the park daily.,irrelevant,Daily activity unrelated
+
+Describe a teacher who influenced you.,My English teacher inspired me to love literature.,relevant,Good teacher influence
+Describe a teacher who influenced you.,My math teacher made learning fun and interesting.,relevant,Relevant teacher description
+Describe a teacher who influenced you.,My science teacher encouraged me to ask questions.,relevant,Correct teacher influence
+Describe a teacher who influenced you?,My sister has a new job.,irrelevant,Sibling news unrelated
+Describe a teacher who influenced you?,The water is very cold.,irrelevant,Nature description unrelated
+Describe a teacher who influenced you?,I like to wear black shoes.,irrelevant,Clothing preference unrelated
+
+What do you like about your job?,I love the creative freedom my job gives me.,relevant,Good job feature
+What do you like about your job?,I enjoy working with a supportive team.,relevant,Relevant job quality
+What do you like about your job?,My job allows me to help people every day.,relevant,Correct job feature
+What do you like about your job?,My friend has a red car.,irrelevant,Friend possession unrelated
+What do you like about your job?,The soup is delicious.,irrelevant,Food comment unrelated
+What do you like about your job?,I take a shower every morning.,irrelevant,Hygiene habit unrelated
+
+Describe a piece of art you like.,I love the Mona Lisa for its mysterious smile.,relevant,Good art description
+Describe a piece of art you like.,I like local paintings that show village life.,relevant,Relevant art preference
+Describe a piece of art you like.,I enjoy abstract art because of its colors.,relevant,Correct art description
+Describe a piece of art you like.,My brother is a mechanic.,irrelevant,Family occupation unrelated
+Describe a piece of art you like.,The floor is wooden.,irrelevant,Room description unrelated
+Describe a piece of art you like.,I eat dinner at 8 PM.,irrelevant,Meal habit unrelated
+
+What is your favorite kind of weather?,I love sunny weather for outdoor activities.,relevant,Good weather preference
+What is your favorite kind of weather?,I enjoy cool breezy days in autumn.,relevant,Relevant weather preference
+What is your favorite kind of weather?,I like mild weather with clear skies.,relevant,Correct weather preference
+What is your favorite kind of weather?,My cousin is a doctor.,irrelevant,Family occupation unrelated
+What is your favorite kind of weather?,The chair is very heavy.,irrelevant,Object description unrelated
+What is your favorite kind of weather?,I watch TV every night.,irrelevant,Entertainment habit unrelated
+
+Describe a memorable meal you had.,I had a delicious meal at my grandmother's house.,relevant,Good meal description
+Describe a memorable meal you had.,I enjoyed a traditional feast during a festival.,relevant,Relevant meal experience
+Describe a memorable meal you had.,I had the best pizza on my birthday.,relevant,Correct meal description
+Describe a memorable meal you had.,My uncle is a businessman.,irrelevant,Family occupation unrelated
+Describe a memorable meal you had.,The bus is late again.,irrelevant,Transport complaint unrelated
+Describe a memorable meal you had.,I brush my teeth daily.,irrelevant,Hygiene habit unrelated
+
+What do you like about your school?,I love the friendly teachers and staff.,relevant,Good school feature
+What do you like about your school?,The library has many interesting books.,relevant,Relevant school quality
+What do you like about your school?,I enjoy the sports facilities and playground.,relevant,Correct school feature
+What do you like about your school?,My mother is a nurse.,irrelevant,Family occupation unrelated
+What do you like about your school?,The window is broken.,irrelevant,Room description unrelated
+What do you like about your school?,I drink coffee after lunch.,irrelevant,Beverage habit unrelated
+
+Describe a dream you remember.,I dreamt of flying over mountains and rivers.,relevant,Good dream description
+Describe a dream you remember.,I had a dream about meeting a famous actor.,relevant,Relevant dream experience
+Describe a dream you remember.,I dreamt of traveling to different countries.,relevant,Correct dream description
+Describe a dream you remember?,My brother has a new bicycle.,irrelevant,Sibling possession unrelated
+Describe a dream you remember?,The path is very steep.,irrelevant,Road description unrelated
+Describe a dream you remember?,I like to eat pancakes.,irrelevant,Food preference unrelated
+
+What is your favorite way to travel?,I love traveling by train to enjoy the scenery.,relevant,Good travel preference
+What is your favorite way to travel?,I prefer flying because it saves time.,relevant,Relevant travel mode
+What is your favorite way to travel?,I enjoy road trips with my family.,relevant,Correct travel preference
+What is your favorite way to travel?,My sister is a dentist.,irrelevant,Family occupation unrelated
+What is your favorite way to travel?,The plate is very clean.,irrelevant,Object description unrelated
+What is your favorite way to travel?,I wake up at 6 AM daily.,irrelevant,Daily routine unrelated
+
+Describe a habit you want to change.,I want to stop using my phone before sleeping.,relevant,Good habit to change
+Describe a habit you want to change.,I want to eat less junk food and be healthier.,relevant,Relevant habit change
+Describe a habit you want to change.,I want to wake up earlier every morning.,relevant,Correct habit description
+Describe a habit you want to change.,My aunt is a teacher.,irrelevant,Family occupation unrelated
+Describe a habit you want to change.,The river is very deep.,irrelevant,Nature description unrelated
+Describe a habit you want to change.,I bought new glasses today.,irrelevant,Shopping activity unrelated
+
+What do you like about your free time?,I love having time to read books quietly.,relevant,Good free time aspect
+What do you like about your free time?,I enjoy spending time with my family.,relevant,Relevant free time quality
+What do you like about your free time?,I like to pursue my hobbies and interests.,relevant,Correct free time aspect
+What do you like about your free time?,My cousin is a pilot.,irrelevant,Family occupation unrelated
+What do you like about your free time?,The door is open.,irrelevant,Room description unrelated
+What do you like about your free time?,I drink green tea every day.,irrelevant,Beverage habit unrelated
+
+Describe a musical instrument you like.,I love the piano because it sounds so elegant.,relevant,Good instrument description
+Describe a musical instrument you like.,I like the guitar for its versatility.,relevant,Relevant instrument preference
+Describe a musical instrument you like.,The flute has a very soothing sound.,relevant,Correct instrument description
+Describe a musical instrument you like.,My father is a lawyer.,irrelevant,Family occupation unrelated
+Describe a musical instrument you like.,The mountain is covered in snow.,irrelevant,Nature description unrelated
+Describe a musical instrument you like.,I take a shower every evening.,irrelevant,Hygiene habit unrelated
+
+What is your favorite way to exercise?,I love running in the park every morning.,relevant,Good exercise preference
+What is your favorite way to exercise?,I enjoy yoga for flexibility and relaxation.,relevant,Relevant exercise type
+What is your favorite way to exercise?,I like swimming for full body workout.,relevant,Correct exercise preference
+What is your favorite way to exercise?,My sister is a nurse.,irrelevant,Family occupation unrelated
+What is your favorite way to exercise?,The table is round.,irrelevant,Object description unrelated
+What is your favorite way to exercise?,I eat breakfast at 7 AM.,irrelevant,Meal habit unrelated
+
+Describe a shop you like to visit.,I love visiting the local bakery for fresh bread.,relevant,Good shop description
+Describe a shop you like to visit.,I enjoy going to the bookshop to browse novels.,relevant,Relevant shop preference
+Describe a shop you like to visit.,I like visiting the vegetable market for fresh produce.,relevant,Correct shop description
+Describe a shop you like to visit.,My uncle is a farmer.,irrelevant,Family occupation unrelated
+Describe a shop you like to visit.,The road is very long.,irrelevant,Road description unrelated
+Describe a shop you like to visit.,I sleep for 8 hours daily.,irrelevant,Sleep habit unrelated
+
+What do you like about winter season?,I love the cool weather and cozy clothes.,relevant,Good winter feature
+What do you like about winter season?,I enjoy drinking hot chocolate in winter.,relevant,Relevant winter activity
+What do you like about winter season?,I like the festive atmosphere during winter.,relevant,Correct winter feature
+What do you like about winter season?,My brother is a doctor.,irrelevant,Family occupation unrelated
+What do you like about winter season?,The bottle is empty.,irrelevant,Object description unrelated
+What do you like about winter season?,I walk to school every day.,irrelevant,Transport habit unrelated
+
+Describe a book that changed your thinking.,The Alchemist taught me to follow my dreams.,relevant,Good book impact
+Describe a book that changed your thinking.,Animal Farm changed my view on politics.,relevant,Relevant book influence
+Describe a book that changed your thinking.,The Seven Habits helped me become more productive.,relevant,Correct book description
+Describe a book that changed your thinking.,My neighbor is a singer.,irrelevant,Neighbor occupation unrelated
+Describe a book that changed your thinking.,The park is very crowded.,irrelevant,Park description unrelated
+Describe a book that changed your thinking.,I drink orange juice daily.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of art?,I love paintings especially nature scenes.,relevant,Good art preference
+What is your favorite type of art?,I enjoy photography for capturing moments.,relevant,Relevant art type
+What is your favorite type of art?,I like sculptures for their three-dimensional beauty.,relevant,Correct art preference
+What is your favorite type of art?,My cousin is an engineer.,irrelevant,Family occupation unrelated
+What is your favorite type of art?,The glass is very clean.,irrelevant,Object description unrelated
+What is your favorite type of art?,I take a bus to work.,irrelevant,Transport habit unrelated
+
+Describe a celebration you enjoy.,I love celebrating Dashain with my family.,relevant,Good celebration description
+Describe a celebration you enjoy.,I enjoy birthday parties with friends and cake.,relevant,Relevant celebration type
+Describe a celebration you enjoy.,I love new year celebrations with fireworks.,relevant,Correct celebration description
+Describe a celebration you enjoy.,My sister is a teacher.,irrelevant,Family occupation unrelated
+Describe a celebration you enjoy.,The road is very busy.,irrelevant,Road description unrelated
+Describe a celebration you enjoy.,I eat lunch at 1 PM.,irrelevant,Meal habit unrelated
+
+What do you like about summer season?,I love the long sunny days in summer.,relevant,Good summer feature
+What do you like about summer season?,I enjoy swimming and ice cream in summer.,relevant,Relevant summer activity
+What do you like about summer season?,I like the vibrant energy of summer.,relevant,Correct summer feature
+What do you like about summer season?,My brother is a pilot.,irrelevant,Family occupation unrelated
+What do you like about summer season?,The wall is painted white.,irrelevant,Room description unrelated
+What do you like about summer season?,I read books every night.,irrelevant,Reading habit unrelated
+
+Describe a hobby you do with your family.,We love cooking together on weekends.,relevant,Good family hobby
+Describe a hobby you do with your family.,We enjoy playing board games as a family.,relevant,Relevant family activity
+Describe a hobby you do with your family.,We go for walks together every evening.,relevant,Correct family hobby
+Describe a hobby you do with your family.,My uncle is a businessman.,irrelevant,Family occupation unrelated
+Describe a hobby you do with your family.,The flower is very beautiful.,irrelevant,Object description unrelated
+Describe a hobby you do with your family.,I drink milk before sleeping.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of fruit?,I love mangoes for their sweet and juicy taste.,relevant,Good fruit preference
+What is your favorite type of fruit?,I enjoy apples because they are healthy.,relevant,Relevant fruit preference
+What is your favorite type of fruit?,Bananas are my favorite for energy.,relevant,Correct fruit preference
+What is your favorite type of fruit?,My cousin is a dentist.,irrelevant,Family occupation unrelated
+What is your favorite type of fruit?,The kitchen is very clean.,irrelevant,Room description unrelated
+What is your favorite type of fruit?,I take a nap after lunch.,irrelevant,Habit unrelated
+
+What is your favorite flower?,I love roses for their beauty and fragrance.,relevant,Good flower preference
+What is your favorite flower?,Lotus is my favorite because it symbolizes purity.,relevant,Relevant flower preference
+What is your favorite flower?,I like sunflowers because they are bright and cheerful.,relevant,Correct flower preference
+What is your favorite flower?,My brother is a teacher.,irrelevant,Family occupation unrelated
+What is your favorite flower?,The door is very heavy.,irrelevant,Object description unrelated
+What is your favorite flower?,I drink tea every afternoon.,irrelevant,Beverage habit unrelated
+
+Describe a place where you feel happy.,I feel happy at my home with my family.,relevant,Good happy place
+Describe a place where you feel happy.,I feel happy in the mountains surrounded by nature.,relevant,Relevant happy place
+Describe a place where you feel happy.,The park makes me happy with its green trees.,relevant,Correct happy place
+Describe a place where you feel happy.,My sister is a nurse.,irrelevant,Family occupation unrelated
+Describe a place where you feel happy.,The window is open.,irrelevant,Room description unrelated
+Describe a place where you feel happy.,I walk to the shop daily.,irrelevant,Daily routine unrelated
+
+What do you like about spring season?,I love the blooming flowers and pleasant weather.,relevant,Good spring feature
+What do you like about spring season?,I enjoy the fresh greenery and new life.,relevant,Relevant spring quality
+What do you like about spring season?,I like the mild temperatures and blue skies.,relevant,Correct spring feature
+What do you like about spring season?,My cousin is a pilot.,irrelevant,Family occupation unrelated
+What do you like about spring season?,The chair is broken.,irrelevant,Object description unrelated
+What do you like about spring season?,I eat dinner at 7 PM.,irrelevant,Meal habit unrelated
+
+Describe a toy from your childhood.,I loved playing with my stuffed teddy bear.,relevant,Good childhood toy
+Describe a toy from your childhood.,I had a remote control car I played with daily.,relevant,Relevant childhood memory
+Describe a toy from your childhood.,My favorite toy was a colorful spinning top.,relevant,Correct childhood toy
+Describe a toy from your childhood.,My uncle is a farmer.,irrelevant,Family occupation unrelated
+Describe a toy from your childhood.,The river is very deep.,irrelevant,Nature description unrelated
+Describe a toy from your childhood.,I wake up at 5 AM daily.,irrelevant,Daily routine unrelated
+
+What is your favorite type of bread?,I love whole wheat bread for its health benefits.,relevant,Good bread preference
+What is your favorite type of bread?,I enjoy naan bread with curry dishes.,relevant,Relevant bread preference
+What is your favorite type of bread?,I like white bread for sandwiches.,relevant,Correct bread preference
+What is your favorite type of bread?,My father is a mechanic.,irrelevant,Family occupation unrelated
+What is your favorite type of bread?,The floor is very dirty.,irrelevant,Room description unrelated
+What is your favorite type of bread?,I read books every weekend.,irrelevant,Reading habit unrelated
+
+Describe a dream job you would like.,I would love to become a travel photographer.,relevant,Good dream job
+Describe a dream job you would like.,I want to be a pilot and fly around the world.,relevant,Relevant career goal
+Describe a dream job you would like.,I dream of becoming a chef in a famous restaurant.,relevant,Correct dream job
+Describe a dream job you would like.,My sister is a doctor.,irrelevant,Family occupation unrelated
+Describe a dream job you would like.,The table is very big.,irrelevant,Object description unrelated
+Describe a dream job you would like.,I drink coffee every morning.,irrelevant,Beverage habit unrelated
+
+What do you like about autumn season?,I love the colorful leaves and cool breeze.,relevant,Good autumn feature
+What do you like about autumn season?,I enjoy the harvest season and festivals.,relevant,Relevant autumn quality
+What do you like about autumn season?,I like the comfortable weather for outdoor walks.,relevant,Correct autumn feature
+What do you like about autumn season?,My cousin is a lawyer.,irrelevant,Family occupation unrelated
+What do you like about autumn season?,The glass is very clean.,irrelevant,Object description unrelated
+What do you like about autumn season?,I sleep early every night.,irrelevant,Sleep habit unrelated
+
+Describe a type of weather you dislike.,I dislike heavy rain because it causes floods.,relevant,Good disliked weather
+Describe a type of weather you dislike.,I don't like extreme heat because it's uncomfortable.,relevant,Relevant weather dislike
+Describe a type of weather you dislike.,I dislike strong winds as they are destructive.,relevant,Correct weather dislike
+Describe a type of weather you dislike.,My brother is a businessman.,irrelevant,Family occupation unrelated
+Describe a type of weather you dislike.,The pen is out of ink.,irrelevant,Object description unrelated
+Describe a type of weather you dislike.,I eat lunch at 2 PM.,irrelevant,Meal habit unrelated
+
+What is your favorite type of cheese?,I love mozzarella cheese on pizza.,relevant,Good cheese preference
+What is your favorite type of cheese?,I enjoy cheddar cheese in sandwiches.,relevant,Relevant cheese preference
+What is your favorite type of cheese?,I like parmesan cheese on pasta.,relevant,Correct cheese preference
+What is your favorite type of cheese?,My aunt is a teacher.,irrelevant,Family occupation unrelated
+What is your favorite type of cheese?,The wall is painted yellow.,irrelevant,Room description unrelated
+What is your favorite type of cheese?,I go jogging every evening.,irrelevant,Exercise habit unrelated
+
+Describe a language you want to learn.,I want to learn Spanish because it sounds beautiful.,relevant,Good language preference
+Describe a language you want to learn.,I want to learn French for traveling.,relevant,Relevant language goal
+Describe a language you want to learn.,I want to learn Japanese to watch anime.,relevant,Correct language preference
+Describe a language you want to learn.,My uncle is a doctor.,irrelevant,Family occupation unrelated
+Describe a language you want to learn.,The road is very clean.,irrelevant,Road description unrelated
+Describe a language you want to learn.,I drink juice every day.,irrelevant,Beverage habit unrelated
+
+What do you like about your garden?,I love the colorful flowers in my garden.,relevant,Good garden feature
+What do you like about your garden?,I enjoy the fresh vegetables I grow there.,relevant,Relevant garden quality
+What do you like about your garden?,I like the peaceful atmosphere in my garden.,relevant,Correct garden feature
+What do you like about your garden?,My sister is a nurse.,irrelevant,Family occupation unrelated
+What do you like about your garden?,The cup is very hot.,irrelevant,Object description unrelated
+What do you like about your garden?,I take the train to work.,irrelevant,Transport habit unrelated
+
+Describe a celebration you had recently.,I celebrated my birthday with close friends.,relevant,Good recent celebration
+Describe a celebration you had recently.,We celebrated Dashain with family gatherings.,relevant,Relevant celebration experience
+Describe a celebration you had recently.,I celebrated my promotion at work.,relevant,Correct celebration description
+Describe a celebration you had recently.,My cousin is a pilot.,irrelevant,Family occupation unrelated
+Describe a celebration you had recently.,The sky is very cloudy.,irrelevant,Weather description unrelated
+Describe a celebration you had recently.,I wake up at 7 AM daily.,irrelevant,Daily routine unrelated
+
+What is your favorite type of dessert?,I love chocolate cake with ice cream.,relevant,Good dessert preference
+What is your favorite type of dessert?,I enjoy mango pudding in summer.,relevant,Relevant dessert preference
+What is your favorite type of dessert?,I like apple pie with cinnamon.,relevant,Correct dessert preference
+What is your favorite type of dessert?,My brother is a mechanic.,irrelevant,Family occupation unrelated
+What is your favorite type of dessert?,The table is very shiny.,irrelevant,Object description unrelated
+What is your favorite type of dessert?,I walk my dog every morning.,irrelevant,Daily routine unrelated
+
+Describe a person who inspires you.,My mother inspires me with her strength.,relevant,Good inspiration description
+Describe a person who inspires you.,My teacher inspires me with his knowledge.,relevant,Relevant inspiration source
+Describe a person who inspires you.,A famous scientist inspires my curiosity.,relevant,Correct inspiration description
+Describe a person who inspires you?,My aunt is a lawyer.,irrelevant,Family occupation unrelated
+Describe a person who inspires you?,The tree is very old.,irrelevant,Nature description unrelated
+Describe a person who inspires you?,I eat breakfast at 8 AM.,irrelevant,Meal habit unrelated
+
+What do you like about your bedroom?,I love the comfortable bed and soft pillows.,relevant,Good bedroom feature
+What do you like about your bedroom?,I enjoy the quiet atmosphere in my room.,relevant,Relevant bedroom quality
+What do you like about your bedroom?,I like the large windows for sunlight.,relevant,Correct bedroom feature
+What do you like about your bedroom?,My cousin is a doctor.,irrelevant,Family occupation unrelated
+What do you like about your bedroom?,The floor is very cold.,irrelevant,Room description unrelated
+What do you like about your bedroom?,I drink hot chocolate at night.,irrelevant,Beverage habit unrelated
+
+Describe a movie character you like.,I love Harry Potter for his bravery and loyalty.,relevant,Good character description
+Describe a movie character you like.,I like James Bond for his confidence.,relevant,Relevant character preference
+Describe a movie character you like.,I admire Iron Man for his intelligence.,relevant,Correct character description
+Describe a movie character you like.,My uncle is a farmer.,irrelevant,Family occupation unrelated
+Describe a movie character you like.,The road is very narrow.,irrelevant,Road description unrelated
+Describe a movie character you like.,I take a shower every day.,irrelevant,Hygiene habit unrelated
+
+What is your favorite type of tree?,I love the mango tree for its delicious fruit.,relevant,Good tree preference
+What is your favorite type of tree?,I like the banyan tree for its shade.,relevant,Relevant tree preference
+What is your favorite type of tree?,I enjoy the pine tree for its fragrance.,relevant,Correct tree preference
+What is your favorite type of tree?,My sister is a nurse.,irrelevant,Family occupation unrelated
+What is your favorite type of tree?,The glass is very shiny.,irrelevant,Object description unrelated
+What is your favorite type of tree?,I read books every morning.,irrelevant,Reading habit unrelated
+
+Describe a place you go to relax.,I go to the park to relax and enjoy nature.,relevant,Good relaxing place
+Describe a place you go to relax.,I relax at home reading books.,relevant,Relevant relaxation place
+Describe a place you go to relax.,I go to the beach to relax and swim.,relevant,Correct relaxation place
+Describe a place you go to relax.,My cousin is a teacher.,irrelevant,Family occupation unrelated
+Describe a place you go to relax.,The mirror is very clean.,irrelevant,Object description unrelated
+Describe a place you go to relax.,I eat dinner at 9 PM.,irrelevant,Meal habit unrelated
+
+What do you like about your workplace?,I love the friendly colleagues I work with.,relevant,Good workplace feature
+What do you like about your workplace?,I enjoy the modern facilities and equipment.,relevant,Relevant workplace quality
+What do you like about your workplace?,I like the flexible working hours.,relevant,Correct workplace feature
+What do you like about your workplace?,My brother is a pilot.,irrelevant,Family occupation unrelated
+What do you like about your workplace?,The door is very tall.,irrelevant,Object description unrelated
+What do you like about your workplace?,I drink tea at 10 AM.,irrelevant,Beverage habit unrelated
+
+Describe a type of dance you like.,I love traditional Nepali dance performances.,relevant,Good dance preference
+Describe a type of dance you like.,I enjoy salsa dancing for its energy.,relevant,Relevant dance type
+Describe a type of dance you like.,I like classical ballet for its grace.,relevant,Correct dance preference
+Describe a type of dance you like.,My uncle is a lawyer.,irrelevant,Family occupation unrelated
+Describe a type of dance you like.,The river is very wide.,irrelevant,Nature description unrelated
+Describe a type of dance you like.,I wake up early every day.,irrelevant,Daily routine unrelated
+
+What is your favorite type of nut?,I love almonds for their health benefits.,relevant,Good nut preference
+What is your favorite type of nut?,I enjoy cashews in various dishes.,relevant,Relevant nut preference
+What is your favorite type of nut?,I like walnuts in my desserts.,relevant,Correct nut preference
+What is your favorite type of nut?,My cousin is a mechanic.,irrelevant,Family occupation unrelated
+What is your favorite type of nut?,The stairs are very steep.,irrelevant,Building description unrelated
+What is your favorite type of nut?,I walk to school every day.,irrelevant,Transport habit unrelated
+
+Describe a sport you want to learn.,I want to learn tennis because it looks fun.,relevant,Good sport to learn
+Describe a sport you want to learn.,I want to learn golf for relaxation.,relevant,Relevant sport goal
+Describe a sport you want to learn.,I want to learn swimming for safety.,relevant,Correct sport description
+Describe a sport you want to learn.,My sister is a doctor.,irrelevant,Family occupation unrelated
+Describe a sport you want to learn.,The carpet is very soft.,irrelevant,Object description unrelated
+Describe a sport you want to learn.,I drink water every hour.,irrelevant,Beverage habit unrelated
+
+What do you like about your balcony?,I love the view of the city from my balcony.,relevant,Good balcony feature
+What do you like about your balcony?,I enjoy having plants and flowers there.,relevant,Relevant balcony quality
+What do you like about your balcony?,I like sitting there to enjoy fresh air.,relevant,Correct balcony feature
+What do you like about your balcony?,My aunt is a teacher.,irrelevant,Family occupation unrelated
+What do you like about your balcony?,The wall is very thick.,irrelevant,Room description unrelated
+What do you like about your balcony?,I eat lunch at 12 PM.,irrelevant,Meal habit unrelated
+
+Describe a festival food you like.,I love the special sweets made during Tihar.,relevant,Good festival food
+Describe a festival food you like.,I enjoy the traditional feast on Dashain.,relevant,Relevant festival food
+Describe a festival food you like.,I like the special bread made during festivals.,relevant,Correct festival food
+Describe a festival food you like.,My brother is a farmer.,irrelevant,Family occupation unrelated
+Describe a festival food you like.,The kitchen is very bright.,irrelevant,Room description unrelated
+Describe a festival food you like.,I sleep for 7 hours daily.,irrelevant,Sleep habit unrelated
+
+What is your favorite type of sauce?,I love tomato sauce with pasta and pizza.,relevant,Good sauce preference
+What is your favorite type of sauce?,I enjoy soy sauce with Asian dishes.,relevant,Relevant sauce preference
+What is your favorite type of sauce?,I like hot sauce for its spiciness.,relevant,Correct sauce preference
+What is your favorite type of sauce?,My cousin is a pilot.,irrelevant,Family occupation unrelated
+What is your favorite type of sauce?,The door is painted red.,irrelevant,Room description unrelated
+What is your favorite type of sauce?,I brush my teeth twice daily.,irrelevant,Hygiene habit unrelated
+
+Describe a lesson you learned in life.,I learned that hard work always pays off.,relevant,Good life lesson
+Describe a lesson you learned in life.,I learned to be kind and honest with everyone.,relevant,Relevant life lesson
+Describe a lesson you learned in life.,I learned that failure is part of success.,relevant,Correct life lesson
+Describe a lesson you learned in life.,My uncle is a businessman.,irrelevant,Family occupation unrelated
+Describe a lesson you learned in life.,The sun is very bright.,irrelevant,Nature description unrelated
+Describe a lesson you learned in life.,I drink coffee every evening.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of vegetable?,I love broccoli because it is healthy and tasty.,relevant,Good vegetable preference
+What is your favorite type of vegetable?,I enjoy carrots for their sweet taste and crunch.,relevant,Relevant vegetable preference
+What is your favorite type of vegetable?,I like spinach in soups and salads.,relevant,Correct vegetable preference
+What is your favorite type of vegetable?,My sister is a lawyer.,irrelevant,Family occupation unrelated
+What is your favorite type of vegetable?,The lamp is very bright.,irrelevant,Object description unrelated
+What is your favorite type of vegetable?,I walk to the store every day.,irrelevant,Daily routine unrelated
+
+Describe a historical place you visited.,I visited the ancient temples of Kathmandu.,relevant,Good historical place
+Describe a historical place you visited.,I went to Lumbini where Buddha was born.,relevant,Relevant historical site
+Describe a historical place you visited.,I visited the old palace in Patan.,relevant,Correct historical place
+Describe a historical place you visited.,My cousin is a doctor.,irrelevant,Family occupation unrelated
+Describe a historical place you visited.,The garden is very green.,irrelevant,Nature description unrelated
+Describe a historical place you visited.,I drink milk every morning.,irrelevant,Beverage habit unrelated
+
+What do you like about your kitchen?,I love the modern appliances and spacious counter.,relevant,Good kitchen feature
+What do you like about your kitchen?,I enjoy cooking meals for my family there.,relevant,Relevant kitchen quality
+What do you like about your kitchen?,I like the natural light from the windows.,relevant,Correct kitchen feature
+What do you like about your kitchen?,My uncle is a mechanic.,irrelevant,Family occupation unrelated
+What do you like about your kitchen?,The sofa is very comfortable.,irrelevant,Object description unrelated
+What do you like about your kitchen?,I sleep at 11 PM every night.,irrelevant,Sleep habit unrelated
+
+Describe a type of weather you enjoy.,I enjoy sunny days for outdoor activities.,relevant,Good weather preference
+Describe a type of weather you enjoy.,I love rainy days for cozy indoor time.,relevant,Relevant weather enjoyment
+Describe a type of weather you enjoy.,I like cloudy days for their coolness.,relevant,Correct weather preference
+Describe a type of weather you enjoy.,My brother is a teacher.,irrelevant,Family occupation unrelated
+Describe a type of weather you enjoy.,The floor is very shiny.,irrelevant,Room description unrelated
+Describe a type of weather you enjoy.,I eat breakfast at 7 AM.,irrelevant,Meal habit unrelated
+
+What is your favorite type of seafood?,I love fish especially grilled with herbs.,relevant,Good seafood preference
+What is your favorite type of seafood?,I enjoy prawns in spicy curry.,relevant,Relevant seafood preference
+What is your favorite type of seafood?,I like crab for its sweet meat.,relevant,Correct seafood preference
+What is your favorite type of seafood?,My aunt is a nurse.,irrelevant,Family occupation unrelated
+What is your favorite type of seafood?,The pen is very small.,irrelevant,Object description unrelated
+What is your favorite type of seafood?,I take the bus to work.,irrelevant,Transport habit unrelated
+
+Describe a teacher you had in school.,My class teacher was very kind and helpful.,relevant,Good teacher description
+Describe a teacher you had in school.,My science teacher made experiments fun.,relevant,Relevant teacher memory
+Describe a teacher you had in school.,My English teacher encouraged me to write.,relevant,Correct teacher description
+Describe a teacher you had in school.,My cousin is a pilot.,irrelevant,Family occupation unrelated
+Describe a teacher you had in school.,The river flows very fast.,irrelevant,Nature description unrelated
+Describe a teacher you had in school.,I drink juice every evening.,irrelevant,Beverage habit unrelated
+
+What do you like about your college?,I love the beautiful campus and green surroundings.,relevant,Good college feature
+What do you like about your college?,I enjoy the modern library and study areas.,relevant,Relevant college quality
+What do you like about your college?,I like the friendly students and teachers.,relevant,Correct college feature
+What do you like about your college?,My sister is a doctor.,irrelevant,Family occupation unrelated
+What do you like about your college?,The chair is very old.,irrelevant,Object description unrelated
+What do you like about your college?,I wake up at 6 AM daily.,irrelevant,Daily routine unrelated
+
+Describe a type of transportation you dislike.,I dislike crowded buses during rush hour.,relevant,Good transport dislike
+Describe a type of transportation you dislike.,I don't like long train journeys.,relevant,Relevant transport dislike
+Describe a type of transportation you dislike.,I dislike flights because of delays.,relevant,Correct transport dislike
+Describe a type of transportation you dislike.,My uncle is a farmer.,irrelevant,Family occupation unrelated
+Describe a type of transportation you dislike.,The wall is very tall.,irrelevant,Room description unrelated
+Describe a type of transportation you dislike.,I eat lunch at 1 PM.,irrelevant,Meal habit unrelated
+
+What is your favorite type of ice cream?,I love vanilla ice cream with chocolate sauce.,relevant,Good ice cream preference
+What is your favorite type of ice cream?,I enjoy strawberry ice cream in summer.,relevant,Relevant ice cream preference
+What is your favorite type of ice cream?,I like chocolate ice cream the most.,relevant,Correct ice cream preference
+What is your favorite type of ice cream?,My brother is a mechanic.,irrelevant,Family occupation unrelated
+What is your favorite type of ice cream?,The door is very heavy.,irrelevant,Object description unrelated
+What is your favorite type of ice cream?,I read books every day.,irrelevant,Reading habit unrelated
+
+Describe a place you go to study.,I study in the library because it's quiet.,relevant,Good study place
+Describe a place you go to study.,I study in my room with no distractions.,relevant,Relevant study location
+Describe a place you go to study.,I go to a coffee shop to study sometimes.,relevant,Correct study place
+Describe a place you go to study.,My cousin is a lawyer.,irrelevant,Family occupation unrelated
+Describe a place you go to study.,The flower is very colorful.,irrelevant,Object description unrelated
+Describe a place you go to study.,I drink tea at 4 PM.,irrelevant,Beverage habit unrelated
+
+What do you like about your village?,I love the fresh air and peaceful environment.,relevant,Good village feature
+What do you like about your village?,I enjoy the farming lifestyle and green fields.,relevant,Relevant village quality
+What do you like about your village?,I like the close-knit community there.,relevant,Correct village feature
+What do you like about your village?,My aunt is a teacher.,irrelevant,Family occupation unrelated
+What do you like about your village?,The glass is very clean.,irrelevant,Object description unrelated
+What do you like about your village?,I walk to school every day.,irrelevant,Daily routine unrelated
+
+Describe a hobby you have given up.,I gave up painting but I want to restart.,relevant,Good hobby description
+Describe a hobby you have given up.,I stopped playing football after my injury.,relevant,Relevant hobby experience
+Describe a hobby you have given up.,I gave up stamp collecting years ago.,relevant,Correct hobby description
+Describe a hobby you have given up.,My uncle is a doctor.,irrelevant,Family occupation unrelated
+Describe a hobby you have given up.,The road is very muddy.,irrelevant,Road description unrelated
+Describe a hobby you have given up.,I drink coffee every morning.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of fabric?,I love cotton for its comfort and breathability.,relevant,Good fabric preference
+What is your favorite type of fabric?,I enjoy silk for its smooth and shiny feel.,relevant,Relevant fabric preference
+What is your favorite type of fabric?,I like wool for its warmth in winter.,relevant,Correct fabric preference
+What is your favorite type of fabric?,My brother is a pilot.,irrelevant,Family occupation unrelated
+What is your favorite type of fabric?,The table is very round.,irrelevant,Object description unrelated
+What is your favorite type of fabric?,I eat dinner at 8 PM.,irrelevant,Meal habit unrelated
+
+Describe a game you like to play.,I love playing chess to improve my thinking.,relevant,Good game preference
+Describe a game you like to play.,I enjoy playing ludo with my family.,relevant,Relevant game description
+Describe a game you like to play.,I like playing card games with friends.,relevant,Correct game preference
+Describe a game you like to play.,My sister is a nurse.,irrelevant,Family occupation unrelated
+Describe a game you like to play.,The tree is very tall.,irrelevant,Nature description unrelated
+Describe a game you like to play.,I take a shower every evening.,irrelevant,Hygiene habit unrelated
+
+What do you like about your vacation?,I love visiting new places and exploring.,relevant,Good vacation feature
+What do you like about your vacation?,I enjoy relaxing and taking a break from work.,relevant,Relevant vacation quality
+What do you like about your vacation?,I like spending quality time with family.,relevant,Correct vacation feature
+What do you like about your vacation?,My cousin is a farmer.,irrelevant,Family occupation unrelated
+What do you like about your vacation?,The mirror is very big.,irrelevant,Object description unrelated
+What do you like about your vacation?,I wake up late on weekends.,irrelevant,Weekend habit unrelated
+
+Describe a type of music you dislike.,I dislike loud heavy metal music.,relevant,Good music dislike
+Describe a type of music you dislike.,I don't enjoy electronic dance music.,relevant,Relevant music dislike
+Describe a type of music you dislike.,I dislike country music because it's boring.,relevant,Correct music dislike
+Describe a type of music you dislike.,My aunt is a mechanic.,irrelevant,Family occupation unrelated
+Describe a type of music you dislike.,The window is very large.,irrelevant,Room description unrelated
+Describe a type of music you dislike.,I drink water after meals.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of meat?,I love chicken because it is versatile.,relevant,Good meat preference
+What is your favorite type of meat?,I enjoy mutton in spicy curries.,relevant,Relevant meat preference
+What is your favorite type of meat?,I like fish for its health benefits.,relevant,Correct meat preference
+What is your favorite type of meat?,My uncle is a lawyer.,irrelevant,Family occupation unrelated
+What is your favorite type of meat?,The carpet is very soft.,irrelevant,Object description unrelated
+What is your favorite type of meat?,I walk to the market every day.,irrelevant,Daily routine unrelated
+
+Describe a place you want to live in the future.,I want to live near the beach for relaxation.,relevant,Good future living place
+Describe a place you want to live in the future.,I want to live in a quiet mountain village.,relevant,Relevant living preference
+Describe a place you want to live in the future.,I want to live in a modern city apartment.,relevant,Correct living place
+Describe a place you want to live in the future.,My brother is a doctor.,irrelevant,Family occupation unrelated
+Describe a place you want to live in the future.,The sky is very clear.,irrelevant,Weather description unrelated
+Describe a place you want to live in the future.,I eat breakfast at 6 AM.,irrelevant,Meal habit unrelated
+
+What do you like about your living room?,I love the comfortable sofas and TV area.,relevant,Good living room feature
+What do you like about your living room?,I enjoy spending time with family there.,relevant,Relevant living room quality
+What do you like about your living room?,I like the beautiful decorations and paintings.,relevant,Correct living room feature
+What do you like about your living room?,My cousin is a teacher.,irrelevant,Family occupation unrelated
+What do you like about your living room?,The stairs are very narrow.,irrelevant,Building description unrelated
+What do you like about your living room?,I read books at night.,irrelevant,Reading habit unrelated
+
+Describe a skill you want to improve.,I want to improve my public speaking skills.,relevant,Good skill to improve
+Describe a skill you want to improve.,I want to get better at cooking.,relevant,Relevant skill improvement
+Describe a skill you want to improve.,I want to improve my English writing.,relevant,Correct skill description
+Describe a skill you want to improve.,My aunt is a pilot.,irrelevant,Family occupation unrelated
+Describe a skill you want to improve.,The floor is very hard.,irrelevant,Room description unrelated
+Describe a skill you want to improve.,I drink juice every day.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of soup?,I love tomato soup with grilled cheese.,relevant,Good soup preference
+What is your favorite type of soup?,I enjoy chicken noodle soup when sick.,relevant,Relevant soup preference
+What is your favorite type of soup?,I like vegetable soup for its nutrition.,relevant,Correct soup preference
+What is your favorite type of soup?,My sister is a mechanic.,irrelevant,Family occupation unrelated
+What is your favorite type of soup?,The wall is very high.,irrelevant,Room description unrelated
+What is your favorite type of soup?,I go to sleep at 10 PM.,irrelevant,Sleep habit unrelated
+
+Describe a festival you want to experience.,I want to experience the Rio Carnival in Brazil.,relevant,Good festival desire
+Describe a festival you want to experience.,I want to see the lantern festival in Thailand.,relevant,Relevant festival experience
+Describe a festival you want to experience.,I want to experience Diwali in India.,relevant,Correct festival desire
+Describe a festival you want to experience.,My uncle is a doctor.,irrelevant,Family occupation unrelated
+Describe a festival you want to experience.,The river is very clean.,irrelevant,Nature description unrelated
+Describe a festival you want to experience.,I take the bus to college.,irrelevant,Transport habit unrelated
+
+What do you like about your office?,I love the comfortable workspace and chairs.,relevant,Good office feature
+What do you like about your office?,I enjoy the collaborative work environment.,relevant,Relevant office quality
+What do you like about your office?,I like the location near good restaurants.,relevant,Correct office feature
+What do you like about your office?,My cousin is a nurse.,irrelevant,Family occupation unrelated
+What do you like about your office?,The lamp is very dim.,irrelevant,Object description unrelated
+What do you like about your office?,I drink tea every evening.,irrelevant,Beverage habit unrelated
+
+Describe a type of flower you want to plant.,I want to plant roses in my garden.,relevant,Good flower planting idea
+Describe a type of flower you want to plant.,I want to grow sunflowers in my backyard.,relevant,Relevant flower preference
+Describe a type of flower you want to plant.,I want to plant colorful tulips.,relevant,Correct flower description
+Describe a type of flower you want to plant.,My brother is a lawyer.,irrelevant,Family occupation unrelated
+Describe a type of flower you want to plant.,The chair is very heavy.,irrelevant,Object description unrelated
+Describe a type of flower you want to plant.,I wake up at 5 AM every day.,irrelevant,Daily routine unrelated
+
+What is your favorite type of bread?,I love sourdough bread for its tangy taste.,relevant,Good bread preference
+What is your favorite type of bread?,I enjoy rye bread with sandwiches.,relevant,Relevant bread preference
+What is your favorite type of bread?,I like multigrain bread for health.,relevant,Correct bread preference
+What is your favorite type of bread?,My aunt is a teacher.,irrelevant,Family occupation unrelated
+What is your favorite type of bread?,The window is very wide.,irrelevant,Room description unrelated
+What is your favorite type of bread?,I eat lunch at 2 PM.,irrelevant,Meal habit unrelated
+
+Describe a movie you want to watch.,I want to watch the new action movie everyone is talking about.,relevant,Good movie desire
+Describe a movie you want to watch.,I want to watch a documentary about Nepal.,relevant,Relevant movie interest
+Describe a movie you want to watch.,I want to watch the latest animated film.,relevant,Correct movie description
+Describe a movie you want to watch.,My cousin is a farmer.,irrelevant,Family occupation unrelated
+Describe a movie you want to watch.,The road is very dusty.,irrelevant,Road description unrelated
+Describe a movie you want to watch.,I drink coffee after dinner.,irrelevant,Beverage habit unrelated
+
+What do you like about your garden?,I love growing my own vegetables there.,relevant,Good garden feature
+What do you like about your garden?,I enjoy the colorful flowers in my garden.,relevant,Relevant garden quality
+What do you like about your garden?,I like sitting there to enjoy the sunset.,relevant,Correct garden feature
+What do you like about your garden?,My sister is a pilot.,irrelevant,Family occupation unrelated
+What do you like about your garden?,The table is very smooth.,irrelevant,Object description unrelated
+What do you like about your garden?,I sleep for 8 hours every night.,irrelevant,Sleep habit unrelated
+
+What is your favorite type of jewelry?,I love gold necklaces for their elegance.,relevant,Good jewelry preference
+What is your favorite type of jewelry?,I enjoy silver earrings for their simplicity.,relevant,Relevant jewelry preference
+What is your favorite type of jewelry?,I like diamond rings for their sparkle.,relevant,Correct jewelry preference
+What is your favorite type of jewelry?,My uncle is a businessman.,irrelevant,Family occupation unrelated
+What is your favorite type of jewelry?,The chair is very comfortable.,irrelevant,Object description unrelated
+What is your favorite type of jewelry?,I walk to the office every day.,irrelevant,Daily routine unrelated
+
+Describe a natural place you like.,I love visiting peaceful lakes in the mountains.,relevant,Good natural place
+Describe a natural place you like.,I enjoy walking through dense forests.,relevant,Relevant natural place
+Describe a natural place you like.,I like sitting by flowing rivers.,relevant,Correct natural place
+Describe a natural place you like.,My cousin is a doctor.,irrelevant,Family occupation unrelated
+Describe a natural place you like.,The lamp is very bright.,irrelevant,Object description unrelated
+Describe a natural place you like.,I drink tea in the evening.,irrelevant,Beverage habit unrelated
+
+What do you like about your bathroom?,I love the modern shower and bathtub.,relevant,Good bathroom feature
+What do you like about your bathroom?,I enjoy the natural light and ventilation.,relevant,Relevant bathroom quality
+What do you like about your bathroom?,I like the clean tiles and mirrors.,relevant,Correct bathroom feature
+What do you like about your bathroom?,My sister is a nurse.,irrelevant,Family occupation unrelated
+What do you like about your bathroom?,The floor is very cold.,irrelevant,Room description unrelated
+What do you like about your bathroom?,I eat breakfast every morning.,irrelevant,Meal habit unrelated
+
+Describe a skill that is easy for you.,Cooking is easy for me because I enjoy it.,relevant,Good easy skill
+Describe a skill that is easy for you.,I find writing very easy and natural.,relevant,Relevant skill description
+Describe a skill that is easy for you.,Drawing comes easily to me.,relevant,Correct easy skill
+Describe a skill that is easy for you.,My brother is a lawyer.,irrelevant,Family occupation unrelated
+Describe a skill that is easy for you.,The sky is very blue.,irrelevant,Nature description unrelated
+Describe a skill that is easy for you.,I drink milk before sleeping.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of kebab?,I love chicken tikka kebab with mint sauce.,relevant,Good kebab preference
+What is your favorite type of kebab?,I enjoy seekh kebab with naan bread.,relevant,Relevant kebab preference
+What is your favorite type of kebab?,I like paneer kebab for its taste.,relevant,Correct kebab preference
+What is your favorite type of kebab?,My aunt is a teacher.,irrelevant,Family occupation unrelated
+What is your favorite type of kebab?,The door is very tall.,irrelevant,Object description unrelated
+What is your favorite type of kebab?,I take the train to work.,irrelevant,Transport habit unrelated
+
+Describe a magazine you like to read.,I enjoy reading travel magazines for inspiration.,relevant,Good magazine description
+Describe a magazine you like to read.,I like reading technology magazines.,relevant,Relevant magazine preference
+Describe a magazine you like to read.,I read cooking magazines for recipes.,relevant,Correct magazine description
+Describe a magazine you like to read.,My cousin is a pilot.,irrelevant,Family occupation unrelated
+Describe a magazine you like to read.,The tree is very tall.,irrelevant,Nature description unrelated
+Describe a magazine you like to read.,I wake up at 7 AM daily.,irrelevant,Daily routine unrelated
+
+What do you like about your classroom?,I love the bright whiteboard and smart board.,relevant,Good classroom feature
+What do you like about your classroom?,I enjoy the large windows and natural light.,relevant,Relevant classroom quality
+What do you like about your classroom?,I like the comfortable desks and chairs.,relevant,Correct classroom feature
+What do you like about your classroom?,My uncle is a mechanic.,irrelevant,Family occupation unrelated
+What do you like about your classroom?,The glass is very clean.,irrelevant,Object description unrelated
+What do you like about your classroom?,I read books every night.,irrelevant,Reading habit unrelated
+
+Describe a type of weather that scares you.,I am scared of thunderstorms and lightning.,relevant,Good weather fear
+Describe a type of weather that scares you.,I fear tornadoes and strong winds.,relevant,Relevant weather fear
+Describe a type of weather that scares you.,I am afraid of hailstorms.,relevant,Correct weather fear
+Describe a type of weather that scares you.,My brother is a doctor.,irrelevant,Family occupation unrelated
+Describe a type of weather that scares you.,The road is very smooth.,irrelevant,Road description unrelated
+Describe a type of weather that scares you.,I drink coffee every morning.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of salad?,I love Caesar salad with chicken and cheese.,relevant,Good salad preference
+What is your favorite type of salad?,I enjoy fresh garden salad with vegetables.,relevant,Relevant salad preference
+What is your favorite type of salad?,I like fruit salad for its sweetness.,relevant,Correct salad preference
+What is your favorite type of salad?,My sister is a lawyer.,irrelevant,Family occupation unrelated
+What is your favorite type of salad?,The chair is very small.,irrelevant,Object description unrelated
+What is your favorite type of salad?,I sleep at 10 PM every night.,irrelevant,Sleep habit unrelated
+
+Describe a restaurant you like.,I like a local restaurant that serves traditional food.,relevant,Good restaurant description
+Describe a restaurant you like.,I enjoy a cozy cafe near my house.,relevant,Relevant restaurant preference
+Describe a restaurant you like.,I like a restaurant with sea views.,relevant,Correct restaurant description
+Describe a restaurant you like.,My cousin is a teacher.,irrelevant,Family occupation unrelated
+Describe a restaurant you like.,The mountain is very high.,irrelevant,Nature description unrelated
+Describe a restaurant you like.,I eat dinner at 8 PM.,irrelevant,Meal habit unrelated
+
+What do you like about your balcony?,I love the beautiful plants and flowers there.,relevant,Good balcony feature
+What do you like about your balcony?,I enjoy the fresh breeze in the evening.,relevant,Relevant balcony quality
+What do you like about your balcony?,I like sitting there to read books.,relevant,Correct balcony feature
+What do you like about your balcony?,My aunt is a nurse.,irrelevant,Family occupation unrelated
+What do you like about your balcony?,The pen is very blue.,irrelevant,Object description unrelated
+What do you like about your balcony?,I take a shower every morning.,irrelevant,Hygiene habit unrelated
+
+Describe a type of art you dislike.,I dislike abstract art because it's confusing.,relevant,Good art dislike
+Describe a type of art you dislike.,I don't like modern art installations.,relevant,Relevant art dislike
+Describe a type of art you dislike.,I dislike graffiti as art.,relevant,Correct art dislike
+Describe a type of art you dislike.,My uncle is a pilot.,irrelevant,Family occupation unrelated
+Describe a type of art you dislike.,The river is very wide.,irrelevant,Nature description unrelated
+Describe a type of art you dislike.,I drink juice after lunch.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of cake?,I love chocolate cake with creamy frosting.,relevant,Good cake preference
+What is your favorite type of cake?,I enjoy vanilla cake with fresh fruit.,relevant,Relevant cake preference
+What is your favorite type of cake?,I like red velvet cake the most.,relevant,Correct cake preference
+What is your favorite type of cake?,My brother is a mechanic.,irrelevant,Family occupation unrelated
+What is your favorite type of cake?,The wall is very colorful.,irrelevant,Room description unrelated
+What is your favorite type of cake?,I walk to the park every day.,irrelevant,Daily routine unrelated
+
+Describe a place you go for shopping.,I go to the local market for fresh vegetables.,relevant,Good shopping place
+Describe a place you go for shopping.,I visit the mall for clothes and shoes.,relevant,Relevant shopping place
+Describe a place you go for shopping.,I go to the supermarket for groceries.,relevant,Correct shopping place
+Describe a place you go for shopping.,My cousin is a doctor.,irrelevant,Family occupation unrelated
+Describe a place you go for shopping.,The carpet is very soft.,irrelevant,Object description unrelated
+Describe a place you go for shopping.,I eat lunch at 1 PM.,irrelevant,Meal habit unrelated
+
+What do you like about your veranda?,I love the view of the garden from there.,relevant,Good veranda feature
+What do you like about your veranda?,I enjoy watching sunset from my veranda.,relevant,Relevant veranda quality
+What do you like about your veranda?,I like having morning tea there.,relevant,Correct veranda feature
+What do you like about your veranda?,My sister is a teacher.,irrelevant,Family occupation unrelated
+What do you like about your veranda?,The table is very round.,irrelevant,Object description unrelated
+What do you like about your veranda?,I sleep for 8 hours daily.,irrelevant,Sleep habit unrelated
+
+Describe a type of exercise you dislike.,I dislike running long distances.,relevant,Good exercise dislike
+Describe a type of exercise you dislike.,I don't enjoy weightlifting.,relevant,Relevant exercise dislike
+Describe a type of exercise you dislike.,I hate doing pushups.,relevant,Correct exercise dislike
+Describe a type of exercise you dislike.,My aunt is a lawyer.,irrelevant,Family occupation unrelated
+Describe a type of exercise you dislike.,The window is very small.,irrelevant,Room description unrelated
+Describe a type of exercise you dislike.,I drink tea every afternoon.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of pudding?,I love rice pudding with cinnamon.,relevant,Good pudding preference
+What is your favorite type of pudding?,I enjoy chocolate pudding with cream.,relevant,Relevant pudding preference
+What is your favorite type of pudding?,I like mango pudding in summer.,relevant,Correct pudding preference
+What is your favorite type of pudding?,My uncle is a farmer.,irrelevant,Family occupation unrelated
+What is your favorite type of pudding?,The glass is very tall.,irrelevant,Object description unrelated
+What is your favorite type of pudding?,I wake up early every day.,irrelevant,Daily routine unrelated
+
+Describe a website you visit often.,I visit news websites every morning.,relevant,Good website description
+Describe a website you visit often.,I use YouTube for learning and entertainment.,relevant,Relevant website preference
+Describe a website you visit often.,I visit recipe websites for cooking ideas.,relevant,Correct website description
+Describe a website you visit often.,My cousin is a pilot.,irrelevant,Family occupation unrelated
+Describe a website you visit often.,The mountain is very beautiful.,irrelevant,Nature description unrelated
+Describe a website you visit often.,I eat breakfast at 8 AM.,irrelevant,Meal habit unrelated
+
+What do you like about your study room?,I love the quiet environment for studying.,relevant,Good study room feature
+What do you like about your study room?,I enjoy the organized desk and bookshelf.,relevant,Relevant study room quality
+What do you like about your study room?,I like the comfortable chair and lighting.,relevant,Correct study room feature
+What do you like about your study room?,My brother is a doctor.,irrelevant,Family occupation unrelated
+What do you like about your study room?,The floor is very clean.,irrelevant,Room description unrelated
+What do you like about your study room?,I walk to school every day.,irrelevant,Transport habit unrelated
+
+Describe a type of animal you find interesting.,I find elephants very interesting and intelligent.,relevant,Good interesting animal
+Describe a type of animal you find interesting.,I find dolphins fascinating for their intelligence.,relevant,Relevant animal description
+Describe a type of animal you find interesting.,I find tigers majestic and powerful.,relevant,Correct animal description
+Describe a type of animal you find interesting.,My aunt is a nurse.,irrelevant,Family occupation unrelated
+Describe a type of animal you find interesting.,The tree is very old.,irrelevant,Nature description unrelated
+Describe a type of animal you find interesting.,I drink coffee every evening.,irrelevant,Beverage habit unrelated
+
+What is your favorite type of pizza?,I love margherita pizza with fresh basil.,relevant,Good pizza preference
+What is your favorite type of pizza?,I enjoy pepperoni pizza with extra cheese.,relevant,Relevant pizza preference
+What is your favorite type of pizza?,I like vegetarian pizza with many toppings.,relevant,Correct pizza preference
+What is your favorite type of pizza?,My sister is a lawyer.,irrelevant,Family occupation unrelated
+What is your favorite type of pizza?,The chair is very soft.,irrelevant,Object description unrelated
+What is your favorite type of pizza?,I take the bus to college.,irrelevant,Transport habit unrelated
+
+Describe a skill you learned online.,I learned coding through online courses.,relevant,Good online skill
+Describe a skill you learned online.,I learned photography from YouTube tutorials.,relevant,Relevant online learning
+Describe a skill you learned online.,I learned cooking through online videos.,relevant,Correct online skill
+Describe a skill you learned online.,My uncle is a mechanic.,irrelevant,Family occupation unrelated
+Describe a skill you learned online.,The river flows very fast.,irrelevant,Nature description unrelated
+Describe a skill you learned online.,I read books every weekend.,irrelevant,Reading habit unrelated
+
+What do you like about your garden path?,I love walking through the flower-lined path.,relevant,Good garden path feature
+What do you like about your garden path?,I enjoy the peaceful walk in the morning.,relevant,Relevant garden path quality
+What do you like about your garden path?,I like the shade from the trees there.,relevant,Correct garden path feature
+What do you like about your garden path?,My cousin is a teacher.,irrelevant,Family occupation unrelated
+What do you like about your garden path?,The lamp is very tall.,irrelevant,Object description unrelated
+What do you like about your garden path?,I sleep at 11 PM every night.,irrelevant,Sleep habit unrelated
+
+Describe a type of drink you dislike.,I dislike coffee because it's too bitter.,relevant,Good drink dislike
+Describe a type of drink you dislike.,I don't like soda because it's unhealthy.,relevant,Relevant drink dislike
+Describe a type of drink you dislike.,I dislike energy drinks with too much sugar.,relevant,Correct drink dislike
+Describe a type of drink you dislike.,My brother is a pilot.,irrelevant,Family occupation unrelated
+Describe a type of drink you dislike.,The window is very wide.,irrelevant,Room description unrelated
+Describe a type of drink you dislike.,I eat dinner at 9 PM.,irrelevant,Meal habit unrelated
+
+What is your favorite type of breakfast?,I love eggs and toast for breakfast.,relevant,Good breakfast preference
+What is your favorite type of breakfast?,I enjoy pancakes with maple syrup.,relevant,Relevant breakfast preference
+What is your favorite type of breakfast?,I like porridge with fruits and nuts.,relevant,Correct breakfast preference
+What is your favorite type of breakfast?,My aunt is a doctor.,irrelevant,Family occupation unrelated
+What is your favorite type of breakfast?,The mirror is very clean.,irrelevant,Object description unrelated
+What is your favorite type of breakfast?,I walk to the park every evening.,irrelevant,Daily routine unrelated
+
+Describe a place you go for a walk.,I walk in the park near my house.,relevant,Good walking place
+Describe a place you go for a walk.,I walk along the riverside path.,relevant,Relevant walking location
+Describe a place you go for a walk.,I walk in the forest trails.,relevant,Correct walking place
+Describe a place you go for a walk.,My cousin is a farmer.,irrelevant,Family occupation unrelated
+Describe a place you go for a walk.,The floor is very shiny.,irrelevant,Room description unrelated
+Describe a place you go for a walk.,I drink milk every morning.,irrelevant,Beverage habit unrelated
