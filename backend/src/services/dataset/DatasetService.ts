@@ -18,13 +18,13 @@ import type {
   ReadingFeedbackRow,
   ReadingQuestionRow,
   RecommendationTemplateRow,
-  RelevanceTrainingRow,
   ScoreCommentRow,
   SpeakingCommonMistakeRow,
   SpeakingFeedbackRow,
   SpeakingInvalidResponseRow,
   SpeakingKeywordRow,
   SpeakingQuestionRow,
+  SpeakingRelevanceTrainingRow,
   SpeakingSampleRow,
   StrengthTemplateRow,
   SynonymRow,
@@ -35,6 +35,7 @@ import type {
   WritingFeedbackRow,
   WritingInvalidResponseRow,
   WritingKeywordRow,
+  WritingRelevanceTrainingRow,
   WritingSampleRow,
   WritingTopicRow,
 } from "./interfaces";
@@ -134,8 +135,8 @@ export class DatasetService {
     return this.loadDataset<SpeakingInvalidResponseRow>("speaking", "invalid_responses.csv", options);
   }
 
-  getRelevanceTraining(options?: LoadOptions): Promise<RelevanceTrainingRow[]> {
-    return this.loadDataset<RelevanceTrainingRow>("speaking", "relevance_training.csv", options);
+  getRelevanceTraining(options?: LoadOptions): Promise<SpeakingRelevanceTrainingRow[]> {
+    return this.loadDataset<SpeakingRelevanceTrainingRow>("speaking", "relevance_training.csv", options);
   }
 
   // ---------------------------------------------------------------------
@@ -164,6 +165,10 @@ export class DatasetService {
 
   getWritingInvalidResponses(options?: LoadOptions): Promise<WritingInvalidResponseRow[]> {
     return this.loadDataset<WritingInvalidResponseRow>("writing", "invalid_responses.csv", options);
+  }
+
+  getWritingRelevanceTraining(options?: LoadOptions): Promise<WritingRelevanceTrainingRow[]> {
+    return this.loadDataset<WritingRelevanceTrainingRow>("writing", "relevance_training.csv", options);
   }
 
   // ---------------------------------------------------------------------

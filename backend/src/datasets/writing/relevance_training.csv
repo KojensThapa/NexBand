@@ -1,1 +1,13 @@
-prompt,response,label,reason
+training_id,topic_id,response_text,label,reason
+RT001,WT004,"Technology improves education through online learning and digital resources.",Relevant,"Directly discusses technology and education."
+RT002,WT004,"Technology helps students access information quickly.",Relevant,"Relevant to the topic."
+RT003,WT004,"I like football because it is interesting.",Not Relevant,"Completely unrelated."
+RT004,WT005,"Governments should reduce pollution and protect forests.",Relevant,"Discusses environmental protection."
+RT005,WT005,"Climate change is a serious global issue.",Relevant,"Relevant to environment."
+RT006,WT005,"My favorite movie is Interstellar.",Not Relevant,"Off-topic."
+RT007,WT006,"University education should be free because everyone deserves equal opportunities.",Relevant,"Answers the prompt."
+RT008,WT006,"Students should pay tuition because education is expensive.",Relevant,"Relevant opposing view."
+RT009,WT006,"I enjoy traveling with my friends.",Not Relevant,"Unrelated."
+RT010,WT007,"Free healthcare improves public health and reduces inequality.",Relevant,"Relevant healthcare discussion."
+RT011,WT007,"Hospitals should receive more government funding.",Relevant,"Relevant."
+RT012,WT007,"My hobby is reading books.",Not Relevant,"Off-topic."

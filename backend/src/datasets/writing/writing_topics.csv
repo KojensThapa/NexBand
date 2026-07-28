@@ -1,1 +1,11 @@
-topic_id,task_number,topic,prompt,task_type
+topic_id,task_type,title,prompt,difficulty,category
+WT001,Task1,Bar Chart,"Summarize the information shown in the bar chart about internet users from 2010 to 2020.",Easy,Bar Chart
+WT002,Task1,Line Graph,"Summarize the line graph showing population growth in three countries.",Medium,Line Graph
+WT003,Task1,Pie Chart,"Summarize the pie charts illustrating household expenditure in 2000 and 2020.",Medium,Pie Chart
+WT004,Task2,Technology,"Some people think technology improves education while others disagree. Discuss both views and give your opinion.",Medium,Technology
+WT005,Task2,Environment,"Some people believe governments should invest more in environmental protection. Discuss both views.",Medium,Environment
+WT006,Task2,Education,"University education should be free for everyone. To what extent do you agree or disagree?",Hard,Education
+WT007,Task2,Health,"Some people think governments should provide free healthcare. Discuss both views.",Medium,Health
+WT008,Task2,Globalization,"Globalization has more advantages than disadvantages. Discuss.",Hard,Globalization
+WT009,Task2,Transport,"Public transportation should be free. To what extent do you agree?",Medium,Transport
+WT010,Task2,Employment,"Remote working is better than office work. Discuss both views.",Easy,Employment

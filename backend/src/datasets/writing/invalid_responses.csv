@@ -1,1 +1,11 @@
-response,reason
+response_id,response,reason
+IR001,"asdfasdfasdf","Random keyboard input"
+IR002,"qwerty qwerty qwerty","Meaningless repeated text"
+IR003,"aaaaaaaaaaaaaaaa","Repeated characters"
+IR004,"123456789","Numbers only"
+IR005,".....","Symbols only"
+IR006,"test test test test","Repeated words"
+IR007,"hello hello hello","Repeated greeting"
+IR008,"kfjdklsf jf kdfjsk","Random characters"
+IR009,"xxxxxxxxxxxxxxxx","Invalid response"
+IR010,".................","No meaningful content"

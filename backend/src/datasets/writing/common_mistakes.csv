@@ -1,1 +1,9 @@
-mistake_id,category,mistake,correction,explanation
+mistake_id,category,mistake_name,description,recommendation,severity
+CM001,Grammar,Subject-Verb Agreement,"Subject and verb do not agree.","Review subject-verb agreement rules.",High
+CM002,Grammar,Tense Error,"Incorrect verb tense.","Use consistent tense throughout the essay.",Medium
+CM003,Vocabulary,Repetition,"Repeated vocabulary reduces lexical resource.","Use synonyms and varied expressions.",Medium
+CM004,Coherence,Poor Organization,"Ideas are not logically connected.","Use linking words and paragraph structure.",High
+CM005,Task Response,Off Topic,"Essay does not fully answer the question.","Focus on all parts of the prompt.",High
+CM006,Cohesion,Weak Linking,"Few cohesive devices used.","Practice transition words.",Medium
+CM007,Grammar,Sentence Fragment,"Incomplete sentences.","Write complete sentences.",Medium
+CM008,Grammar,Punctuation,"Incorrect punctuation.","Review punctuation rules.",Low

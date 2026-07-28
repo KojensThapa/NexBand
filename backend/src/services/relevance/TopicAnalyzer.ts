@@ -54,7 +54,7 @@ export class TopicAnalyzer implements TopicProfileProvider {
       .map((row) => this.toKeywordEntry(row.keyword, row.weight));
     const samples = sampleRows
       .filter((row) => row.question_id === id)
-      .map((row) => this.toSpeakingSampleEntry(row.sample_answer, row.sample_level));
+      .map((row) => this.toBandLabeledSampleEntry(row.sample_answer, row.sample_level));
 
     return this.buildProfile(question !== undefined, question?.question ?? "", explicitKeywords, samples);
   }
@@ -67,13 +67,13 @@ export class TopicAnalyzer implements TopicProfileProvider {
     ]);
 
     const topic = topics.find((row) => row.topic_id === id);
-    const sourceText = topic ? `${topic.topic} ${topic.prompt}` : "";
+    const sourceText = topic ? `${topic.title} ${topic.prompt}` : "";
     const explicitKeywords = keywordRows
       .filter((row) => row.topic_id === id)
       .map((row) => this.toKeywordEntry(row.keyword, row.weight));
     const samples = sampleRows
       .filter((row) => row.topic_id === id)
-      .map((row) => this.toSampleEntry(row.essay, row.band_score));
+      .map((row) => this.toBandLabeledSampleEntry(row.sample_answer, row.sample_level));
 
     return this.buildProfile(topic !== undefined, sourceText, explicitKeywords, samples);
   }
@@ -115,14 +115,8 @@ export class TopicAnalyzer implements TopicProfileProvider {
     return { keyword, weight: Number.isFinite(weight) && weight > 0 ? weight : DEFAULT_KEYWORD_WEIGHT };
   }
 
-  private toSampleEntry(rawText: string, rawBandScore: string): SampleEntry {
-    const tokens = this.normalizer.tokenize(rawText);
-    const bandScore = Number(rawBandScore);
-    return { tokens, bandScore: Number.isFinite(bandScore) ? bandScore : undefined };
-  }
-
-  /** speaking_samples.csv reports its band as a label like "Band9" rather than a bare number. */
-  private toSpeakingSampleEntry(rawText: string, rawSampleLevel: string): SampleEntry {
+  /** speaking_samples.csv and writing_samples.csv both report their band as a label like "Band9" rather than a bare number. */
+  private toBandLabeledSampleEntry(rawText: string, rawSampleLevel: string): SampleEntry {
     const tokens = this.normalizer.tokenize(rawText);
     const match = /(\d+(?:\.\d+)?)/.exec(rawSampleLevel);
     const bandScore = match ? Number(match[1]) : undefined;

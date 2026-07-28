@@ -10,21 +10,6 @@
 // Shared shapes (identical column layout reused across categories)
 // ---------------------------------------------------------------------------
 
-export interface CommonMistakeRow {
-  mistake_id: string;
-  category: string;
-  mistake: string;
-  correction: string;
-  explanation: string;
-}
-
-export interface CriterionFeedbackRow {
-  criterion: string;
-  score_min: string;
-  score_max: string;
-  feedback: string;
-}
-
 export interface QuestionKeywordRow {
   question_id: string;
   keyword: string;
@@ -67,6 +52,38 @@ export interface QuestionAnswerMetadataRow {
   answer_type: string;
   keywords: string;
   explanation: string;
+}
+
+/**
+ * Listening, Speaking, and Writing all populated their overall-band
+ * feedback file with this exact same column layout (a raw score/band
+ * range plus its own performance level, feedback sentence, and
+ * semicolon-separated strengths/weaknesses/recommendations lists). Reading
+ * keeps its own distinct shape (see ReadingFeedbackRow below) since its
+ * file also carries a "band" column and uses different column names.
+ */
+export interface ScoreRangeFeedbackRow {
+  score_min: string;
+  score_max: string;
+  performance_level: string;
+  overall_feedback: string;
+  strengths: string;
+  weaknesses: string;
+  recommendations: string;
+}
+
+/**
+ * Speaking and Writing both populated their common-mistakes file keyed by
+ * a score *category* (Grammar, Vocabulary, Coherence, Task Response, ...)
+ * rather than by question_type, with this exact same column layout.
+ */
+export interface CategoryMistakeRow {
+  mistake_id: string;
+  category: string;
+  mistake_name: string;
+  description: string;
+  recommendation: string;
+  severity: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,16 +140,7 @@ export interface ListeningQuestionRow {
 export type ListeningAnswerRow = QuestionAnswerMetadataRow;
 export type ListeningExplanationRow = QuestionTypeExplanationRow;
 export type ListeningCommonMistakeRow = QuestionTypeMistakeRow;
-
-export interface ListeningFeedbackRow {
-  score_min: string;
-  score_max: string;
-  performance_level: string;
-  overall_feedback: string;
-  strengths: string;
-  weaknesses: string;
-  recommendations: string;
-}
+export type ListeningFeedbackRow = ScoreRangeFeedbackRow;
 
 export type TranscriptKeywordRow = QuestionKeywordRow;
 
@@ -158,26 +166,9 @@ export interface SpeakingSampleRow {
   sample_answer: string;
 }
 
-/** Speaking's overall-band feedback is keyed by score range (0-9 band scale), like reading_feedback.csv/listening_feedback.csv, but with its own column names. */
-export interface SpeakingFeedbackRow {
-  score_min: string;
-  score_max: string;
-  performance_level: string;
-  overall_feedback: string;
-  strengths: string;
-  weaknesses: string;
-  recommendations: string;
-}
-
-/** Unlike Reading/Listening's question-type-keyed mistakes, Speaking's are keyed by score category (Grammar, Vocabulary, Pronunciation, Fluency, Coherence, Task Response, Filler Words). */
-export interface SpeakingCommonMistakeRow {
-  mistake_id: string;
-  category: string;
-  mistake_name: string;
-  description: string;
-  recommendation: string;
-  severity: string;
-}
+export type SpeakingFeedbackRow = ScoreRangeFeedbackRow;
+/** Speaking's mistakes are keyed by score category (Grammar, Vocabulary, Pronunciation, Fluency, Coherence, Task Response, Filler Words) rather than by question_type. */
+export type SpeakingCommonMistakeRow = CategoryMistakeRow;
 
 export interface SpeakingInvalidResponseRow {
   response: string;
@@ -186,7 +177,7 @@ export interface SpeakingInvalidResponseRow {
 }
 
 /** Labeled example responses (Relevant/Not Relevant) per question, used to corroborate the dataset-based relevance analysis. */
-export interface RelevanceTrainingRow {
+export interface SpeakingRelevanceTrainingRow {
   training_id: string;
   question_id: string;
   response_text: string;
@@ -200,13 +191,15 @@ export interface RelevanceTrainingRow {
 
 export interface WritingTopicRow {
   topic_id: string;
-  task_number: string;
-  topic: string;
-  prompt: string;
   task_type: string;
+  title: string;
+  prompt: string;
+  difficulty: string;
+  category: string;
 }
 
 export interface WritingKeywordRow {
+  keyword_id: string;
   topic_id: string;
   keyword: string;
   weight: string;
@@ -215,14 +208,28 @@ export interface WritingKeywordRow {
 export interface WritingSampleRow {
   sample_id: string;
   topic_id: string;
-  band_score: string;
-  essay: string;
-  notes: string;
+  sample_level: string;
+  sample_answer: string;
 }
 
-export type WritingFeedbackRow = CriterionFeedbackRow;
-export type WritingCommonMistakeRow = CommonMistakeRow;
-export type WritingInvalidResponseRow = InvalidResponseRow;
+export type WritingFeedbackRow = ScoreRangeFeedbackRow;
+/** Writing's mistakes are keyed by score category (Grammar, Vocabulary, Coherence, Task Response, Cohesion), the same convention Speaking uses. */
+export type WritingCommonMistakeRow = CategoryMistakeRow;
+
+export interface WritingInvalidResponseRow {
+  response_id: string;
+  response: string;
+  reason: string;
+}
+
+/** Labeled example responses (Relevant/Not Relevant) per topic, used to corroborate the dataset-based relevance analysis. */
+export interface WritingRelevanceTrainingRow {
+  training_id: string;
+  topic_id: string;
+  response_text: string;
+  label: string;
+  reason: string;
+}
 
 // ---------------------------------------------------------------------------
 // Vocabulary

@@ -1,1 +1,6 @@
-criterion,score_min,score_max,feedback
+score_min,score_max,performance_level,overall_feedback,strengths,weaknesses,recommendations
+8.5,9.0,Excellent,"Outstanding task response with excellent grammar and coherence.","Excellent task achievement;Advanced vocabulary;Strong cohesion","Minor stylistic improvements","Maintain your writing style."
+7.0,8.0,Good,"Good response with clear ideas and effective organization.","Clear arguments;Good vocabulary","Some grammar mistakes","Use more complex sentence structures."
+6.0,6.5,Satisfactory,"Generally clear response but inconsistent development.","Adequate vocabulary;Reasonable organization","Weak task response;Grammar inconsistencies","Develop ideas with better examples."
+5.0,5.5,Fair,"Basic communication achieved.","Simple vocabulary","Frequent grammar mistakes;Weak coherence","Practice essay organization."
+0.0,4.5,Poor,"Response does not meet IELTS requirements.","Very limited strengths","Poor grammar;Weak vocabulary;Off-topic","Study IELTS writing structure."

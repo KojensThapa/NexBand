@@ -1,4 +1,11 @@
-import type { QuestionAnswerMetadataRow, QuestionTypeExplanationRow, QuestionTypeMistakeRow } from "../dataset";
+import type {
+  CategoryMistakeRow,
+  QuestionAnswerMetadataRow,
+  QuestionTypeExplanationRow,
+  QuestionTypeMistakeRow,
+  ScoreRangeFeedbackRow,
+} from "../dataset";
+import type { SimilarityCalculator, TextNormalizer } from "../relevance";
 
 /**
  * Small, generic pieces genuinely duplicated between ReadingFeedbackService
@@ -33,6 +40,11 @@ export interface QuestionTypeExplanationResult<TType extends string> {
 /** Collapses case/spacing/punctuation differences so "TRUE_FALSE_NOT_GIVEN", "True / False / Not Given", and "True/False/Not Given" all compare equal. */
 export function normalizeLabel(value: string): string {
   return value.trim().toLowerCase().replace(/[\s/_-]+/g, " ");
+}
+
+/** Lowercases, trims, and strips trailing sentence punctuation, so a submitted question/prompt can be compared against a catalogued one despite minor formatting differences. */
+export function normalizeSentence(value: string): string {
+  return value.trim().toLowerCase().replace(/[?.!,;:]+$/g, "").trim();
 }
 
 function parseScoreBound(value: string): number | undefined {
@@ -103,6 +115,14 @@ export function resolveCommonMistakes(
   return resolveMistakesByKey(rows, weakLabels, (row) => row.question_type);
 }
 
+/** Common mistakes for whichever score categories (Grammar, Vocabulary, Coherence, Task Response, ...) came out low, matched by normalized category. Used by Speaking and Writing, which key their mistakes by category rather than by question_type. */
+export function resolveCategoryMistakes(
+  rows: readonly CategoryMistakeRow[],
+  weakCategories: ReadonlySet<string>
+): string[] {
+  return resolveMistakesByKey(rows, weakCategories, (row) => row.category);
+}
+
 /**
  * Explanations for each weak question type, matched by normalized
  * question_type, plus accepted answers for that type's questions —
@@ -141,4 +161,74 @@ export function resolveQuestionTypeExplanations<TType extends string>(
       ...(acceptedAnswers.length > 0 ? { acceptedAnswers } : {}),
     };
   });
+}
+
+const NOT_ASSESSED_PERFORMANCE_LEVEL = "Not Assessed";
+
+export interface ScoreRangeFeedback {
+  overallFeedback: string;
+  performanceLevel: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+}
+
+/**
+ * Resolves the "overall band" feedback for a score, from a
+ * ScoreRangeFeedbackRow dataset (listening_feedback.csv,
+ * speaking_feedback.csv, and writing_feedback.csv all share this exact
+ * column layout). Every field gracefully defaults to empty when no row's
+ * range contains the score.
+ */
+export function resolveScoreRangeFeedback(rows: readonly ScoreRangeFeedbackRow[], score: number): ScoreRangeFeedback {
+  const row = findRowInScoreRange(rows, score, (item) => item.score_min, (item) => item.score_max);
+
+  return {
+    overallFeedback: row?.overall_feedback ?? "",
+    performanceLevel: row?.performance_level ?? NOT_ASSESSED_PERFORMANCE_LEVEL,
+    strengths: splitList(row?.strengths ?? ""),
+    weaknesses: splitList(row?.weaknesses ?? ""),
+    recommendations: splitList(row?.recommendations ?? ""),
+  };
+}
+
+export interface TextCandidate {
+  id: string;
+  text: string;
+  label?: string;
+  reason?: string;
+}
+
+export interface ClosestTextMatch {
+  id: string;
+  text: string;
+  label?: string;
+  reason?: string;
+  similarity: number;
+}
+
+/**
+ * Finds whichever candidate's text is most similar (by rule-based token
+ * overlap, via RelevanceEngine's own SimilarityCalculator strategy) to the
+ * target tokens. Used to find the closest sample answer, or the closest
+ * labeled training example, for a response — reusing RelevanceEngine's
+ * comparison logic rather than re-implementing it.
+ */
+export function findClosestTextMatch(
+  targetTokens: readonly string[],
+  candidates: readonly TextCandidate[],
+  normalizer: TextNormalizer,
+  similarityCalculator: SimilarityCalculator
+): ClosestTextMatch | undefined {
+  let best: ClosestTextMatch | undefined;
+
+  for (const candidate of candidates) {
+    const candidateTokens = normalizer.tokenize(candidate.text);
+    const similarity = similarityCalculator.calculate([...targetTokens], [{ tokens: candidateTokens }]);
+    if (!best || similarity > best.similarity) {
+      best = { id: candidate.id, text: candidate.text, label: candidate.label, reason: candidate.reason, similarity };
+    }
+  }
+
+  return best && best.similarity > 0 ? best : undefined;
 }

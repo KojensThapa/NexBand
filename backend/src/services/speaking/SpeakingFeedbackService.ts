@@ -1,6 +1,6 @@
 import { datasetService as defaultDatasetService } from "../dataset";
 import type {
-  RelevanceTrainingRow,
+  SpeakingRelevanceTrainingRow,
   SpeakingCommonMistakeRow,
   SpeakingFeedbackRow,
   SpeakingQuestionRow,
@@ -14,7 +14,13 @@ import {
   RuleBasedSimilarityCalculator,
 } from "../relevance";
 import type { RelevanceInput, RelevanceResult, SimilarityCalculator, TextNormalizer } from "../relevance";
-import { findRowInScoreRange, normalizeLabel, resolveMistakesByKey, splitList } from "../shared/datasetFeedbackUtils";
+import {
+  findClosestTextMatch,
+  normalizeLabel,
+  normalizeSentence,
+  resolveCategoryMistakes,
+  resolveScoreRangeFeedback,
+} from "../shared/datasetFeedbackUtils";
 import { validationEngine as defaultValidationEngine } from "../validation";
 import type { ValidationOptions, ValidationResult, ValidationTarget } from "../validation";
 
@@ -29,7 +35,6 @@ const LOW_SCORE_THRESHOLD = 6;
  * not depend on the algorithm's internals.
  */
 const LOW_RELEVANCE_THRESHOLD = 5;
-const NOT_ASSESSED_PERFORMANCE_LEVEL = "Not Assessed";
 
 /**
  * The only slice of DatasetService this service is allowed to see directly:
@@ -43,7 +48,7 @@ export interface SpeakingDatasetProvider {
   getSpeakingCommonMistakes(): Promise<SpeakingCommonMistakeRow[]>;
   getSpeakingQuestions(): Promise<SpeakingQuestionRow[]>;
   getSpeakingSamples(): Promise<SpeakingSampleRow[]>;
-  getRelevanceTraining(): Promise<RelevanceTrainingRow[]>;
+  getRelevanceTraining(): Promise<SpeakingRelevanceTrainingRow[]>;
 }
 
 /** The one FeedbackEngine method this service needs — matches the real FeedbackEngine's public API structurally. */
@@ -115,10 +120,6 @@ export interface EnhancedSpeakingEvaluationResult extends SpeakingEvaluationResu
   datasetWarnings: string[];
 }
 
-function normalizeSentence(value: string): string {
-  return value.trim().toLowerCase().replace(/[?.!,;:]+$/g, "").trim();
-}
-
 /**
  * Bridges the existing (untouched) Speaking evaluation pipeline —
  * Deepgram transcription, Gemini grammar/pronunciation/relevance analysis,
@@ -185,26 +186,21 @@ export class SpeakingFeedbackService {
     const feedback = await this.feedbackGenerator.generateFeedback(this.buildEvaluationInput(result));
 
     // speaking_feedback.csv is keyed by overallBand, already a 0-9 band score.
-    const overallFeedbackRow = findRowInScoreRange(
-      feedbackRows,
-      result.overallBand,
-      (row) => row.score_min,
-      (row) => row.score_max
-    );
+    const overallFeedback = resolveScoreRangeFeedback(feedbackRows, result.overallBand);
 
     const weakCategories = this.resolveWeakCategories(result);
-    const commonMistakes = resolveMistakesByKey(mistakeRows, weakCategories, (row) => row.category);
+    const commonMistakes = resolveCategoryMistakes(mistakeRows, weakCategories);
     const sampleAnswer = sampleRows.find((row) => questionIds.includes(row.question_id))?.sample_answer;
 
     return {
       ...result,
-      strengths: [...feedback.strengths, ...splitList(overallFeedbackRow?.strengths ?? "")],
-      weakAreas: [...feedback.weaknesses, ...splitList(overallFeedbackRow?.weaknesses ?? "")],
-      recommendations: [...feedback.recommendations, ...splitList(overallFeedbackRow?.recommendations ?? "")],
+      strengths: [...feedback.strengths, ...overallFeedback.strengths],
+      weakAreas: [...feedback.weaknesses, ...overallFeedback.weaknesses],
+      recommendations: [...feedback.recommendations, ...overallFeedback.recommendations],
       validation,
       ...(relevanceAnalysis ? { relevanceAnalysis } : {}),
-      performanceLevel: overallFeedbackRow?.performance_level ?? NOT_ASSESSED_PERFORMANCE_LEVEL,
-      overallFeedback: overallFeedbackRow?.overall_feedback ?? "",
+      performanceLevel: overallFeedback.performanceLevel,
+      overallFeedback: overallFeedback.overallFeedback,
       commonMistakes,
       feedbackSummary: feedback.summary,
       ...(sampleAnswer ? { sampleAnswer } : {}),
@@ -284,7 +280,7 @@ export class SpeakingFeedbackService {
     result: SpeakingEvaluationResult,
     questionIds: string[],
     sampleRows: SpeakingSampleRow[],
-    trainingRows: RelevanceTrainingRow[]
+    trainingRows: SpeakingRelevanceTrainingRow[]
   ): Promise<{ analysis?: SpeakingRelevanceAnalysis; warnings: string[] }> {
     const questionId = questionIds[0];
     if (questionIds.length !== 1 || questionId === undefined) {
@@ -338,29 +334,20 @@ export class SpeakingFeedbackService {
   private matchTrainingExample(
     transcriptTokens: string[],
     questionId: string,
-    trainingRows: RelevanceTrainingRow[]
+    trainingRows: SpeakingRelevanceTrainingRow[]
   ): TrainingExampleMatch | undefined {
-    const candidates = trainingRows.filter(
-      (row) => row.question_id === questionId && row.response_text.trim().length > 0
-    );
-    if (candidates.length === 0) return undefined;
+    const candidates = trainingRows
+      .filter((row) => row.question_id === questionId && row.response_text.trim().length > 0)
+      .map((row) => ({ id: row.training_id, text: row.response_text, label: row.label, reason: row.reason }));
 
-    let best: { row: RelevanceTrainingRow; similarity: number } | undefined;
-    for (const row of candidates) {
-      const candidateTokens = this.normalizer.tokenize(row.response_text);
-      const similarity = this.similarityCalculator.calculate(transcriptTokens, [{ tokens: candidateTokens }]);
-      if (!best || similarity > best.similarity) {
-        best = { row, similarity };
-      }
-    }
-
-    if (!best || best.similarity <= 0) return undefined;
+    const match = findClosestTextMatch(transcriptTokens, candidates, this.normalizer, this.similarityCalculator);
+    if (!match) return undefined;
 
     return {
-      trainingId: best.row.training_id,
-      label: best.row.label,
-      reason: best.row.reason,
-      similarity: best.similarity,
+      trainingId: match.id,
+      label: match.label ?? "",
+      reason: match.reason ?? "",
+      similarity: match.similarity,
     };
   }
 }

@@ -1,3 +1,4 @@
+import { WritingFeedbackService } from "../../../services/writing/WritingFeedbackService";
 import { calculateCefrLevel, calculateMockOverallBand } from "../algorithm/bandCalculator";
 import { evaluateWriting } from "../algorithm/writingAlgorithm";
 import type {
@@ -102,7 +103,8 @@ function buildMockReport(taskReports: WritingEvaluationResult[]): WritingMockRep
 export class WritingEvaluationService {
   constructor(
     private readonly repository: WritingEvaluationRepositoryPort = new WritingEvaluationRepository(),
-    private readonly providers: WritingProviders = createWritingProvidersFromEnvironment()
+    private readonly providers: WritingProviders = createWritingProvidersFromEnvironment(),
+    private readonly writingFeedbackService: WritingFeedbackService = new WritingFeedbackService()
   ) {}
 
   private async analyzeTask(
@@ -188,6 +190,68 @@ export class WritingEvaluationService {
   async getSubmission(userId: string, submissionId: string) {
     const submission = await this.repository.findSubmissionForUser(userId, submissionId);
     if (!submission) throw new WritingServiceError("Writing submission not found.", 404);
-    return submission;
+    return await this.enrichSubmissionReports(submission);
+  }
+
+  /**
+   * Enriches each persisted report's `evaluationData` (the full
+   * WritingEvaluationResult, or WritingMockReport, JSON blob) with
+   * dataset-driven feedback before it reaches the caller. This only
+   * touches the read path — the reports were already persisted by
+   * `submit()`, exactly as evaluateWriting() produced them; nothing about
+   * scoring, persistence, or orchestration changes. A mock report has no
+   * single task number of its own, so each of its nested `taskReports` is
+   * enriched individually instead. Any shape this repository port returns
+   * that isn't recognizably a reports array is returned unchanged.
+   */
+  private async enrichSubmissionReports(submission: unknown): Promise<unknown> {
+    if (!submission || typeof submission !== "object" || !("reports" in submission)) {
+      return submission;
+    }
+
+    const reports = (submission as { reports: unknown }).reports;
+    if (!Array.isArray(reports)) return submission;
+
+    const enrichedReports = await Promise.all(
+      reports.map(async (report) => {
+        if (!report || typeof report !== "object" || !("evaluationData" in report)) return report;
+
+        const evaluationData = (report as { evaluationData: unknown }).evaluationData;
+
+        if (this.isWritingEvaluationResult(evaluationData)) {
+          return { ...report, evaluationData: await this.writingFeedbackService.enrich(evaluationData) };
+        }
+
+        if (this.isWritingMockReport(evaluationData)) {
+          const enrichedTaskReports = await Promise.all(
+            evaluationData.taskReports.map((taskReport) => this.writingFeedbackService.enrich(taskReport))
+          );
+          return { ...report, evaluationData: { ...evaluationData, taskReports: enrichedTaskReports } };
+        }
+
+        return report;
+      })
+    );
+
+    return { ...submission, reports: enrichedReports };
+  }
+
+  private isWritingEvaluationResult(value: unknown): value is WritingEvaluationResult {
+    return (
+      !!value &&
+      typeof value === "object" &&
+      "studentEssay" in value &&
+      "taskNumber" in value &&
+      typeof (value as { taskNumber: unknown }).taskNumber === "number"
+    );
+  }
+
+  private isWritingMockReport(value: unknown): value is WritingMockReport {
+    return (
+      !!value &&
+      typeof value === "object" &&
+      "taskReports" in value &&
+      Array.isArray((value as { taskReports: unknown }).taskReports)
+    );
   }
 }

@@ -10,11 +10,10 @@ import type {
 import { feedbackEngine as defaultFeedbackEngine } from "../feedback";
 import type { EvaluationInput, FeedbackResult } from "../feedback";
 import {
-  findRowInScoreRange,
   normalizeLabel,
   resolveCommonMistakes,
   resolveQuestionTypeExplanations,
-  splitList,
+  resolveScoreRangeFeedback,
   type QuestionTypeExplanationResult,
 } from "../shared/datasetFeedbackUtils";
 
@@ -32,8 +31,6 @@ import type {
  * already-computed `questionTypePerformance` the algorithm returns.
  */
 const LOW_PERFORMANCE_ACCURACY_THRESHOLD = 60;
-
-const NOT_ASSESSED_PERFORMANCE_LEVEL = "Not Assessed";
 
 /**
  * The only slice of DatasetService this service is allowed to see: the six
@@ -134,12 +131,7 @@ export class ListeningFeedbackService {
 
     // listening_feedback.csv is keyed by the learner's raw correct-answer
     // count out of 40, the same convention reading_feedback.csv uses.
-    const overallFeedbackRow = findRowInScoreRange(
-      feedbackRows,
-      result.correctAnswers,
-      (row) => row.score_min,
-      (row) => row.score_max
-    );
+    const overallFeedback = resolveScoreRangeFeedback(feedbackRows, result.correctAnswers);
 
     const questionTypeExplanations = this.attachRelatedKeywords(
       resolveQuestionTypeExplanations(weakPerformances, questionRows, explanationRows, answerRows),
@@ -149,11 +141,11 @@ export class ListeningFeedbackService {
 
     return {
       ...result,
-      strengths: [...feedback.strengths, ...splitList(overallFeedbackRow?.strengths ?? "")],
-      weakAreas: [...feedback.weaknesses, ...splitList(overallFeedbackRow?.weaknesses ?? "")],
-      recommendations: [...feedback.recommendations, ...splitList(overallFeedbackRow?.recommendations ?? "")],
-      overallFeedback: overallFeedbackRow?.overall_feedback ?? "",
-      performanceLevel: overallFeedbackRow?.performance_level ?? NOT_ASSESSED_PERFORMANCE_LEVEL,
+      strengths: [...feedback.strengths, ...overallFeedback.strengths],
+      weakAreas: [...feedback.weaknesses, ...overallFeedback.weaknesses],
+      recommendations: [...feedback.recommendations, ...overallFeedback.recommendations],
+      overallFeedback: overallFeedback.overallFeedback,
+      performanceLevel: overallFeedback.performanceLevel,
       commonMistakes: resolveCommonMistakes(commonMistakeRows, weakPerformances),
       questionTypeExplanations,
       feedbackSummary: feedback.summary,

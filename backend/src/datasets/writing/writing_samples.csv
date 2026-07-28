@@ -1,1 +1,6 @@
-sample_id,topic_id,band_score,essay,notes
+sample_id,topic_id,sample_level,sample_answer
+WS001,WT004,Band9,"Technology has transformed education by providing students with unlimited learning opportunities through digital resources. However, excessive dependence on technology may reduce critical thinking. In my opinion, technology greatly benefits education when used appropriately."
+WS002,WT004,Band7,"Technology helps students learn more easily. Online classes and educational websites are useful, but students should not depend only on computers."
+WS003,WT005,Band9,"Environmental protection requires cooperation between governments and citizens. Investment in renewable energy and stricter environmental laws are essential."
+WS004,WT006,Band8,"Free university education can improve equal opportunities, but governments may face financial challenges in supporting every student."
+WS005,WT007,Band8,"Healthcare should be accessible to everyone. Governments should provide affordable medical services while encouraging private healthcare investment."
