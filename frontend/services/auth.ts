@@ -109,6 +109,55 @@ export function signOutApiUser() {
   clearApiToken();
 }
 
+// Email OTP verification (user registration only)
+export async function registerInitiate(input: RegisterInput): Promise<void> {
+  await apiFetch<{ success: true; message: string }>("/api/auth/register/initiate", {
+    method: "POST",
+    body: JSON.stringify({
+      fullName: input.name,
+      email: input.email,
+      password: input.password,
+    }),
+  });
+}
+
+export async function registerVerify(input: { email: string; otp: string }): Promise<AuthSession<User>> {
+  const response = await apiFetch<{
+    success: true;
+    token: string;
+    user: ApiUser;
+  }>("/api/auth/register/verify", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  saveApiToken(response.token);
+
+  return { user: toUser(response.user), token: response.token };
+}
+
+export async function resendOtp(email: string): Promise<void> {
+  await apiFetch<{ success: true; message: string }>("/api/auth/resend-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+// Forgot / reset password
+export async function forgotPassword(email: string): Promise<void> {
+  await apiFetch<{ success: true; message: string }>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(input: { token: string; password: string }): Promise<void> {
+  await apiFetch<{ success: true; message: string }>("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 async function getCurrentAccount(expectedRole: Role) {
   try {
     const response = await apiFetch<ApiEnvelope<ApiUser>>("/api/auth/me");

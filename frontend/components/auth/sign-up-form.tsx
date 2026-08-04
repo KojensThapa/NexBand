@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { registerApiUser } from "@/services/auth";
+import { registerInitiate } from "@/services/auth";
+import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -27,9 +28,8 @@ export function SignUpForm() {
       if (password !== confirmPassword) {
         throw new Error("Passwords do not match.");
       }
-      await registerApiUser({ name, email, password });
-      router.push("/auth/signin?registered=1");
-      router.refresh();
+      await registerInitiate({ name, email, password });
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed. Please try again.");
     } finally {
@@ -75,16 +75,14 @@ export function SignUpForm() {
         <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="8+ characters, uppercase, lowercase, and number"
-          className={inputClass}
         />
       </div>
 
@@ -95,16 +93,14 @@ export function SignUpForm() {
         >
           Confirm password
         </label>
-        <input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Re-enter your password"
-          className={inputClass}
         />
       </div>
 
@@ -121,7 +117,7 @@ export function SignUpForm() {
           "flex h-12 w-full items-center justify-center rounded-xl bg-[#553285] text-sm font-medium text-white transition-colors hover:bg-[#432668] disabled:opacity-60"
         )}
       >
-        {isSubmitting ? "Creating account…" : "Create account"}
+        {isSubmitting ? "Sending code…" : "Create account"}
       </button>
 
       <p className="text-center text-sm text-slate-600">

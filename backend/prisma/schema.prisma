@@ -140,6 +140,12 @@ model User {
   // Profile photos are stored as a validated data URL for now. Keeping this
   // nullable lets an account fall back to its initials after a photo is removed.
   image     String?  @db.Text
+  // Set once the account's email OTP has been verified. Registration already
+  // gates account creation behind OTP verification, so this is currently
+  // informational rather than an additional login gate.
+  emailVerified DateTime?
+
+  passwordResetTokens PasswordResetToken[]
 
   readingAttempts   ReadingAttempt[]
   readingResults    ReadingResult[]
@@ -153,6 +159,38 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// No User account exists yet for a pending signup. Registration data lives
+// here only until the OTP is verified, at which point the User row is
+// created and this row is deleted.
+model PendingRegistration {
+  id           String   @id @default(cuid())
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  otpHash      String
+  otpExpiresAt DateTime
+  attempts     Int      @default(0)
+  lastSentAt   DateTime @default(now())
+  resendCount  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model SpeakingTest {

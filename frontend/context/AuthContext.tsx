@@ -14,8 +14,15 @@ import {
   getStoredSessionUser,
   persistSessionUser,
 } from "@/lib/auth/client-session";
-import { clearSessionCookie } from "@/lib/auth/session";
-import { getCurrentUser, signOutApiUser } from "@/services/auth";
+import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session";
+import {
+  forgotPassword as apiForgotPassword,
+  getCurrentUser,
+  registerVerify as apiRegisterVerify,
+  resendOtp as apiResendOtp,
+  resetPassword as apiResetPassword,
+  signOutApiUser,
+} from "@/services/auth";
 import type { User } from "@/types/user";
 
 interface AuthContextValue {
@@ -23,6 +30,10 @@ interface AuthContextValue {
   isLoading: boolean;
   setUser: (user: User | null) => void;
   signOut: () => void;
+  verifyEmail: (email: string, otp: string) => Promise<User>;
+  resendOTP: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -71,9 +82,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOutApiUser();
   }, []);
 
+  const verifyEmail = useCallback(
+    async (email: string, otp: string) => {
+      const { user: verifiedUser, token } = await apiRegisterVerify({ email, otp });
+      setSessionCookie(token);
+      setUser(verifiedUser);
+      return verifiedUser;
+    },
+    [setUser]
+  );
+
+  const resendOTP = useCallback(async (email: string) => {
+    await apiResendOtp(email);
+  }, []);
+
+  const forgotPassword = useCallback(async (email: string) => {
+    await apiForgotPassword(email);
+  }, []);
+
+  const resetPassword = useCallback(async (token: string, password: string) => {
+    await apiResetPassword({ token, password });
+  }, []);
+
   const value = useMemo(
-    () => ({ user, isLoading, setUser, signOut }),
-    [user, isLoading, setUser, signOut]
+    () => ({ user, isLoading, setUser, signOut, verifyEmail, resendOTP, forgotPassword, resetPassword }),
+    [user, isLoading, setUser, signOut, verifyEmail, resendOTP, forgotPassword, resetPassword]
   );
 
   return (

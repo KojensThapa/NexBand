@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
@@ -34,6 +35,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-white text-slate-900">
         <Providers>{children}</Providers>
+        <Toaster position="top-center" richColors closeButton />
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { setSessionCookie } from "@/lib/auth/session";
 import { loginApiUser } from "@/services/auth";
+import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -77,15 +78,13 @@ export function SignInForm({ callbackUrl = "/dashboard", registered, passwordRes
         <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"
-          className={inputClass}
         />
         <div className="mt-2 text-right">
           <Link

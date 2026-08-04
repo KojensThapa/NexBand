@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { registerApiAdmin } from "@/services/auth";
+import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
+
+const adminPasswordFocusClass = "focus:!border-violet-400 focus:!ring-violet-100";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100";
@@ -80,16 +83,15 @@ export function AdminSignUpForm() {
         >
           Password
         </label>
-        <input
+        <PasswordInput
           id="admin-password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="8+ characters, uppercase, lowercase, and number"
-          className={inputClass}
+          className={adminPasswordFocusClass}
         />
       </div>
 
@@ -100,16 +102,15 @@ export function AdminSignUpForm() {
         >
           Confirm password
         </label>
-        <input
+        <PasswordInput
           id="admin-confirm-password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Re-enter your password"
-          className={inputClass}
+          className={adminPasswordFocusClass}
         />
       </div>
 

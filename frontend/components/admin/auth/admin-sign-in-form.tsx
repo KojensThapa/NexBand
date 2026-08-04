@@ -6,7 +6,10 @@ import { useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { loginApiAdmin } from "@/services/auth";
 import { setAdminSessionCookie } from "@/lib/admin/auth/session";
+import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
+
+const adminPasswordFocusClass = "focus:!border-violet-400 focus:!ring-violet-100";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100";
@@ -86,15 +89,14 @@ export function AdminSignInForm({
         >
           Password
         </label>
-        <input
+        <PasswordInput
           id="admin-password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"
-          className={inputClass}
+          className={adminPasswordFocusClass}
         />
         <div className="mt-2 text-right">
           <Link
