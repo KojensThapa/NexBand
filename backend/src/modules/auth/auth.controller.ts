@@ -33,27 +33,32 @@ export class AuthController {
 
   async registerInitiate(
     request: FastifyRequest<{ Body: RegisterInitiateInput }>,
-    reply: FastifyReply
+    reply: FastifyReply,
+    role: Role
   ) {
     try {
-      await this.authService.registerInitiate(request.body);
+      await this.authService.registerInitiate(request.body, role);
       return reply.status(200).send({
         success: true,
         message: "A verification code has been sent to your email.",
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Internal Server Error";
-      const status = message === "Email already exists" ? 409 : 400;
+      const status =
+        message === "Email already exists" || message.startsWith("An admin account already exists")
+          ? 409
+          : 400;
       return reply.status(status).send({ success: false, message });
     }
   }
 
   async registerVerify(
     request: FastifyRequest<{ Body: RegisterVerifyInput }>,
-    reply: FastifyReply
+    reply: FastifyReply,
+    role: Role
   ) {
     try {
-      const user = await this.authService.registerVerify(request.body);
+      const user = await this.authService.registerVerify(request.body, role);
       const token = await this.issueToken(reply, user);
 
       return reply.status(201).send({
@@ -70,10 +75,11 @@ export class AuthController {
 
   async resendOtp(
     request: FastifyRequest<{ Body: ResendOtpInput }>,
-    reply: FastifyReply
+    reply: FastifyReply,
+    role: Role
   ) {
     try {
-      await this.authService.resendOtp(request.body);
+      await this.authService.resendOtp(request.body, role);
       return reply.status(200).send({
         success: true,
         message: "A new verification code has been sent to your email.",
@@ -87,10 +93,11 @@ export class AuthController {
 
   async forgotPassword(
     request: FastifyRequest<{ Body: ForgotPasswordInput }>,
-    reply: FastifyReply
+    reply: FastifyReply,
+    role: Role
   ) {
     try {
-      await this.authService.forgotPassword(request.body);
+      await this.authService.forgotPassword(request.body, role);
     } catch {
       // Fall through: never reveal backend failures tied to a specific email.
     }

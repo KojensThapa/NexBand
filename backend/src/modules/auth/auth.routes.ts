@@ -44,7 +44,7 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
     }
 
     request.body = result.data;
-    return authController.registerInitiate(request as any, reply);
+    return authController.registerInitiate(request as any, reply, "USER");
   });
 
   fastify.post("/register/verify", async (request, reply) => {
@@ -59,7 +59,7 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
     }
 
     request.body = result.data;
-    return authController.registerVerify(request as any, reply);
+    return authController.registerVerify(request as any, reply, "USER");
   });
 
   fastify.post(
@@ -77,7 +77,7 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
       }
 
       request.body = result.data;
-      return authController.resendOtp(request as any, reply);
+      return authController.resendOtp(request as any, reply, "USER");
     }
   );
 
@@ -96,7 +96,7 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
       }
 
       request.body = result.data;
-      return authController.forgotPassword(request as any, reply);
+      return authController.forgotPassword(request as any, reply, "USER");
     }
   );
 
@@ -128,7 +128,9 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
     return authController.login(request as any, reply, "USER");
   });
 
-  fastify.post("/admin/register", async (request, reply) => {
+  // Admin registration reuses the same OTP email-verification flow as user
+  // registration: no Admin row exists until /admin/register/verify succeeds.
+  fastify.post("/admin/register/initiate", async (request, reply) => {
     if (process.env.ALLOW_ADMIN_REGISTRATION === "false") {
       return reply.status(403).send({
         success: false,
@@ -136,7 +138,7 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
       });
     }
 
-    const result = registerSchema.safeParse(request.body);
+    const result = registerInitiateSchema.safeParse(request.body);
     if (!result.success) {
       return reply.status(400).send({
         success: false,
@@ -145,8 +147,59 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
       });
     }
 
-    return authController.register(request as any, reply, "ADMIN");
+    request.body = result.data;
+    return authController.registerInitiate(request as any, reply, "ADMIN");
   });
+
+  fastify.post("/admin/register/verify", async (request, reply) => {
+    const result = registerVerifySchema.safeParse(request.body);
+    if (!result.success) {
+      return reply.status(400).send({
+        success: false,
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
+    }
+
+    request.body = result.data;
+    return authController.registerVerify(request as any, reply, "ADMIN");
+  });
+
+  fastify.post(
+    "/admin/resend-otp",
+    { config: { rateLimit: { max: 5, timeWindow: "5 minutes" } } },
+    async (request, reply) => {
+      const result = resendOtpSchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({
+          success: false,
+          message: "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        });
+      }
+
+      request.body = result.data;
+      return authController.resendOtp(request as any, reply, "ADMIN");
+    }
+  );
+
+  fastify.post(
+    "/admin/forgot-password",
+    { config: { rateLimit: { max: 5, timeWindow: "5 minutes" } } },
+    async (request, reply) => {
+      const result = forgotPasswordSchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({
+          success: false,
+          message: "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        });
+      }
+
+      request.body = result.data;
+      return authController.forgotPassword(request as any, reply, "ADMIN");
+    }
+  );
 
   fastify.post("/admin/login", async (request, reply) => {
     const result = loginSchema.safeParse(request.body);

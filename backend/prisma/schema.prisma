@@ -131,10 +131,15 @@ enum ReadingAttemptStatus {
   SUBMITTED
 }
 
+// A partial unique index (migration 20260818120000_enforce_single_admin)
+// additionally restricts this table to at most one row with role = ADMIN.
+// Prisma's schema language can't express a partial index, so it isn't
+// declared below with @@unique - it only exists in the migration SQL.
 model User {
   id        String   @id @default(cuid())
   fullName  String
-  email     String   @unique
+  // A USER and an ADMIN may share the same email; the pair must be unique instead.
+  email     String
   password  String
   role      Role     @default(USER)
   // Profile photos are stored as a validated data URL for now. Keeping this
@@ -159,6 +164,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([email, role])
 }
 
 // No User account exists yet for a pending signup. Registration data lives
@@ -167,7 +174,9 @@ model User {
 model PendingRegistration {
   id           String   @id @default(cuid())
   fullName     String
-  email        String   @unique
+  email        String
+  // Same email can have a pending USER signup and a pending ADMIN signup at once.
+  role         Role     @default(USER)
   passwordHash String
   otpHash      String
   otpExpiresAt DateTime
@@ -177,6 +186,8 @@ model PendingRegistration {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([email, role])
 }
 
 model PasswordResetToken {

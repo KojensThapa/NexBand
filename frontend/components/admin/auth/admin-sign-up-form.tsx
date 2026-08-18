@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { registerApiAdmin } from "@/services/auth";
+import { registerInitiateApiAdmin } from "@/services/auth";
 import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +30,8 @@ export function AdminSignUpForm() {
       if (password !== confirmPassword) {
         throw new Error("Passwords do not match.");
       }
-      await registerApiAdmin({ name, email, password });
-      router.push("/admin/auth/signin?registered=1");
-      router.refresh();
+      await registerInitiateApiAdmin({ name, email, password });
+      router.push(`/admin/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Sign up failed. Please try again."
@@ -127,7 +126,7 @@ export function AdminSignUpForm() {
           "flex h-12 w-full items-center justify-center rounded-xl bg-[#553285] text-sm font-medium text-white transition-colors hover:bg-[#432668] disabled:opacity-60"
         )}
       >
-        {isSubmitting ? "Creating admin account…" : "Create admin account"}
+        {isSubmitting ? "Sending code…" : "Create admin account"}
       </button>
 
       <p className="text-center text-sm text-slate-600">

@@ -3,10 +3,11 @@ import type { Role } from "@prisma/client";
 import type { RegisterInput, UpdateProfileInput } from "./auth.schemas";
 
 export class AuthRepository {
-  async findUserByEmail(email: string) {
+  // A USER and an ADMIN may share the same email, so lookups must be scoped by role.
+  async findUserByEmail(email: string, role: Role) {
     return prisma.user.findUnique({
       where: {
-        email,
+        email_role: { email, role },
       },
     });
   }
@@ -19,6 +20,13 @@ export class AuthRepository {
     return prisma.user.create({
       data,
     });
+  }
+
+  // Only one ADMIN account may exist system-wide (enforced also by a partial
+  // unique index on User.role, see migration 20260818120000_enforce_single_admin).
+  async adminExists() {
+    const admin = await prisma.user.findFirst({ where: { role: "ADMIN" }, select: { id: true } });
+    return admin !== null;
   }
 
   async updateUser(id: string, data: UpdateProfileInput) {
@@ -40,20 +48,22 @@ export class AuthRepository {
     return prisma.user.update({ where: { id }, data: { password } });
   }
 
-  // Pending registration (pre-OTP-verification signup data)
-  async findPendingRegistrationByEmail(email: string) {
-    return prisma.pendingRegistration.findUnique({ where: { email } });
+  // Pending registration (pre-OTP-verification signup data). Scoped by role so
+  // the same email can have an independent pending USER and ADMIN signup.
+  async findPendingRegistrationByEmail(email: string, role: Role) {
+    return prisma.pendingRegistration.findUnique({ where: { email_role: { email, role } } });
   }
 
   async upsertPendingRegistration(data: {
     fullName: string;
     email: string;
+    role: Role;
     passwordHash: string;
     otpHash: string;
     otpExpiresAt: Date;
   }) {
     return prisma.pendingRegistration.upsert({
-      where: { email: data.email },
+      where: { email_role: { email: data.email, role: data.role } },
       create: { ...data, lastSentAt: new Date(), attempts: 0, resendCount: 0 },
       update: {
         fullName: data.fullName,
@@ -68,10 +78,11 @@ export class AuthRepository {
 
   async touchPendingRegistrationOtp(
     email: string,
+    role: Role,
     data: { otpHash: string; otpExpiresAt: Date }
   ) {
     return prisma.pendingRegistration.update({
-      where: { email },
+      where: { email_role: { email, role } },
       data: {
         otpHash: data.otpHash,
         otpExpiresAt: data.otpExpiresAt,
@@ -82,15 +93,15 @@ export class AuthRepository {
     });
   }
 
-  async incrementPendingRegistrationAttempts(email: string) {
+  async incrementPendingRegistrationAttempts(email: string, role: Role) {
     return prisma.pendingRegistration.update({
-      where: { email },
+      where: { email_role: { email, role } },
       data: { attempts: { increment: 1 } },
     });
   }
 
-  async deletePendingRegistration(email: string) {
-    await prisma.pendingRegistration.deleteMany({ where: { email } });
+  async deletePendingRegistration(email: string, role: Role) {
+    await prisma.pendingRegistration.deleteMany({ where: { email, role } });
   }
 
   // Password reset tokens

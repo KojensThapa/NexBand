@@ -14,8 +14,15 @@ import {
   getStoredAdminSession,
   persistAdminSession,
 } from "@/lib/auth/client-session";
-import { clearAdminSessionCookie } from "@/lib/admin/auth/session";
-import { getCurrentAdmin, signOutApiUser } from "@/services/auth";
+import { clearAdminSessionCookie, setAdminSessionCookie } from "@/lib/admin/auth/session";
+import {
+  forgotPasswordApiAdmin,
+  getCurrentAdmin,
+  registerVerifyApiAdmin,
+  resendOtpApiAdmin,
+  resetPassword as apiResetPassword,
+  signOutApiUser,
+} from "@/services/auth";
 import type { Admin } from "@/types/admin";
 
 interface AdminAuthContextValue {
@@ -23,6 +30,10 @@ interface AdminAuthContextValue {
   isLoading: boolean;
   setAdmin: (admin: Admin | null) => void;
   signOut: () => void;
+  verifyEmail: (email: string, otp: string) => Promise<Admin>;
+  resendOTP: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | undefined>(undefined);
@@ -71,9 +82,40 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     signOutApiUser();
   }, []);
 
+  const verifyEmail = useCallback(
+    async (email: string, otp: string) => {
+      const { user: verifiedAdmin, token } = await registerVerifyApiAdmin({ email, otp });
+      setAdminSessionCookie(token);
+      setAdmin(verifiedAdmin);
+      return verifiedAdmin;
+    },
+    [setAdmin]
+  );
+
+  const resendOTP = useCallback(async (email: string) => {
+    await resendOtpApiAdmin(email);
+  }, []);
+
+  const forgotPassword = useCallback(async (email: string) => {
+    await forgotPasswordApiAdmin(email);
+  }, []);
+
+  const resetPassword = useCallback(async (token: string, password: string) => {
+    await apiResetPassword({ token, password });
+  }, []);
+
   const value = useMemo(
-    () => ({ admin, isLoading, setAdmin, signOut }),
-    [admin, isLoading, setAdmin, signOut]
+    () => ({
+      admin,
+      isLoading,
+      setAdmin,
+      signOut,
+      verifyEmail,
+      resendOTP,
+      forgotPassword,
+      resetPassword,
+    }),
+    [admin, isLoading, setAdmin, signOut, verifyEmail, resendOTP, forgotPassword, resetPassword]
   );
 
   return (

@@ -55,22 +55,6 @@ type RegisterInput = {
 
 type LoginInput = Pick<RegisterInput, "email" | "password">;
 
-async function register(input: RegisterInput, role: Role) {
-  const response = await apiFetch<ApiEnvelope<ApiUser>>(
-    role === "ADMIN" ? "/api/auth/admin/register" : "/api/auth/register",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        fullName: input.name,
-        email: input.email,
-        password: input.password,
-      }),
-    }
-  );
-
-  return role === "ADMIN" ? toAdmin(response.data) : toUser(response.data);
-}
-
 async function login(input: LoginInput, role: Role) {
   const response = await apiFetch<{
     success: true;
@@ -89,14 +73,6 @@ async function login(input: LoginInput, role: Role) {
   };
 }
 
-export function registerApiUser(input: RegisterInput) {
-  return register(input, "USER") as Promise<User>;
-}
-
-export function registerApiAdmin(input: RegisterInput) {
-  return register(input, "ADMIN") as Promise<Admin>;
-}
-
 export function loginApiUser(input: LoginInput) {
   return login(input, "USER") as Promise<AuthSession<User>>;
 }
@@ -109,43 +85,82 @@ export function signOutApiUser() {
   clearApiToken();
 }
 
-// Email OTP verification (user registration only)
-export async function registerInitiate(input: RegisterInput): Promise<void> {
-  await apiFetch<{ success: true; message: string }>("/api/auth/register/initiate", {
-    method: "POST",
-    body: JSON.stringify({
-      fullName: input.name,
-      email: input.email,
-      password: input.password,
-    }),
-  });
+// Email OTP verification (shared by user and admin registration)
+async function doRegisterInitiate(input: RegisterInput, role: Role): Promise<void> {
+  await apiFetch<{ success: true; message: string }>(
+    role === "ADMIN" ? "/api/auth/admin/register/initiate" : "/api/auth/register/initiate",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        fullName: input.name,
+        email: input.email,
+        password: input.password,
+      }),
+    }
+  );
 }
 
-export async function registerVerify(input: { email: string; otp: string }): Promise<AuthSession<User>> {
+async function doRegisterVerify(input: { email: string; otp: string }, role: Role) {
   const response = await apiFetch<{
     success: true;
     token: string;
     user: ApiUser;
-  }>("/api/auth/register/verify", {
+  }>(role === "ADMIN" ? "/api/auth/admin/register/verify" : "/api/auth/register/verify", {
     method: "POST",
     body: JSON.stringify(input),
   });
 
   saveApiToken(response.token);
 
-  return { user: toUser(response.user), token: response.token };
+  return { user: response.user, token: response.token };
 }
 
-export async function resendOtp(email: string): Promise<void> {
-  await apiFetch<{ success: true; message: string }>("/api/auth/resend-otp", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
+async function doResendOtp(email: string, role: Role): Promise<void> {
+  await apiFetch<{ success: true; message: string }>(
+    role === "ADMIN" ? "/api/auth/admin/resend-otp" : "/api/auth/resend-otp",
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }
+  );
+}
+
+export function registerInitiate(input: RegisterInput): Promise<void> {
+  return doRegisterInitiate(input, "USER");
+}
+
+export function registerInitiateApiAdmin(input: RegisterInput): Promise<void> {
+  return doRegisterInitiate(input, "ADMIN");
+}
+
+export async function registerVerify(input: { email: string; otp: string }): Promise<AuthSession<User>> {
+  const { user, token } = await doRegisterVerify(input, "USER");
+  return { user: toUser(user), token };
+}
+
+export async function registerVerifyApiAdmin(input: { email: string; otp: string }): Promise<AuthSession<Admin>> {
+  const { user, token } = await doRegisterVerify(input, "ADMIN");
+  return { user: toAdmin(user), token };
+}
+
+export function resendOtp(email: string): Promise<void> {
+  return doResendOtp(email, "USER");
+}
+
+export function resendOtpApiAdmin(email: string): Promise<void> {
+  return doResendOtp(email, "ADMIN");
 }
 
 // Forgot / reset password
 export async function forgotPassword(email: string): Promise<void> {
   await apiFetch<{ success: true; message: string }>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function forgotPasswordApiAdmin(email: string): Promise<void> {
+  await apiFetch<{ success: true; message: string }>("/api/auth/admin/forgot-password", {
     method: "POST",
     body: JSON.stringify({ email }),
   });
